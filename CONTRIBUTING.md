@@ -107,22 +107,20 @@ grep -r "/your-command" README.md CLAUDE.md
 4. Update documentation if needed
 5. Submit a PR with a clear description
 
-### Integrations that depend on a single paid service or local software
+### Integrations that depend on a hosted service or local software
 
-If your integration only works against one paid API or a piece of software we can't bundle, keep
-it in your own repo and open an issue to be listed under **Community add-ons** in the README.
+An integration that needs a hosted third-party service, or software we can't bundle, lives in
+your own repo. Open an issue with a link and a one-line description and we'll list it under
+**Community add-ons** in the README.
 
-The toolkit does carry some hosted, paid providers, so here is the test they passed. Both parts
-apply:
+The toolkit does carry a few hosted providers: ElevenLabs, 60db, Ideogram 4 and acemusic. Each is
+there because a maintainer uses it, holds an account, and can run it against the live API when
+something breaks. That is the bar, and a PR can't meet it on a maintainer's behalf — code we
+can't run is code we can't keep working.
 
-1. **The capability has an open or self-hostable path in the toolkit.** Nothing here should be
-   possible *only* by paying one vendor. Speech has Qwen3-TTS, images have FLUX.2, music has
-   ACE-Step. A capability with no such path yet (the vendor's API is the only way to do it) is an
-   add-on, however useful.
-2. **The hosted provider does something that path cannot.** 60db's Indian-language voices and
-   Ideogram's legible in-image text are the examples. Another place to run a model the toolkit
-   already runs is not a gap — skipping a deploy is convenient, but each provider is code we have
-   to keep working against an account we don't have.
+If you think a hosted service belongs in-tree, **open an issue before writing any code**. Say
+what it does that the toolkit can't already do; another place to run a model we already run
+isn't that. If a maintainer wants to adopt it, we'll take it from there.
 
 ### Brand profiles and new templates
 
@@ -140,8 +138,8 @@ scenes, structure, or rendering — not just its look.
 
 Automated or AI-generated PRs are welcome only when a human author responds to review and the
 PR states why the toolkit needs the feature — cost, license, and how it differs from the tools
-already here (e.g. a hosted alternative to a self-hosted generator must say when to choose it).
-PRs with no human response within 14 days are closed without further review.
+already here. PRs with no human response within 14 days are closed without further review.
+Integrations with hosted services follow the section above whoever, or whatever, wrote them.
 
 ## Toolkit Tracking Files
 
