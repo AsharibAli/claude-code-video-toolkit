@@ -69,11 +69,13 @@ def _find_modal_url(text: str) -> str | None:
 
     Modal hard-wraps long URLs to the terminal width, so a URL can arrive split
     across lines. Collapsing whitespace first is what makes the match reliable;
-    a per-line search silently finds nothing on a wrapped URL.
+    a per-line search silently finds nothing on a wrapped URL. The tree's `│`
+    goes with it: continuation lines on any branch but the last start with one,
+    and it would otherwise land in the middle of the URL.
     """
     if not text:
         return None
-    m = _MODAL_URL_RE.search(re.sub(r"\s+", "", text))
+    m = _MODAL_URL_RE.search(re.sub(r"[\s│]+", "", text))
     return m.group(0) if m else None
 
 # Docker image for RunPod endpoint
