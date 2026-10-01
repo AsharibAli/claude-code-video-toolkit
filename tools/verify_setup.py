@@ -168,6 +168,31 @@ def check_modal_apps() -> dict:
         return {"ok": False, "apps": [], "detail": str(e)[:200]}
 
 
+def check_soulx_weights() -> dict:
+    """Check the SoulX weights volume was populated.
+
+    SoulX is the one app that keeps its weights in a Modal Volume instead of
+    baking them into the image, so it deploys fine with nothing to load.
+    """
+    try:
+        result = subprocess.run(
+            ["modal", "volume", "ls", "soulx-weights", "/SoulX-FlashHead-1_3B", "--json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        # A missing directory prints an error box rather than JSON.
+        populated = result.returncode == 0 and bool(json.loads(result.stdout))
+    except (OSError, subprocess.SubprocessError, ValueError):
+        populated = False
+
+    if populated:
+        return {"ok": True, "detail": "weights volume populated"}
+    return {
+        "ok": False,
+        "detail": "soulx-weights volume looks empty — run "
+                  "`uv run modal run docker/modal-soulx/app.py::populate_weights`",
+    }
+
+
 def check_modal_env_vars() -> list[dict]:
     """Check which Modal endpoint URLs are configured."""
     tools = {
@@ -176,6 +201,7 @@ def check_modal_env_vars() -> list[dict]:
         "MODAL_IMAGE_EDIT_ENDPOINT_URL": "Image Editing (Qwen-Edit)",
         "MODAL_UPSCALE_ENDPOINT_URL": "Upscaling (RealESRGAN)",
         "MODAL_MUSIC_GEN_ENDPOINT_URL": "Music (ACE-Step)",
+        "MODAL_SOULX_ENDPOINT_URL": "Talking Heads (SoulX-FlashHead)",
         "MODAL_SADTALKER_ENDPOINT_URL": "Talking Heads (SadTalker)",
         "MODAL_DEWATERMARK_ENDPOINT_URL": "Watermark Removal (ProPainter)",
         "MODAL_LTX2_ENDPOINT_URL": "Video (LTX-2)",
@@ -330,6 +356,11 @@ def main():
         results["modal_apps"] = modal_apps
         if verbose:
             print(f"  Deployed apps: {modal_apps['detail']}")
+        if "video-toolkit-soulx" in modal_apps["apps"]:
+            soulx_weights = check_soulx_weights()
+            results["soulx_weights"] = soulx_weights
+            if verbose:
+                print(f"  {'[x]' if soulx_weights['ok'] else '[ ]'} SoulX weights: {soulx_weights['detail']}")
     print()
 
     # 4. RunPod

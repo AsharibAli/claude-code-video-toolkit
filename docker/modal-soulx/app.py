@@ -192,6 +192,20 @@ def populate_weights():
     volume.commit()
 
 
+def _missing_weights():
+    """Readable error if the weights volume was never populated, else None."""
+    import os
+
+    for _, _, dest, _, _ in _WEIGHT_FETCH:
+        if not os.path.isdir(dest) or not os.listdir(dest):
+            return (
+                f"SoulX weights are missing from the soulx-weights volume ({dest} "
+                "is empty). Run this once, then retry: "
+                "modal run docker/modal-soulx/app.py::populate_weights"
+            )
+    return None
+
+
 # Pixel dimensions must divide by the VAE's spatial stride, and the resulting
 # latent extent must be even because the transformer patchifies 2x2. Nothing
 # upstream validates this: target_size flows straight into
@@ -231,8 +245,12 @@ def _fit_size(img_w, img_h, target, model_type):
     image=image,
     # A10G (24GB) is the toolkit's existing tier, and upstream quotes its FPS on
     # a 24GB 4090. Measured here: 8.87s per 28-frame chunk at 544x736 with
-    # compile on, i.e. ~7.9x realtime, no OOM.
-    gpu="A10G",
+    # compile on, i.e. ~7.9x realtime, no OOM. 1280x720 does OOM on it (reported
+    # in #95, fine on L40S), so the tier is a deploy-time setting:
+    #   SOULX_GPU=L40S modal deploy docker/modal-soulx/app.py
+    # Only the deploy-time value matters -- the in-container re-import falls
+    # back to the default, but the GPU is already allocated by then.
+    gpu=os.environ.get("SOULX_GPU", "A10G"),
     volumes={MODELS_DIR: volume, OUT_DIR: out_volume},
     timeout=7200,
     # Generous on purpose. torch.compile is per-container and per-resolution, so
@@ -244,6 +262,18 @@ def _fit_size(img_w, img_h, target, model_type):
 class SoulXFlashHead:
     @modal.enter()
     def load_pipeline(self):
+        # An unpopulated volume makes get_pipeline die with a bare
+        # FileNotFoundError, and a container that dies here is restarted forever
+        # while the client sees only a hang until its timeout (#95). Start
+        # anyway and let the request say what is wrong.
+        self.pipeline = None
+        self.load_error = _missing_weights()
+        if self.load_error:
+            print(self.load_error)
+            return
+        self._load()
+
+    def _load(self):
         import os
         import time
 
@@ -277,6 +307,21 @@ class SoulXFlashHead:
         self.load_seconds = time.time() - started
         print(f"pipeline loaded in {self.load_seconds:.1f}s "
               f"(model_type={self.model_type}, compile={self.use_compile})")
+
+    def _not_ready(self):
+        """Error string if the pipeline cannot serve, else None.
+
+        Re-checks the volume first, so a container that started before
+        populate_weights ran picks the weights up instead of refusing for the
+        rest of its warm window.
+        """
+        if self.pipeline is not None:
+            return None
+        volume.reload()
+        self.load_error = _missing_weights()
+        if self.load_error is None:
+            self._load()
+        return self.load_error
 
     # -- core ---------------------------------------------------------------
 
@@ -420,6 +465,10 @@ class SoulXFlashHead:
         import tempfile
         from pathlib import Path
 
+        err = self._not_ready()
+        if err:
+            raise RuntimeError(err)
+
         work = Path(tempfile.mkdtemp())
         img_path, aud_path = work / "cond.png", work / "audio.wav"
         img_path.write_bytes(image_bytes)
@@ -443,7 +492,8 @@ class SoulXFlashHead:
     @modal.fastapi_endpoint(method="GET")
     def health(self) -> dict:
         return {
-            "ok": True,
+            "ok": self.pipeline is not None,
+            "error": self.load_error,
             "model_type": getattr(self, "model_type", "pro"),
             "compile": getattr(self, "use_compile", USE_COMPILE),
             "load_seconds": round(getattr(self, "load_seconds", -1), 1),
@@ -469,6 +519,10 @@ class SoulXFlashHead:
             return {"error": "Missing image_url or image_base64"}
         if not audio_url and not audio_base64:
             return {"error": "Missing audio_url or audio_base64"}
+
+        err = self._not_ready()
+        if err:
+            return {"error": err}
 
         work = Path(tempfile.mkdtemp(prefix="modal_soulx_"))
         try:
@@ -529,7 +583,8 @@ class SoulXFlashHead:
             # _check_size and friends: a caller error, not a server fault.
             return {"error": str(e)}
         except torch.cuda.OutOfMemoryError:
-            return {"error": "CUDA OOM. Lower `size` (e.g. 640), or redeploy on L40S."}
+            return {"error": "CUDA OOM. Lower `size` (e.g. 640), or redeploy on a larger "
+                             "GPU: SOULX_GPU=L40S modal deploy docker/modal-soulx/app.py"}
         except subprocess.CalledProcessError as e:
             return {"error": f"ffmpeg mux failed: {e.stderr[-300:] if e.stderr else e}"}
         except Exception as e:

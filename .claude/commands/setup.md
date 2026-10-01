@@ -138,7 +138,7 @@ Explain what cloud GPU enables:
 - AI image editing (Qwen-Edit) — transform photos, add effects
 - AI upscaling (RealESRGAN) — enhance image quality
 - AI music generation (ACE-Step) — background music, jingles
-- Talking heads (SadTalker) — animated presenters from a photo
+- Talking heads (SoulX-FlashHead, SadTalker) — animated presenters from a photo
 - Watermark removal (ProPainter) — clean up stock footage
 
 Then present the choice:
@@ -290,9 +290,11 @@ Which AI tools would you like to set up?
      Generate background music, jingles, vocals
      8 scene presets: corporate, ambient, dramatic, tension, cta...
 
-  6. Talking Heads (SadTalker)
+  6. Talking Heads (SoulX-FlashHead + SadTalker)
      Animate a portrait photo with lip-sync from audio
      Great for narrator Picture-in-Picture
+     SoulX is the default (Modal only, one-off 15GB weights download);
+     SadTalker is the cheap draft option
 
   7. Watermark Removal (ProPainter)
      Remove watermarks from video using AI inpainting
@@ -320,13 +322,24 @@ uv run modal deploy docker/modal-upscale/app.py
 uv run modal deploy docker/modal-music-gen/app.py
 uv run modal deploy docker/modal-sadtalker/app.py
 uv run modal deploy docker/modal-propainter/app.py
+
+# SoulX keeps its weights in a Modal Volume instead of baking them into the
+# image, so populate the volume FIRST (one-off, ~15GB, ~5 min). Skip this and
+# the app deploys fine but every render fails with "SoulX weights are missing".
+uv run modal run docker/modal-soulx/app.py::populate_weights
+uv run modal deploy docker/modal-soulx/app.py
 ```
 
 After each deploy, Modal prints the endpoint URL. Parse it and save to .env:
 ```
 MODAL_QWEN3_TTS_ENDPOINT_URL=https://username--video-toolkit-qwen3-tts-...modal.run
 MODAL_FLUX2_ENDPOINT_URL=https://username--video-toolkit-flux2-...modal.run
+MODAL_SOULX_ENDPOINT_URL=https://username--video-toolkit-soulx-...modal.run
 ```
+
+SoulX prints two URLs (`health` and `generate_web`) — save the `generate_web` one. Modal
+truncates that URL's label, so identify it by the `SoulXFlashHead.generate_web =>` line it
+follows, not by the URL text.
 
 **Important**: The deploy output contains the URL. Look for lines containing `.modal.run` in the output. The URL format is typically:
 `https://{username}--{app-name}-{class}-{method}.modal.run`
