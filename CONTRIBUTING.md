@@ -111,7 +111,18 @@ grep -r "/your-command" README.md CLAUDE.md
 
 If your integration only works against one paid API or a piece of software we can't bundle, keep
 it in your own repo and open an issue to be listed under **Community add-ons** in the README.
-In-tree integrations need at least one open or self-hostable path.
+
+The toolkit does carry some hosted, paid providers, so here is the test they passed. Both parts
+apply:
+
+1. **The capability has an open or self-hostable path in the toolkit.** Nothing here should be
+   possible *only* by paying one vendor. Speech has Qwen3-TTS, images have FLUX.2, music has
+   ACE-Step. A capability with no such path yet (the vendor's API is the only way to do it) is an
+   add-on, however useful.
+2. **The hosted provider does something that path cannot.** 60db's Indian-language voices and
+   Ideogram's legible in-image text are the examples. Another place to run a model the toolkit
+   already runs is not a gap — skipping a deploy is convenient, but each provider is code we have
+   to keep working against an account we don't have.
 
 ### Brand profiles and new templates
 
