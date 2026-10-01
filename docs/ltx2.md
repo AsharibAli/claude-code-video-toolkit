@@ -190,6 +190,16 @@ Re-run with a different `--seed`. Adding "no text, no watermark, no logo" to the
 
 High-resolution or long videos can exceed the timeout. Use `--quality fast` or reduce dimensions.
 
+### Every call fails with "Modal HTTP 500 ... upstream request timeout"
+
+The container is crashing on startup, which from the client looks the same as a slow cold start. Check the logs:
+
+```bash
+uv run modal app logs video-toolkit-ltx2
+```
+
+`AttributeError: module 'torch.compiler' has no attribute 'nested_compile_region'` means the app was deployed from a toolkit version that cloned LTX-2 unpinned and picked up an upstream release needing torch 2.13. Update the toolkit and redeploy — `docker/modal-ltx2/app.py` now pins the upstream commit (`LTX2_REPO_REF`).
+
 ## License
 
 LTX-2 uses a [Community License](https://github.com/Lightricks/LTX-2/blob/main/LICENSE) from Lightricks. Key points:
