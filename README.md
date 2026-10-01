@@ -384,9 +384,9 @@ software or a service we can't bundle. We haven't reviewed them; check each proj
 |--------|--------------|-------|
 | [VOICEPEAK for voiceover.py](https://github.com/fialuxe/claude-code-video-toolkit-expand-ja-voicepeak/) | Offline Japanese TTS provider (patches `voiceover.py`) | VOICEPEAK (paid, local) |
 
-To be listed, open an issue with a link and a one-line description. The toolkit itself only takes
-integrations that have at least one open or self-hostable path — see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+To be listed, open an issue with a link and a one-line description. Integrations that need a
+hosted third-party service live here rather than in the toolkit itself — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for why, and for how the few exceptions came about.
 
 ## Contributing
 
