@@ -459,6 +459,15 @@ def _cancel_runpod_job(endpoint_id: str, api_key: str, job_id: str):
 # Modal implementation
 # ---------------------------------------------------------------------------
 
+# A container that crashes on startup is restarted by Modal while the web
+# request just waits, so from here it looks the same as a slow cold start
+# (#94, #95). The real error is only in the app's logs.
+_MODAL_LOGS_HINT = (
+    " If this keeps happening, the container may be crashing on startup: check"
+    " `uv run modal app logs <app>` (`uv run modal app list` shows the names)."
+)
+
+
 def _call_modal(
     payload: dict,
     endpoint_url: str | None,
@@ -530,14 +539,15 @@ def _call_modal(
             _emit("error", "Modal endpoint scaling up or unavailable", level="error")
             return {"error": "Modal endpoint is scaling up or unavailable. Try again in a moment."}, elapsed
         else:
+            hint = _MODAL_LOGS_HINT if response.status_code >= 500 else ""
             _emit("error", f"Modal HTTP {response.status_code}: {error_body}",
                    level="error")
-            return {"error": f"Modal HTTP {response.status_code}: {error_body}"}, elapsed
+            return {"error": f"Modal HTTP {response.status_code}: {error_body}{hint}"}, elapsed
 
     except requests.exceptions.Timeout:
         elapsed = time.time() - start
         _emit("error", f"Modal request timed out after {elapsed:.0f}s", level="error")
-        return {"error": f"Modal request timed out after {elapsed:.0f}s"}, elapsed
+        return {"error": f"Modal request timed out after {elapsed:.0f}s.{_MODAL_LOGS_HINT}"}, elapsed
     except requests.exceptions.ConnectionError as e:
         elapsed = time.time() - start
         _emit("error", f"Modal connection failed: {e}", level="error")

@@ -8,6 +8,25 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Fixed
+- **LTX-2 Modal app** (`docker/modal-ltx2/app.py`) cloned upstream unpinned, so
+  any deploy after upstream's August 2026 releases crashed on import with
+  `module 'torch.compiler' has no attribute 'nested_compile_region'` (upstream
+  now needs torch 2.13; the app installs 2.7). The clone is pinned to the commit
+  the pipeline code was written against. Existing deployments are unaffected
+  until they are redeployed. Thanks @nevesen (#94).
+- **SoulX-FlashHead** deployed before `populate_weights` ran crash-looped with a
+  bare `FileNotFoundError` while the client hung until its timeout. The app now
+  starts anyway and every request returns a readable error naming the command to
+  run; a warm container picks the weights up without a redeploy. `/setup` now
+  includes SoulX (populate, then deploy) and `verify_setup.py` checks both the
+  endpoint and the weights volume. Thanks @nevesen (#95).
+- **SoulX GPU tier** is a deploy-time setting (`SOULX_GPU=L40S modal deploy …`)
+  instead of a hard-coded A10G, which OOMs at 1280x720 (#95).
+- **Modal timeouts and 5xx errors** now point at `modal app logs`, since a
+  container crashing on startup looks the same as a slow cold start from the
+  client (#94, #95).
+
 ---
 
 ## 2026-09-08 (v0.20.1)

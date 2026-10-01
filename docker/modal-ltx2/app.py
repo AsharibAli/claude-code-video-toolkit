@@ -44,6 +44,14 @@ import modal
 
 app = modal.App("video-toolkit-ltx2")
 
+LTX2_REPO_URL = "https://github.com/Lightricks/LTX-2.git"
+# Pinned: upstream main (Aug 2026+) calls torch.compiler.nested_compile_region
+# and pins torch 2.13, so an unpinned clone crashes on import against the
+# torch 2.7 installed below (#94). This is the commit the pipeline code here
+# was written against. Bump deliberately, together with torch, then re-run a
+# smoke render.
+LTX2_REPO_REF = "a2c3f24078eb918171967f74b6f66b756b29ee45"
+
 # HuggingFace model repos (2.3 weights are split across repos)
 HF_REPO = "Lightricks/LTX-2.3"
 HF_REPO_FP8 = "Lightricks/LTX-2.3-fp8"
@@ -95,9 +103,13 @@ image = (
         "pip install --no-cache-dir flash-attn --no-build-isolation "
         "|| echo 'flash-attn not available, using SDPA fallback'"
     )
-    # Clone LTX-2 and install its packages
+    # Fetch LTX-2 at the pinned ref and install its packages. Fetch-by-SHA
+    # rather than `clone --branch`, which only takes a ref name.
     .run_commands(
-        "git clone --depth 1 https://github.com/Lightricks/LTX-2.git /app/ltx2",
+        "git init /app/ltx2",
+        f"git -C /app/ltx2 remote add origin {LTX2_REPO_URL}",
+        f"git -C /app/ltx2 fetch --depth 1 origin {LTX2_REPO_REF}",
+        "git -C /app/ltx2 checkout FETCH_HEAD",
         "pip install -e /app/ltx2/packages/ltx-core",
         "pip install -e /app/ltx2/packages/ltx-pipelines",
     )

@@ -225,9 +225,22 @@ See [Resolution rules](#resolution-rules). Use `--size` and let it snap.
 `torch.compile` on a cold container. Subsequent renders at the same resolution
 in the same container are ~40% faster per chunk.
 
+**"SoulX weights are missing from the soulx-weights volume".**
+The app was deployed before `populate_weights` ran. Run it once (see
+[Setup](#setup)) and retry — no redeploy needed, a warm container picks the
+weights up on the next request. `uv run tools/verify_setup.py` reports this too.
+
 **CUDA OOM.**
-Lower `--size`, or redeploy the app on L40S. Not seen at 768x432 or 544x736 on
-A10G.
+Lower `--size`, or redeploy the app on a larger GPU. Not seen at 768x432 or
+544x736 on the default A10G; 1280x720 does OOM there, at the end of the render.
+The GPU tier is a deploy-time setting:
+
+```bash
+SOULX_GPU=L40S uv run modal deploy docker/modal-soulx/app.py
+```
+
+Reported on L40S (#95): a 19s take at 1280x720 in 807s, about $0.25. The cost
+and speed figures above are for A10G and do not carry over.
 
 **The face is cropped square when a 16:9 image went in.**
 `--face-crop` is on. Upstream's crop sets `new_height = new_width`
