@@ -42,7 +42,7 @@ dependencies = [
 # Burned karaoke captions in templates/concept-explainer-short
 # (word-level timing; heavy install, pulls in torch)
 whisper = [
-    "openai-whisper>=20231117",
+    "openai-whisper>=20240930",
 ]
 # Self-hosted cloud GPU fallback via Modal (see docs/modal-setup.md)
 modal = [
