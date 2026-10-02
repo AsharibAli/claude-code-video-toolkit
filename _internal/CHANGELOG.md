@@ -8,6 +8,14 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+---
+
+## 2026-10-02 (v0.20.2)
+
+Patch release. Fixes two first-deploy failures on Modal (LTX-2, SoulX) and the
+Windows cp1252 crashes, moves Remotion to 4.0.529, and rewrites the contribution
+policy for hosted services.
+
 ### Added
 - **`concept-explainer-short`: `voice.brand`** in `config.json` now drives the
   narrator from a brand profile. `gen_vo.py` never passed `--brand`, so a brand
