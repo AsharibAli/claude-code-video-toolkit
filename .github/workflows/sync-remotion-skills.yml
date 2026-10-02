@@ -59,6 +59,24 @@ jobs:
           rm -rf "$LOCAL_SKILL_DIR"
           cp -r "/tmp/remotion-skills/$UPSTREAM_SKILL_DIR" "$LOCAL_SKILL_DIR"
 
+          # The registry records which upstream version is synced. Nothing else
+          # updates it, so without this it goes stale at the first sync.
+          if [ "$UPSTREAM_VERSION" != "unknown" ]; then
+            python3 - <<'PY'
+          import datetime, json, os
+
+          path = "_internal/toolkit-registry.json"
+          with open(path, encoding="utf-8") as f:
+              registry = json.load(f)
+          entry = registry["skills"]["remotion-official"]
+          entry["upstreamVersion"] = os.environ["UPSTREAM_VERSION"]
+          entry["updated"] = datetime.date.today().isoformat()
+          with open(path, "w", encoding="utf-8") as f:
+              json.dump(registry, f, indent=2, ensure_ascii=False)
+              f.write("\n")
+          PY
+          fi
+
       - name: Create pull request
         if: steps.diff.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8

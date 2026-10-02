@@ -10,9 +10,9 @@
       "status": "stable",
       "upstream": "https://github.com/remotion-dev/skills",
       "created": "2026-02-19",
-      "updated": "2026-08-26",
+      "updated": "2026-10-01",
       "upstreamPath": "skills/remotion-best-practices",
-      "upstreamVersion": "4.0.518"
+      "upstreamVersion": "4.0.529"
     },
     "remotion": {
       "path": ".claude/skills/remotion/",
@@ -187,7 +187,7 @@
       "description": "First-time toolkit setup - cloud GPU, file transfer, voice, and prerequisites",
       "status": "beta",
       "created": "2026-03-23",
-      "updated": "2026-03-23"
+      "updated": "2026-10-01"
     },
     "publish": {
       "path": ".claude/commands/publish.md",
@@ -335,7 +335,7 @@
       "usage": "uv run tools/verify_setup.py [--test] [--json]",
       "status": "beta",
       "created": "2026-03-23",
-      "updated": "2026-03-23"
+      "updated": "2026-10-01"
     },
     "notebooklm_brand": {
       "path": "tools/notebooklm_brand.py",
@@ -486,7 +486,7 @@
       "estimatedCost": "~$0.0024 per second of output (measured 6.4-7.9x realtime on A10G), plus a one-off ~600s torch.compile per container per resolution",
       "documentation": "docs/soulx.md",
       "created": "2026-08-31",
-      "updated": "2026-08-31"
+      "updated": "2026-10-01"
     },
     "qwen3_tts": {
       "path": "tools/qwen3_tts.py",
@@ -942,6 +942,7 @@
             "soulx"
           ],
           "gpu": "A10G",
+          "gpuOverride": "SOULX_GPU at deploy time, e.g. L40S for 1280x720 (OOMs on A10G)",
           "weights": "modal-volume",
           "estimatedCost": "~$0.0024 per second of output, plus a one-off ~600s torch.compile per container per resolution"
         },

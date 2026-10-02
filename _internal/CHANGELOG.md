@@ -8,7 +8,42 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Added
+- **`concept-explainer-short`: `voice.brand`** in `config.json` now drives the
+  narrator from a brand profile. `gen_vo.py` never passed `--brand`, so a brand
+  could set the palette but not the voice. Empty or absent adds no flag. Picked
+  up from #84. (#88)
+- **Community add-on: arkiv** — natural-language search over your own footage
+  archive, listed in the README. (#100)
+
+### Changed
+- **Remotion 4.0.518 → 4.0.529** across all templates, examples, showcase and
+  the render-baseline harness, via the first grouped Dependabot bump. The
+  baseline A/B rendered identical on every frame, and all nine Remotion
+  projects smoke-render on the new version. (#97)
+- **Official Remotion skills synced to 4.0.529**, so the skills and the pinned
+  version match again. New upstream material: connected compositions, motion
+  blur, editable SVG paths. (#83, #92)
+- **Contribution policy for hosted services** rewritten. Integrations that need
+  a hosted third-party service default to Community add-ons; the providers
+  in-tree are there because a maintainer uses and can test each one, and the
+  route in is an issue before any code. The old wording contradicted the tree
+  and invited the PRs it then declined. (#99)
+- **`/contribute`** asks what actually differs before copying a template, and
+  routes colors, fonts, voice and timing to `/brand`. Two PRs had arrived as
+  near-identical template forks because the command told them to. (#89)
+- The Remotion skills sync now updates the registry's `upstreamVersion`, which
+  had been left at 4.0.518 through two syncs.
+
 ### Fixed
+- **Windows: tools and Modal setup died on cp1252.** Python picks the locale
+  codec for redirected output, so printing `→` or `⚠` raised
+  `UnicodeEncodeError`, and `modal deploy` aborted mid-build on its own
+  progress output. New `tools/win_encoding.py` guards the affected tools, and
+  `/setup` documents `PYTHONIOENCODING=utf-8`. Thanks @randomdill1 (#91).
+- **`qwen3_tts.py --setup --cloud modal`** reported "could not parse endpoint
+  URL" after a successful deploy, because Modal wraps long URLs across lines.
+  (#91, hardened in #98 for URLs on a non-final branch of the output tree.)
 - **LTX-2 Modal app** (`docker/modal-ltx2/app.py`) cloned upstream unpinned, so
   any deploy after upstream's August 2026 releases crashed on import with
   `module 'torch.compiler' has no attribute 'nested_compile_region'` (upstream
