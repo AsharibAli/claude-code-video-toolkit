@@ -2,6 +2,15 @@
 
 Generate realistic talking head videos from a portrait image and audio file.
 
+> **Another draft option: SoulX-FlashHead Lite.** `uv run tools/soulx.py --model lite`
+> is cheaper per second of output than SadTalker (~$0.0004 vs ~$0.0014), keeps
+> the input aspect ratio with no `--preprocess` workaround, and comes from the
+> same model family and endpoint as the SoulX Pro render you finish with. It is
+> for drafts only: it has been tested on ~2.6s clips, and its long-take drift is
+> unmeasured. See [soulx.md](soulx.md#choosing-a-variant). SadTalker stays a
+> supported draft option, and it is the only talking head with a RunPod path,
+> so it is also the one to use when Modal is unavailable.
+
 ## Quick Start
 
 ```bash
