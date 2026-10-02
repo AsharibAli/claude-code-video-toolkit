@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
-AI-powered image editing using Qwen-Image-Edit-2511.
+AI-powered image editing using Qwen-Image.
 
-Cloud providers: RunPod (default), Modal.
+Cloud providers:
+- Modal (default): the model is chosen when the app is deployed --
+  Qwen-Image-Edit-2511 by default (Apache-2.0, up to 3 input images), or
+  Qwen-Image-2.1 with IMAGE_EDIT_MODEL=qwen-image-2.1 (up to 10 input images,
+  RGBA; Qwen Research License, NON-COMMERCIAL only). See docker/modal-image-edit.
+- RunPod: Qwen-Image-Edit-2511 + Lightning LoRA -- up to 3 input images.
+  Apache-2.0, commercial OK.
 
 Capabilities:
 - Background replacement (--background)
 - Style transfer (--style)
 - Custom edits (--prompt)
-- Multi-image merge (multiple --input files)
+- Multi-image merge (multiple --input files; first is the image being edited)
 - Viewpoint changes (--viewpoint)
 - Batch processing (--input-dir)
 
@@ -22,8 +28,8 @@ Examples:
   # Custom prompt (full control)
   uv run tools/image_edit.py --input photo.jpg --prompt "Add warm sunset lighting"
 
-  # Using Modal instead of RunPod
-  uv run tools/image_edit.py --input photo.jpg --background "office" --cloud modal
+  # Using RunPod (Qwen-Image-Edit-2511 + Lightning LoRA) instead of Modal
+  uv run tools/image_edit.py --input photo.jpg --background "office" --cloud runpod
 
   # Batch processing
   uv run tools/image_edit.py --input-dir ./photos --background "studio backdrop" --output-dir ./edited
@@ -77,6 +83,18 @@ STYLE_PRESETS = {
     "sketch": "pencil sketch drawing style",
     "vintage": "vintage 1970s photograph with warm tones and grain",
     "cinematic": "cinematic movie still with dramatic lighting",
+}
+
+# Per-provider defaults. Without --steps both providers are sent 8 steps, as
+# before. RunPod runs Qwen-Image-Edit-2511 with the Lightning LoRA (8 steps, up
+# to 3 images). On Modal the deployed model decides: the request also carries
+# steps_is_client_default, so the app runs its model's own default instead
+# (8 on 2511, 40 on Qwen-Image-2.1; an app deployed before that flag existed
+# runs the 8 it is sent), and the app caps the image count (3 / 10), so send up
+# to the larger limit.
+PROVIDER_DEFAULTS = {
+    "modal": {"steps": 8, "max_images": 10},
+    "runpod": {"steps": 8, "max_images": 3},
 }
 
 # Viewpoint presets
@@ -161,7 +179,7 @@ def edit_image(
     prompt: str,
     output_path: Optional[str] = None,
     seed: Optional[int] = None,
-    steps: int = 8,
+    steps: Optional[int] = None,
     guidance: float = 1.0,
     negative_prompt: Optional[str] = None,
     open_result: bool = True,
@@ -189,6 +207,14 @@ def edit_image(
 
     log(f"Prompt: {prompt}", "info")
 
+    defaults = PROVIDER_DEFAULTS.get(cloud, PROVIDER_DEFAULTS["runpod"])
+    steps_is_default = steps is None
+    if steps_is_default:
+        steps = defaults["steps"]
+    max_images = defaults["max_images"]
+    if len(input_paths) > max_images:
+        log(f"{cloud} takes at most {max_images} images; ignoring the rest", "warn")
+
     # Build payload with primary image + optional reference images
     payload = {
         "input": {
@@ -198,14 +224,16 @@ def edit_image(
             "guidance_scale": guidance,
         }
     }
+    if cloud == "modal" and steps_is_default:
+        payload["input"]["steps_is_client_default"] = True
 
     if guidance != 1.0:
         log(f"Guidance: {guidance}", "dim")
 
-    # Add additional reference images (up to 2 more for 3 total)
+    # Add additional reference images (up to max_images total)
     if len(input_paths) > 1:
-        log(f"Multi-image mode: {len(input_paths)} images", "info")
-        payload["input"]["images_base64"] = [encode_image(p) for p in input_paths[1:3]]
+        log(f"Multi-image mode: {min(len(input_paths), max_images)} images", "info")
+        payload["input"]["images_base64"] = [encode_image(p) for p in input_paths[1:max_images]]
 
     if seed is not None:
         payload["input"]["seed"] = seed
@@ -256,6 +284,20 @@ def edit_image(
     output_size = result.get("image_size", [0, 0])
 
     log(f"Saved: {output_path}", "success")
+    if result.get("model"):
+        log(f"Model: {result['model']}", "dim")
+    if result.get("num_inference_steps"):
+        log(f"Steps: {result['num_inference_steps']}", "dim")
+    # An endpoint deployed before steps_is_client_default existed ignores it and
+    # runs the 8 it was sent, which is too few for Qwen-Image-2.1.
+    if (cloud == "modal" and steps_is_default
+            and "Qwen-Image-2.1" in str(result.get("model", ""))
+            and result.get("num_inference_steps") == steps):
+        log(f"This endpoint ran Qwen-Image-2.1 at the client default of {steps} steps; "
+            "redeploy docker/modal-image-edit to get its 40-step default, or pass --steps", "warn")
+    images_used = result.get("images_used")
+    if images_used and images_used < min(len(input_paths), max_images):
+        log(f"The deployed model took only {images_used} of the input images", "warn")
     log(f"Time: {elapsed:.1f}s total, {inference_ms/1000:.1f}s inference", "dim")
     log(f"Output: {output_size[0]}x{output_size[1]}", "dim")
     log(f"Seed: {result.get('seed', 'unknown')}", "dim")
@@ -273,7 +315,7 @@ def batch_edit(
     output_dir: str,
     prompt: str,
     seed: Optional[int] = None,
-    steps: int = 8,
+    steps: Optional[int] = None,
     verbose: bool = False,
     cloud: str = "runpod",
 ) -> tuple[int, int]:
@@ -346,7 +388,8 @@ def list_presets():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AI-powered image editing using Qwen-Image-Edit",
+        description="AI-powered image editing using Qwen-Image "
+                    "(Qwen-Image-Edit-2511 by default; Qwen-Image-2.1 if the Modal app was deployed with it)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -361,7 +404,9 @@ Examples:
 
     # Input options
     input_group = parser.add_argument_group("Input")
-    input_group.add_argument("--input", "-i", nargs="+", help="Input image(s)")
+    input_group.add_argument("--input", "-i", nargs="+",
+                             help="Input image(s); the first is edited, the rest are references/masks "
+                                  "(up to 3 on Qwen-Image-Edit-2511, 10 on Qwen-Image-2.1)")
     input_group.add_argument("--input-dir", help="Directory of images for batch processing")
 
     # Edit options
@@ -380,9 +425,16 @@ Examples:
     # Advanced options
     adv_group = parser.add_argument_group("Advanced")
     adv_group.add_argument("--seed", type=int, help="Random seed for reproducibility")
-    adv_group.add_argument("--steps", type=int, default=8, help="Inference steps (default: 8)")
-    adv_group.add_argument("--guidance", "-g", type=float, default=1.0, help="Guidance scale - higher = follows prompt more strictly (default: 1.0)")
-    adv_group.add_argument("--negative", "-n", help="Negative prompt - things to avoid")
+    adv_group.add_argument("--steps", type=int, default=None,
+                           help="Inference steps (default: 8 for Qwen-Image-Edit-2511 on Modal and RunPod; "
+                                "40 on a Modal app deployed with IMAGE_EDIT_MODEL=qwen-image-2.1)")
+    adv_group.add_argument("--guidance", "-g", type=float, default=1.0,
+                           help="Guidance scale - higher = follows prompt more strictly (default: 1.0). "
+                                "On Qwen-Image-2.1, 1.0 means no CFG, as the model is meant to run; "
+                                ">1 turns on true CFG and doubles the cost per step")
+    adv_group.add_argument("--negative", "-n",
+                           help="Negative prompt - things to avoid (on an app deployed with "
+                                "Qwen-Image-2.1 it only applies with --guidance above 1)")
     adv_group.add_argument("--verbose", action="store_true", help="Show detailed output")
     adv_group.add_argument("--cloud", type=str, default="modal", choices=["runpod", "modal"],
                            help="Cloud GPU provider (default: modal)")
@@ -427,7 +479,7 @@ Examples:
     reporter = ProgressReporter(mode=args.progress)
 
     print()
-    log("Qwen Image Edit", "info")
+    log("Qwen image edit" if args.cloud == "modal" else "Qwen-Image-Edit-2511", "info")
     log("=" * 40, "dim")
 
     # Batch or single
