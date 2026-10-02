@@ -546,7 +546,7 @@ youtube = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", specifier = ">=1.28.0" },
-    { name = "elevenlabs", specifier = ">=1.0.0" },
+    { name = "elevenlabs", specifier = ">=2.21.0" },
     { name = "google-api-python-client", marker = "extra == 'youtube'", specifier = ">=2.100.0" },
     { name = "google-auth-httplib2", marker = "extra == 'youtube'", specifier = ">=0.2.0" },
     { name = "google-auth-oauthlib", marker = "extra == 'youtube'", specifier = ">=1.2.0" },
