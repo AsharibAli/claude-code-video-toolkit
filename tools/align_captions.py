@@ -124,7 +124,7 @@ def parse_scenes(config_text: str):
 
 # ─── Scribe transcription ───────────────────────────────────
 
-def transcribe_words(audio_path: str, api_key: str, model_id: str = "scribe_v1"):
+def transcribe_words(audio_path: str, api_key: str, model_id: str = "scribe_v2"):
     """Return list of word dicts: {text, start, end}."""
     from elevenlabs.client import ElevenLabs
 
@@ -267,9 +267,12 @@ def apply_patches(config_text: str, scenes_aligned):
 
 def main():
     ensure_utf8_output()  # Windows: piped stdout defaults to cp1252
+    # Shared with redub.py: the accepted Scribe ids and the deprecated-id mapping.
+    from voiceover import ELEVENLABS_STT_MODELS, UrlSafeHelpFormatter, resolve_model_id
+
     ap = argparse.ArgumentParser(
         description="Align caption timestamps to TTS audio via ElevenLabs Scribe.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=UrlSafeHelpFormatter,
         epilog=__doc__,
     )
     ap.add_argument("--config", required=True, help="Path to sprint-config.ts")
@@ -284,11 +287,15 @@ def main():
     )
     ap.add_argument(
         "--model",
-        default="scribe_v1",
-        choices=["scribe_v1", "scribe_v1_experimental"],
-        help="Scribe STT model",
+        default="scribe_v2",
+        choices=ELEVENLABS_STT_MODELS,
+        help="Scribe STT model (default: scribe_v2). scribe_v1 is deprecated, with "
+             "removal announced for 2026-07-09 (https://elevenlabs.io/docs/changelog/2026/6/8); "
+             "it still runs, with a warning. scribe_v1_experimental is accepted with a "
+             "warning and sent as scribe_v2.",
     )
     args = ap.parse_args()
+    args.model = resolve_model_id(args.model)
 
     # Load env via the toolkit's own loader if available
     try:

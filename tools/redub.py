@@ -32,6 +32,7 @@ Sync Mode:
     voice speaks at a different pace than the original. It uses:
     - ElevenLabs Scribe for word-level timestamps from original audio
     - ElevenLabs TTS with timestamps for character-level alignment
+      (Text to Dialogue with timestamps when --model eleven_v4)
     - FFmpeg filtergraph to apply variable speed per segment
 
     This ensures each word in the video aligns with its corresponding TTS audio,
@@ -60,12 +61,21 @@ from config import (
     get_sixtydb_voice_id,
     get_voice_id,
 )
+from voiceover import (
+    ELEVENLABS_STT_MODELS,
+    ELEVENLABS_TTS_MODELS,
+    generate_dialogue_audio,
+    is_dialogue_model,
+    UrlSafeHelpFormatter,
+    resolve_model_id,
+    warn_dialogue_ignored_settings,
+)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Redub a video with a different voice using ElevenLabs",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=UrlSafeHelpFormatter,
         epilog="""
 Examples:
   uv run tools/redub.py --input video.mp4 --voice-id ABC123 --output dubbed.mp4
@@ -123,15 +133,23 @@ Examples:
         "-m",
         type=str,
         default="eleven_multilingual_v2",
-        choices=["eleven_multilingual_v2", "eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_v3"],
-        help="ElevenLabs TTS model (default: eleven_multilingual_v2). eleven_v3 is alpha.",
+        choices=ELEVENLABS_TTS_MODELS,
+        help="ElevenLabs TTS model (default: eleven_multilingual_v2). eleven_v4, released "
+             "2026-09-28 (https://elevenlabs.io/docs/changelog/2026/9/28), is the most "
+             "expressive: it runs on the Text to Dialogue API and takes stability + "
+             "similarity only, no style/speed. eleven_turbo_v2_5 is deprecated: accepted "
+             "with a warning and sent as eleven_flash_v2_5 "
+             "(https://elevenlabs.io/docs/overview/models#deprecated-models).",
     )
     parser.add_argument(
         "--stt-model",
         type=str,
-        default="scribe_v1",
-        choices=["scribe_v1", "scribe_v1_experimental"],
-        help="ElevenLabs STT model (default: scribe_v1)",
+        default="scribe_v2",
+        choices=ELEVENLABS_STT_MODELS,
+        help="ElevenLabs STT model (default: scribe_v2). scribe_v1 is deprecated, with "
+             "removal announced for 2026-07-09 (https://elevenlabs.io/docs/changelog/2026/6/8); "
+             "it still runs, with a warning. scribe_v1_experimental is accepted with a "
+             "warning and sent as scribe_v2.",
     )
     parser.add_argument(
         "--stability",
@@ -274,6 +292,19 @@ def generate_tts(
         print(f"Generating TTS with voice {voice_id}...", file=sys.stderr)
 
     try:
+        if is_dialogue_model(model_id):
+            warn_dialogue_ignored_settings(model_id, style, speed)
+            generate_dialogue_audio(
+                client,
+                text,
+                voice_id,
+                output_path,
+                model=model_id,
+                stability=stability,
+                similarity=similarity,
+            )
+            return True
+
         audio = client.text_to_speech.convert(
             text=text,
             voice_id=voice_id,
@@ -401,27 +432,55 @@ def generate_tts_with_timestamps(
     output_path: str,
     model_id: str,
     verbose: bool = True,
+    stability: float | None = None,
+    similarity: float | None = None,
+    style: float = 0.0,
+    speed: float = 1.0,
 ) -> dict | None:
-    """Generate TTS with character-level timestamps."""
+    """Generate TTS with character-level timestamps.
+
+    Only Eleven v4 receives voice settings here (stability + similarity).
+    """
     if verbose:
         print(f"Generating TTS with timestamps...", file=sys.stderr)
 
     try:
-        result = client.text_to_speech.convert_with_timestamps(
-            text=text,
-            voice_id=voice_id,
-            model_id=model_id,
-        )
+        if is_dialogue_model(model_id):
+            # Eleven v4: Text to Dialogue with timestamps (chunked past ~2,000 chars)
+            warn_dialogue_ignored_settings(model_id, style, speed)
+            alignment = generate_dialogue_audio(
+                client,
+                text,
+                voice_id,
+                output_path,
+                model=model_id,
+                stability=stability,
+                similarity=similarity,
+                with_timestamps=True,
+            )["alignment"]
+            chars = alignment["characters"]
+            starts = alignment["starts"]
+            ends = alignment["ends"]
+        else:
+            # This call has never sent voice_settings, so in --sync mode these
+            # models use the voice's stored settings and ignore --stability,
+            # --similarity, --style and --speed. Left as it was.
+            result = client.text_to_speech.convert_with_timestamps(
+                text=text,
+                voice_id=voice_id,
+                model_id=model_id,
+            )
 
-        # Save audio
-        audio_bytes = base64.b64decode(result.audio_base_64)
-        with open(output_path, "wb") as f:
-            f.write(audio_bytes)
+            # Save audio
+            audio_bytes = base64.b64decode(result.audio_base_64)
+            with open(output_path, "wb") as f:
+                f.write(audio_bytes)
+
+            chars = result.alignment.characters
+            starts = result.alignment.character_start_times_seconds
+            ends = result.alignment.character_end_times_seconds
 
         # Parse character timestamps into word timestamps
-        chars = result.alignment.characters
-        starts = result.alignment.character_start_times_seconds
-        ends = result.alignment.character_end_times_seconds
 
         words = []
         current_word = ""
@@ -565,6 +624,8 @@ def apply_synced_redub(
 def main():
     load_dotenv()
     args = parse_args()
+    args.model = resolve_model_id(args.model)
+    args.stt_model = resolve_model_id(args.stt_model)
 
     # Validate input file exists
     if not Path(args.input).exists():
@@ -744,6 +805,10 @@ def main():
                     str(generated_audio),
                     args.model,
                     verbose=verbose,
+                    stability=args.stability,
+                    similarity=args.similarity,
+                    style=args.style,
+                    speed=args.speed,
                 )
                 if not tts_result:
                     print("Error: Failed to generate TTS audio", file=sys.stderr)
