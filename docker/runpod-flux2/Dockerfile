@@ -36,30 +36,38 @@ ENV PATH="${CUDA_HOME}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
 
 # Install PyTorch with CUDA 12.4 support
+# 2.6+ is required: current transformers calls torch.accelerator, which does not
+# exist in 2.5.x and crashes the Flux2KleinPipeline import at load time.
 RUN pip3 install --no-cache-dir \
-    torch==2.5.1 \
-    torchvision==0.20.1 \
+    torch==2.6.0 \
+    torchvision==0.21.0 \
     --index-url https://download.pytorch.org/whl/cu124
 
 # Install diffusers from git (required for Flux2KleinPipeline)
-RUN pip3 install --no-cache-dir git+https://github.com/huggingface/diffusers
+# Pinned to the same commit as docker/modal-flux2/app.py -- an unpinned ref
+# silently re-resolves on every rebuild.
+RUN pip3 install --no-cache-dir \
+    git+https://github.com/huggingface/diffusers@119c339551f68ea523b9f204120b929e56342421
 
 # Install dependencies
+# Specifiers are quoted: unquoted, the shell reads ">=" as a redirect and the
+# version floors are silently dropped.
+# transformers 4.51+ is needed for Qwen3ForCausalLM (Flux2KleinPipeline).
 RUN pip3 install --no-cache-dir \
-    transformers>=4.45.0 \
-    accelerate>=0.30.0 \
-    safetensors>=0.4.0 \
-    sentencepiece>=0.2.0 \
-    protobuf>=4.25.0 \
-    Pillow>=10.0.0 \
-    numpy>=1.26.0
+    "transformers>=4.51.0" \
+    "accelerate>=0.30.0" \
+    "safetensors>=0.4.0" \
+    "sentencepiece>=0.2.0" \
+    "protobuf>=4.25.0" \
+    "Pillow>=10.0.0" \
+    "numpy>=1.26.0"
 
 # Install RunPod SDK and utilities
 RUN pip3 install --no-cache-dir \
-    runpod>=1.7.0 \
-    requests>=2.31.0 \
-    boto3>=1.34.0 \
-    huggingface_hub>=0.25.0
+    "runpod>=1.7.0" \
+    "requests>=2.31.0" \
+    "boto3>=1.34.0" \
+    "huggingface_hub>=0.25.0"
 
 # Set HF cache location
 ENV HF_HOME=/root/.cache/huggingface

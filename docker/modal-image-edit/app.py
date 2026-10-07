@@ -17,8 +17,10 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "libgl1", "libglib2.0-0")
     .pip_install(
-        "torch==2.5.1",
-        "torchvision==0.20.1",
+        # 2.6+ is required: current transformers calls torch.accelerator, which
+        # does not exist in 2.5.x and crashes the pipeline import at load time.
+        "torch==2.6.0",
+        "torchvision==0.21.0",
         "transformers>=4.45.0",
         "accelerate>=0.30.0",
         "safetensors>=0.4.0",
