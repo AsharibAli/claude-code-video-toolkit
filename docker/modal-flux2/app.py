@@ -33,8 +33,8 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git")
     .pip_install(
-        "torch==2.5.1",
-        "torchvision==0.20.1",
+        "torch==2.6.0",
+        "torchvision==0.21.0",
         # Flux2KleinPipeline (diffusers git main) imports Qwen3ForCausalLM,
         # which landed in transformers 4.51. The old >=4.45 floor let a
         # cached pre-Qwen3 layer sit under a fresh diffusers, crash-looping
