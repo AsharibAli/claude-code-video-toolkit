@@ -8,8 +8,9 @@ Deploy (the model version is a deploy-time choice):
     modal deploy docker/modal-ltx2/app.py                    # LTX-2.3 (default)
     LTX2_VERSION=2.5 modal deploy docker/modal-ltx2/app.py   # LTX-2.5 (opt-in)
 
-LTX-2.3 is the default. LTX-2.5 stays opt-in until it has been benchmarked
-against 2.3 (default 121-frame size, image-to-video, the crt-terminal LoRA).
+LTX-2.3 is the default. LTX-2.5 is opt-in: benchmarked against 2.3 it is
+~25-45% slower per clip and the crt-terminal LoRA only works on 2.3
+(docs/ltx2.md#benchmarks).
 The 2.3 image is built exactly as before the switch existed, so a 2.3 redeploy
 reuses its cached layers.
 
