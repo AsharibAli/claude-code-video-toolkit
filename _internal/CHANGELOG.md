@@ -45,6 +45,12 @@ are untouched.
   $3.95/h; L40S added) and the GPU each Modal app actually runs on.
 
 ### Added
+- **Burned captions for the Remotion templates.** `tools/captions.py` transcribes narration
+  (ElevenLabs Scribe or local whisper) and writes a word-level `<name>.captions.json` beside each
+  audio file, aligned to the scene's `.txt` script so names are spelled as written. A new shared
+  `<Captions>` component (`lib/components`) renders it with karaoke highlighting; sprint-review,
+  sprint-review-v2 and product-demo show captions automatically once the JSON exists
+  (`captions: { enabled: false }` turns them off). No new npm dependency.
 - **Opt-in non-commercial models, chosen at deploy time.** Licences differ, so the
   Apache-2.0 models stay the default and the newer ones need an explicit switch:
   - `FLUX2_MODEL=klein-9b` deploys FLUX.2-klein-9B (gated, FLUX Non-Commercial

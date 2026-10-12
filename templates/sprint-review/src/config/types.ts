@@ -15,6 +15,8 @@ export type {
   ThemeTypography,
 } from '../../../../lib/theme';
 
+import type { CaptionsConfig } from '../../../../lib/components';
+
 // Sprint configuration types
 export interface SprintInfo {
   name: string;           // Sprint name (e.g., "Cho Oyu")
@@ -105,6 +107,8 @@ export interface SprintConfig {
   };
   narrator?: NarratorConfig;
   mazeDecoration?: MazeDecorationConfig;
+  /** Burned captions from <audio>.captions.json files (uv run tools/captions.py). Shown when the JSON exists. */
+  captions?: CaptionsConfig;
 }
 
 // Video configuration

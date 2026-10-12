@@ -249,7 +249,11 @@ Before gathering configuration, check if we're in a project context:
    Next steps:
    1. Update sprint-config.ts with audioFile for each scene
    2. If using narrator, run SadTalker with voiceover-concat.mp3
+   3. Optional burned captions: uv run tools/captions.py PROJECT_DIR/public/audio/scenes
    ```
+
+   Offer step 3 (from the toolkit root). The templates show captions as soon as the
+   `.captions.json` files exist, and they need regenerating if a scene's audio is regenerated.
 
    **Single-file results:**
    ```

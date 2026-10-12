@@ -8,7 +8,7 @@ import { resolveTransition } from './config/transitions';
 
 // Core components
 import { AnimatedBackground, NarratorPiP, Vignette, FilmGrain } from './components/core';
-import { MazeDecoration } from '../../../lib/components';
+import { MazeDecoration, Captions, captionsFor } from '../../../lib/components';
 
 // Scene renderer
 import { SceneRenderer } from './components/SceneRenderer';
@@ -16,12 +16,24 @@ import { SceneRenderer } from './components/SceneRenderer';
 const FPS = 30;
 
 export const SprintReview: React.FC = () => {
-  const { info, scenes, audio, narrator, overlays } = sprintConfig;
+  const { info, scenes, audio, narrator, overlays, captions } = sprintConfig;
   const staticFiles = getStaticFiles();
 
   // Helper to check if an audio file exists
   const audioExists = (path: string | undefined) =>
     path && staticFiles.some((f) => f.name === `audio/${path}`);
+
+  // Burned captions for a voiceover file (renders nothing until its .captions.json exists)
+  const { enabled: captionsEnabled = true, ...captionStyle } = captions ?? {};
+  const sceneCaptions = (path: string | undefined) =>
+    captionsEnabled && audioExists(path) ? (
+      <Captions
+        src={captionsFor(`audio/${path}`)}
+        fontFamily={defaultTheme.fonts.primary}
+        highlightColor={defaultTheme.colors.primary}
+        {...captionStyle}
+      />
+    ) : null;
 
   // Check which global audio files exist
   const hasVoiceover = audioExists(audio.voiceoverFile);
@@ -63,6 +75,7 @@ export const SprintReview: React.FC = () => {
           <Audio src={staticFile(`audio/${scene.audioFile}`)} />
         )}
         <SceneRenderer scene={scene} info={info} />
+        {sceneCaptions(scene.audioFile)}
       </TransitionSeries.Sequence>
     );
   });
@@ -93,6 +106,7 @@ export const SprintReview: React.FC = () => {
         {hasVoiceover && !hasPerSceneAudio && (
           <Sequence from={audio.voiceoverStartFrame || 0}>
             <Audio src={staticFile(`audio/${audio.voiceoverFile}`)} />
+            {sceneCaptions(audio.voiceoverFile)}
           </Sequence>
         )}
 

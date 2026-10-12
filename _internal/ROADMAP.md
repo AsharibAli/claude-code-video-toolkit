@@ -182,7 +182,7 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 
 **Output & Accessibility:**
 - [ ] Multi-format output (MP4, WebM, GIF, social formats)
-- [ ] Subtitle generation from voiceover scripts
+- [x] Subtitle generation from voiceover scripts (`tools/captions.py` + `<Captions>`)
 - [ ] Thumbnail auto-generation
 
 **Skills:**
@@ -243,7 +243,7 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 | Templates | 4 | sprint-review, sprint-review-v2, product-demo, concept-explainer-short |
 | Brands | 2 | default, digital-samba |
 | Skills | 12 | remotion, remotion-official, elevenlabs, ffmpeg, playwright-recording, frontend-design, qwen-edit, runpod, acestep, ltx2, moviepy, ideogram4 |
-| Tools | 22 | voiceover, qwen3_tts, sixtydb_tts, music, music_gen, sfx, redub, addmusic, sync_timing, align_captions, dewatermark, locate_watermark, notebooklm_brand, image_edit, upscale, flux2, ideogram4, ltx2, chain_video, sadtalker, verify_setup, youtube_upload |
+| Tools | 23 | voiceover, qwen3_tts, sixtydb_tts, music, music_gen, sfx, redub, addmusic, sync_timing, align_captions, captions, dewatermark, locate_watermark, notebooklm_brand, image_edit, upscale, flux2, ideogram4, ltx2, chain_video, sadtalker, verify_setup, youtube_upload |
 | Commands | 14 | setup, video, brand, template, skills, contribute, record-demo, generate-voiceover, scene-review, design, versions, redub, voice-clone, publish |
 | Components | 11 | AnimatedBackground, SlideTransition, Label, Vignette, FilmGrain, LogoWatermark, SplitScreen, NarratorPiP, Envelope, PointingHand, MazeDecoration |
 | Transitions | 7 | glitch, rgbSplit, zoomBlur, lightLeak, clockWipe, pixelate, checkerboard |

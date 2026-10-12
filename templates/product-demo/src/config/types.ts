@@ -15,6 +15,8 @@ export type {
   ThemeTypography,
 } from '../../../../lib/theme';
 
+import type { CaptionsConfig } from '../../../../lib/components';
+
 // Product Demo Configuration
 export interface ProductInfo {
   name: string;
@@ -109,6 +111,8 @@ export interface ProductDemoConfig {
   scenes: SceneConfig[];
   audio?: AudioConfig;
   narrator?: NarratorConfig;
+  /** Burned captions from <audio>.captions.json files (uv run tools/captions.py). Shown when the JSON exists. */
+  captions?: CaptionsConfig;
 }
 
 export interface VideoConfig {

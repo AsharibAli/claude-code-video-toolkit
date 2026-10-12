@@ -4,7 +4,7 @@ import { sprintConfig, seconds } from './config/sprint-config';
 
 // Core components
 import { AnimatedBackground, SlideTransition, NarratorPiP } from './components/core';
-import { MazeDecoration } from '../../../lib/components';
+import { MazeDecoration, Captions, captionsFor } from '../../../lib/components';
 
 // Slides
 import { TitleSlide, OverviewSlide, SummarySlide, EndCredits } from './components/slides';
@@ -13,12 +13,24 @@ import { TitleSlide, OverviewSlide, SummarySlide, EndCredits } from './component
 import { DemoSection, SplitScreen } from './components/demos';
 
 export const SprintReview: React.FC = () => {
-  const { info, overview, demos, summary, audio, narrator, mazeDecoration } = sprintConfig;
+  const { info, overview, demos, summary, audio, narrator, mazeDecoration, captions } = sprintConfig;
   const staticFiles = getStaticFiles();
 
   // Helper to check if an audio file exists
   const audioExists = (path: string | undefined) =>
     path && staticFiles.some((f) => f.name === `audio/${path}`);
+
+  // Burned captions for a voiceover file (renders nothing until its .captions.json exists)
+  const { enabled: captionsEnabled = true, ...captionStyle } = captions ?? {};
+  const sceneCaptions = (path: string | undefined) =>
+    captionsEnabled && audioExists(path) ? (
+      <Captions
+        src={captionsFor(`audio/${path}`)}
+        fontFamily={defaultTheme.fonts.primary}
+        highlightColor={defaultTheme.colors.primary}
+        {...captionStyle}
+      />
+    ) : null;
 
   // Check which global audio files exist
   const hasVoiceover = audioExists(audio.voiceoverFile);
@@ -58,6 +70,7 @@ export const SprintReview: React.FC = () => {
             <SlideTransition durationInFrames={seconds(5)} style="zoom">
               <TitleSlide />
             </SlideTransition>
+            {sceneCaptions(info.audioFile)}
           </Series.Sequence>
 
           {/* Overview - 15 seconds */}
@@ -68,6 +81,7 @@ export const SprintReview: React.FC = () => {
             <SlideTransition durationInFrames={seconds(15)} style="zoom">
               <OverviewSlide />
             </SlideTransition>
+            {sceneCaptions(overview.audioFile)}
           </Series.Sequence>
 
           {/* Dynamic demo sections from config */}
@@ -99,6 +113,7 @@ export const SprintReview: React.FC = () => {
                   />
                 )}
               </SlideTransition>
+              {sceneCaptions(demo.audioFile)}
             </Series.Sequence>
           ))}
 
@@ -110,6 +125,7 @@ export const SprintReview: React.FC = () => {
             <SlideTransition durationInFrames={seconds(15)} style="zoom" transitionDuration={20}>
               <SummarySlide />
             </SlideTransition>
+            {sceneCaptions(summary.audioFile)}
           </Series.Sequence>
 
           {/* End Credits - 30 seconds */}
@@ -122,6 +138,7 @@ export const SprintReview: React.FC = () => {
         {hasVoiceover && !hasPerSceneAudio && (
           <Sequence from={audio.voiceoverStartFrame || 0}>
             <Audio src={staticFile(`audio/${audio.voiceoverFile}`)} />
+            {sceneCaptions(audio.voiceoverFile)}
           </Sequence>
         )}
 

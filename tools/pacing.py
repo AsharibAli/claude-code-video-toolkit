@@ -44,9 +44,14 @@ _MARKUP = re.compile(
 )
 
 
+def spoken_text(text: str) -> str:
+    """Script text with pause markers, SSML breaks and tone headers removed."""
+    return _MARKUP.sub(" ", text)
+
+
 def count_words(text: str) -> int:
     """Spoken-word count: ignores pause markers, SSML breaks, tone headers."""
-    return len(_MARKUP.sub(" ", text).split())
+    return len(spoken_text(text).split())
 
 
 def measure_wpm(text: str, duration_seconds: float | None) -> float | None:
