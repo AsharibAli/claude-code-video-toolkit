@@ -8,6 +8,10 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+---
+
+## 2026-10-12 (v0.21.0)
+
 Five new production steps: pre-render QC with loudness (`tools/qc.py`), `/thumbnail`,
 one-command Modal setup (`tools/modal_setup.py`), burned captions for the Remotion
 templates (`tools/captions.py` + `<Captions>`) and social cut-downs (`tools/cutdown.py`).
