@@ -1,29 +1,96 @@
 """
-Modal deployment for Qwen-Image-Edit (AI image editing).
+Modal deployment for Qwen image editing.
 
-Deploy:
-    modal deploy docker/modal-image-edit/app.py
+Deploy (the model is a deploy-time choice):
+    modal deploy docker/modal-image-edit/app.py                                  # Qwen-Image-Edit-2511
+    IMAGE_EDIT_MODEL=qwen-image-2.1 modal deploy docker/modal-image-edit/app.py  # Qwen-Image-2.1
 
-Capabilities: background replacement, style transfer, custom edits, multi-image merge.
+Capabilities: background replacement, style transfer, custom edits, multi-image
+merge (3 images on 2511, up to 10 on 2.1), RGBA in/out on 2.1.
+
+LICENSES -- they differ, which is why 2511 stays the default:
+- Qwen-Image-Edit-2511: Apache-2.0, commercial OK.
+- Qwen-Image-2.1: Qwen Research License, non-commercial ("research or evaluation
+  purposes only"). Newer and stronger -- one model for generation and editing --
+  but opt in only for personal/non-commercial work.
+
+Both variants share one request/response contract, so tools/image_edit.py works
+against either. Defaults the caller leaves out (steps, image count) come from
+the deployed variant; the response's "model" and "num_inference_steps" say what
+ran.
+
+Input format (POST JSON to web endpoint):
+{
+    "image_base64": str,           # Required -- primary image ("Picture 1" in the prompt)
+    "images_base64": [str],        # Optional -- more images (masks, references)
+    "prompt": str,                 # Required
+    "num_inference_steps": int,    # Default: 8 (2511) / 40 (2.1)
+    "steps_is_client_default": bool,  # Optional. True: the steps above are only the
+                                      # client's default, so run the variant's own
+                                      # default instead (8 on 2511, 40 on 2.1)
+    "guidance_scale": float,       # Default: 1.0. On 2.1, >1 enables true CFG
+    "negative_prompt": str,        # Optional
+    "seed": int,
+    "output_resolution": int,      # 2.1 only. Default: 1024 (output area ~= this squared)
+    "width": int, "height": int,   # 2.1 only. Optional explicit output size
+    "r2": dict                     # Optional R2 upload config
+}
 """
+
+import os
 
 import modal
 
 app = modal.App("video-toolkit-image-edit")
 
-MODEL_ID = "Qwen/Qwen-Image-Edit-2511"
+VARIANTS = {
+    "qwen-image-edit-2511": {
+        "repo": "Qwen/Qwen-Image-Edit-2511",
+        "revision": None,
+        "pipeline": "QwenImageEditPlusPipeline",
+        "steps": 8,
+        "max_images": 3,
+    },
+    "qwen-image-2.1": {
+        "repo": "Qwen/Qwen-Image-2.1",
+        # Pinned: diffusers 0.41 reads `sample_sigmas` from model_index.json and
+        # then ignores num_inference_steps. This revision has none, so the steps
+        # we pass are the steps that run.
+        "revision": "d26bb61231c349cf6b7896fa83353113880e1ba3",
+        # Not step-distilled: 40 is the model card's default.
+        "pipeline": "QwenImage21Pipeline",
+        "steps": 40,
+        "max_images": 10,
+    },
+}
+
+# Read at deploy time, and again inside the container when it re-imports this
+# file -- the image env below carries the deploy-time value into the container.
+IMAGE_EDIT_MODEL = os.environ.get("IMAGE_EDIT_MODEL", "qwen-image-edit-2511")
+if IMAGE_EDIT_MODEL not in VARIANTS:
+    raise ValueError(f"IMAGE_EDIT_MODEL must be one of {sorted(VARIANTS)}, got {IMAGE_EDIT_MODEL!r}")
+VARIANT = VARIANTS[IMAGE_EDIT_MODEL]
+MODEL_ID = VARIANT["repo"]
+REVISION = VARIANT["revision"]
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install("git", "libgl1", "libglib2.0-0")
+    .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
         # 2.6+ is required: current transformers calls torch.accelerator, which
         # does not exist in 2.5.x and crashes the pipeline import at load time.
         "torch==2.6.0",
         "torchvision==0.21.0",
-        "transformers>=4.45.0",
-        "accelerate>=0.30.0",
-        "safetensors>=0.4.0",
+        # 0.41.0 is the first release with QwenImage21Pipeline, and it also has
+        # QwenImageEditPlusPipeline, so both variants share one exact pin.
+        # Unpinned diffusers re-resolved on every rebuild and crash-looped
+        # containers before (#71, #74). Bump deliberately, smoke-test after.
+        "diffusers==0.41.0",
+        # The 2.1 model card asks for transformers>=5.17 (Qwen3VLForConditionalGeneration
+        # + the processor the checkpoint was saved with).
+        "transformers==5.17.0",
+        "accelerate>=1.1.0",
+        "safetensors>=0.8.0",
         "einops>=0.7.0",
         "Pillow>=10.0.0",
         "numpy>=1.26.0",
@@ -33,23 +100,23 @@ image = (
         "boto3",
         "requests",
         "fastapi[standard]",
-        "huggingface_hub>=0.25.0",
+        # diffusers 0.41 needs >=1.32,<2.0; transformers 5.17 needs <2.0.
+        "huggingface_hub>=1.32.0,<2.0",
     )
-    .run_commands("pip install --no-cache-dir git+https://github.com/huggingface/diffusers")
     .run_commands(
         'python -c "'
         "from huggingface_hub import snapshot_download; "
-        f"snapshot_download('{MODEL_ID}')"
+        f"snapshot_download('{MODEL_ID}', revision={REVISION!r})"
         '"'
     )
+    .env({"IMAGE_EDIT_MODEL": IMAGE_EDIT_MODEL})
 )
 
 
 @app.cls(
     image=image,
-    # A100-80GB, not plain "A100" (= 40GB): the bfloat16 pipeline lands at ~38.8GiB
-    # resident, so a 40GB card OOMs on the first allocation after load. The RunPod
-    # deployment of this same model runs on AMPERE_80 for the same reason.
+    # 2511's 20B DiT needs the 80GB card. 2.1 is ~33GB (17.5GB Qwen3-VL text
+    # encoder + 14.2GB DiT + VAE), and 80GB leaves room for 10 condition images.
     gpu="A100-80GB",
     timeout=600,
     scaledown_window=60,
@@ -58,12 +125,14 @@ image = (
 class ImageEditor:
     @modal.enter()
     def load_pipeline(self):
+        import diffusers
         import torch
-        from diffusers import QwenImageEditPlusPipeline
 
-        print(f"Loading {MODEL_ID}...")
-        self.pipeline = QwenImageEditPlusPipeline.from_pretrained(
+        print(f"Loading {MODEL_ID} ({VARIANT['pipeline']})...")
+        pipeline_cls = getattr(diffusers, VARIANT["pipeline"])
+        self.pipeline = pipeline_cls.from_pretrained(
             MODEL_ID,
+            revision=REVISION,
             torch_dtype=torch.bfloat16,
         )
         self.pipeline.to("cuda")
@@ -73,6 +142,7 @@ class ImageEditor:
     def edit(self, request: dict) -> dict:
         import base64
         import io
+        import math
         import random
         import time
         import uuid
@@ -88,10 +158,17 @@ class ImageEditor:
         if not prompt:
             return {"error": "Missing required 'prompt'"}
 
-        num_inference_steps = request.get("num_inference_steps", 4)
+        is_21 = IMAGE_EDIT_MODEL == "qwen-image-2.1"
+        # tools/image_edit.py always sends num_inference_steps (an app deployed
+        # before this protocol needs it) and flags its own default of 8 with
+        # steps_is_client_default. Without a value, or with the flag, the
+        # deployed variant's default runs; an explicit value is honoured.
+        num_inference_steps = request.get("num_inference_steps")
+        if num_inference_steps is None or request.get("steps_is_client_default"):
+            num_inference_steps = VARIANT["steps"]
         guidance_scale = request.get("guidance_scale", 1.0)
-        seed = request.get("seed")
         negative_prompt = request.get("negative_prompt")
+        seed = request.get("seed")
         r2_config = request.get("r2")
 
         if seed is None:
@@ -103,11 +180,14 @@ class ImageEditor:
             def decode_b64_image(b64: str) -> Image.Image:
                 if "," in b64:
                     b64 = b64.split(",", 1)[1]
-                return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+                img = Image.open(io.BytesIO(base64.b64decode(b64)))
+                # Keep alpha on 2.1: it edits transparent layers natively.
+                has_alpha = img.mode in ("RGBA", "LA") or "transparency" in img.info
+                return img.convert("RGBA" if is_21 and has_alpha else "RGB")
 
             # Primary image + optional references
             all_images = [decode_b64_image(image_base64)]
-            for ref_b64 in request.get("images_base64", [])[:2]:
+            for ref_b64 in request.get("images_base64", [])[: VARIANT["max_images"] - 1]:
                 all_images.append(decode_b64_image(ref_b64))
 
             image_input = all_images if len(all_images) > 1 else all_images[0]
@@ -118,14 +198,47 @@ class ImageEditor:
                 "prompt": prompt,
                 "image": image_input,
                 "num_inference_steps": num_inference_steps,
-                "guidance_scale": guidance_scale,
                 "generator": generator,
             }
-            if negative_prompt:
-                kwargs["negative_prompt"] = negative_prompt
+
+            if is_21:
+                # The 2.1 pipeline has no guidance_scale -- it is meant to be
+                # sampled without guidance. Map ours onto true CFG, which only
+                # switches on with a negative prompt, so supply a blank one if
+                # the caller didn't.
+                kwargs["true_cfg_scale"] = guidance_scale
+                if guidance_scale > 1.0:
+                    kwargs["negative_prompt"] = negative_prompt or " "
+
+                output_resolution = request.get("output_resolution", 1024)
+                width = request.get("width")
+                height = request.get("height")
+                # The pipeline sizes the output from the *last* condition image.
+                # With references attached, size it from the primary instead.
+                if len(all_images) > 1 and not (width and height):
+                    w0, h0 = all_images[0].size
+                    ratio = w0 / h0
+                    area = output_resolution * output_resolution
+                    width = round(math.sqrt(area * ratio) / 32) * 32
+                    height = round(math.sqrt(area * ratio) / ratio / 32) * 32
+                kwargs["output_resolution"] = output_resolution
+                if width and height:
+                    kwargs["width"] = width
+                    kwargs["height"] = height
+            else:
+                kwargs["guidance_scale"] = guidance_scale
+                if negative_prompt:
+                    kwargs["negative_prompt"] = negative_prompt
 
             output = self.pipeline(**kwargs)
             output_image = output.images[0]
+
+            # The 2.1 VAE is RGBA. Only hand back an alpha channel when the model
+            # actually made something transparent; keep normal edits plain RGB.
+            # Opaque edits still decode with alpha noise of 252-254, so treat a
+            # minimum alpha of 250 or more as opaque.
+            if output_image.mode == "RGBA" and output_image.getchannel("A").getextrema()[0] >= 250:
+                output_image = output_image.convert("RGB")
 
             buffer = io.BytesIO()
             output_image.save(buffer, format="PNG")
@@ -140,6 +253,9 @@ class ImageEditor:
                 "inference_time_ms": elapsed_ms,
                 "image_size": list(output_image.size),
                 "num_inference_steps": num_inference_steps,
+                "guidance_scale": guidance_scale,
+                "images_used": len(all_images),
+                "model": MODEL_ID,
             }
 
             # R2 upload

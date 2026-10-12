@@ -199,7 +199,7 @@ uv run tools/voiceover.py --provider qwen3 --speaker Ryan --scene-dir public/aud
 # AI music (ACE-Step — free cloud API)
 uv run tools/music_gen.py --preset corporate-bg --duration 120 --output music.mp3
 
-# AI image generation (FLUX.2) and editing (Qwen-Image-Edit)
+# AI image generation (FLUX.2) and editing (Qwen-Image)
 uv run tools/flux2.py --preset title-bg --brand digital-samba --cloud modal
 uv run tools/image_edit.py --input photo.jpg --prompt "Add sunglasses" --cloud modal
 
@@ -257,7 +257,7 @@ uv run tools/locate_watermark.py --input video.mp4 --grid --output-dir ./review/
 # Generate talking head video from image + audio (SoulX-FlashHead)
 uv run tools/soulx.py --image portrait.png --audio voiceover.mp3 --output talking.mp4
 
-# AI image generation (FLUX.2 Klein 4B — text-to-image + editing)
+# AI image generation (FLUX.2 klein 4B; klein-9B is a non-commercial Modal opt-in)
 uv run tools/flux2.py --prompt "A sunset over mountains" --cloud modal
 uv run tools/flux2.py --preset title-bg --brand digital-samba --cloud modal
 uv run tools/flux2.py --list-presets

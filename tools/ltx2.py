@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-AI video generation using LTX-2.3 (22B DiT model).
+AI video generation using LTX-2 (22B DiT model).
 
 Generates ~5 second video clips from text prompts or images via Modal cloud GPU.
 Supports text-to-video and image-to-video with joint audio generation.
+
+The Modal app runs LTX-2.3 by default, or LTX-2.5 if it was deployed with
+LTX2_VERSION=2.5. The "Model:" line printed after each clip says which one ran.
 
 Examples:
   # Text-to-video
@@ -207,6 +210,8 @@ def generate_video(
     out_seed = result.get("seed", "unknown")
 
     log(f"Saved: {output_path}", "success")
+    if result.get("model"):
+        log(f"Model: {result['model']}", "dim")
     log(f"Duration: {out_duration}s, {result.get('num_frames', num_frames)} frames @ {result.get('fps', fps)}fps", "dim")
     log(f"Time: {elapsed:.1f}s total, {inference_ms/1000:.1f}s inference", "dim")
     log(f"Seed: {out_seed}", "dim")
@@ -220,7 +225,9 @@ def generate_video(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AI video generation using LTX-2.3 (22B DiT model)",
+        description="AI video generation using LTX-2 (22B DiT model).\n"
+                    "The Modal app runs LTX-2.3 by default, or LTX-2.5 if it was\n"
+                    "deployed with LTX2_VERSION=2.5.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -252,8 +259,9 @@ Examples:
     # Style LoRA
     lora_group = parser.add_argument_group("Style LoRA")
     lora_group.add_argument("--lora", choices=list(LORA_PRESETS), default=None,
-                            help="Apply a style LoRA preset. First use after a LoRA change "
-                                 "incurs ~60s of pipeline reload on the server.")
+                            help="Apply a style LoRA preset. Presets were trained on LTX-2.3; "
+                                 "crt-terminal does not keep its look on an LTX2_VERSION=2.5 "
+                                 "deployment (see docs/ltx2.md).")
 
     # Quality
     quality_group = parser.add_argument_group("Quality")
@@ -315,7 +323,7 @@ Examples:
         num_frames = 121
 
     print()
-    log("LTX-2.3 Video Generation (22B DiT)", "info")
+    log("LTX-2 Video Generation (22B DiT)", "info")
     log("=" * 45, "dim")
 
     result_path = generate_video(

@@ -11,12 +11,30 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 ## Text-to-Speech Models
 
-| Model ID | Description | Languages | Latency |
-|----------|-------------|-----------|---------|
-| `eleven_flash_v2_5` | Ultra-low latency streaming | 32 | ~75ms |
-| `eleven_multilingual_v2` | Highest quality | 32 | Standard |
-| `eleven_turbo_v2_5` | Fast, good quality | 32 | Low |
-| `eleven_v3` | Best emotional range (alpha) | 32+ | Higher |
+| Model ID | Description | Languages | Latency | Max chars/request |
+|----------|-------------|-----------|---------|-------------------|
+| `eleven_v4` | Most expressive, best clone accuracy | 90+ | Higher | ~2,000 per Text to Dialogue request |
+| `eleven_v4_turbo` | Real-time v4 (Text to Dialogue WebSocket only) | 90+ | ~100ms | — |
+| `eleven_multilingual_v2` | Highest consistency | 29 | Standard | 10,000 |
+| `eleven_flash_v2_5` | Ultra-low latency streaming | 32 | ~75ms | 40,000 |
+| `eleven_v3` | Expressive, previous generation | 70+ | Higher | 5,000 |
+
+Deprecated: `eleven_turbo_v2_5` (→ `eleven_flash_v2_5`), `eleven_turbo_v2` (→ `eleven_flash_v2`).
+
+Sources: [models and deprecated models](https://elevenlabs.io/docs/overview/models#deprecated-models),
+[Eleven v4](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/eleven-v4#model-variants)
+(released 2026-09-28, served via Text to Dialogue), and
+[Text to Dialogue](https://elevenlabs.io/docs/overview/capabilities/text-to-dialogue)
+(keep each request at or below 2,000 characters).
+
+## Speech-to-Text Models
+
+| Model ID | Use |
+|----------|-----|
+| `scribe_v2` | Batch transcription with word timestamps, diarization, 90+ languages (current) |
+| `scribe_v2_realtime` | Live streaming transcription (~150ms) |
+| `scribe_v2_medical` | Clinical audio; same API as `scribe_v2` |
+| `scribe_v1` | Deprecated → `scribe_v2`; removal announced for 2026-07-09 ([changelog](https://elevenlabs.io/docs/changelog/2026/6/8)) |
 
 ## Voice Settings
 
@@ -25,7 +43,9 @@ client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 | `stability` | 0.0-1.0 | 0.5 | Lower = more expressive/variable |
 | `similarity_boost` | 0.0-1.0 | 0.75 | Higher = closer to original voice |
 | `style` | 0.0-1.0 | 0.0 | Style exaggeration (v2 models) |
-| `speed` | 0.5-2.0 | 1.0 | Playback speed multiplier |
+| `speed` | 0.7-1.2 | 1.0 | Speech speed multiplier |
+
+**Eleven v4** takes only stability and similarity: no style, no speed, no SSML. On Text to Dialogue they go in `settings={"stability": ..., "similarity": ...}`, and similarity defaults to 0.75. The `similarity` field was added to Text to Dialogue on [2026-09-28](https://elevenlabs.io/docs/changelog/2026/9/28).
 
 ## Output Formats
 

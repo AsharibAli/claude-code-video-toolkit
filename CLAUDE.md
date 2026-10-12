@@ -228,11 +228,13 @@ The toolkit has **two** text-to-image generators. They barely overlap — the de
 **whether the image needs legible baked-in text**.
 
 ```bash
-# FLUX.2 — text-FREE backgrounds + image editing (self-hosted, free, Apache-2.0/commercial-OK)
+# FLUX.2 Klein — text-FREE backgrounds + image editing (self-hosted, free)
+#   klein-4B by default (Apache-2.0). FLUX2_MODEL=klein-9b at Modal deploy time opts into
+#   klein-9B (FLUX Non-Commercial, outputs need review) -- see docs/modal-setup.md
 uv run tools/flux2.py --preset title-bg --brand digital-samba   # background for Remotion text overlay
 uv run tools/flux2.py --prompt "Abstract tech background, no text"
 
-# Ideogram 4 — legible IN-IMAGE text + exact color/layout (hosted API, ~$0.03-0.09/img, commercial-OK)
+# Ideogram 4 — legible IN-IMAGE text + exact color/layout (hosted API, ~$0.03-0.10/img, commercial-OK)
 uv run tools/ideogram4.py --json caption.json --output title.png   # text baked into the image
 uv run tools/ideogram4.py --prompt "Thumbnail: 'SHIP FASTER' bold" --output thumb.png
 ```
@@ -259,12 +261,15 @@ Ideogram 4 chains with the processors like any generator: `ideogram4 → upscale
 `ideogram4 → ltx2.py --input` (animate the still), or drop the PNG straight into Remotion `<Img>`.
 Ideogram 4 is generate-only here (no editing). See `.claude/skills/ideogram4/` for the JSON caption
 format — Claude authors the caption as the "magic prompt" expander; needs `IDEOGRAM_API_KEY` in `.env`.
+`--model 4.5` opts into Ideogram 4.5 on the v2 API (same flags; `--speed` maps to its quality
+tiers); 4.0 stays the default until 4.5 has been run live.
 
 ### AI Image Editing
 
 ```bash
 
-# Image editing (Qwen-Image-Edit)
+# Image editing (Qwen-Image-Edit-2511, Apache-2.0; IMAGE_EDIT_MODEL=qwen-image-2.1 at Modal
+# deploy time opts into Qwen-Image-2.1, non-commercial)
 uv run tools/image_edit.py --input photo.jpg --prompt "Add sunglasses"
 uv run tools/image_edit.py --input photo.jpg --prompt "Add sunglasses" --cloud modal
 uv run tools/image_edit.py --input photo.jpg --style cyberpunk
@@ -280,7 +285,7 @@ See `docs/qwen-edit-patterns.md` and `.claude/skills/qwen-edit/` for prompting g
 
 ### AI Music Generation (ACE-Step 1.5)
 
-Default provider is **acemusic** (official cloud API, free key from [acemusic.ai/api-key](https://acemusic.ai/api-key)). Uses XL Turbo 4B model with 5Hz LM thinking mode. Falls back to Modal/RunPod for self-hosted 2B model.
+Default provider is **acemusic** (official cloud API, free key from [acemusic.ai/api-key](https://acemusic.ai/api-key)). Uses XL Turbo 4B model with 5Hz LM thinking mode. Falls back to Modal (self-hosted XL Turbo 4B on ACE-Step-1.5 v0.1.8, no LM thinking) or RunPod (2B turbo).
 
 ```bash
 # Background music (acemusic cloud API by default)
@@ -340,16 +345,22 @@ uv run tools/dewatermark.py --setup  # One-time setup
 
 **Local mode** requires NVIDIA GPU (8GB+ VRAM). Mac users should use `--runpod`.
 
-### Talking Head Generation (SoulX-FlashHead vs SadTalker)
+### Talking Head Generation (SoulX-FlashHead Pro vs Lite vs SadTalker)
 
 Two generators, and the deciding factor is **whether a viewer actually watches the shot**.
 
 ```bash
-# SoulX-FlashHead — the default. Diffusion, follows the input aspect ratio (Modal only)
+# SoulX-FlashHead Pro — the default. Diffusion, follows the input aspect ratio (Modal only)
 uv run tools/soulx.py --image presenter_16x9.png --audio voiceover.mp3 \
   --size 768 --output narrator.mp4
 
-# SadTalker — warp-based, cheap and near-realtime; square crop unless --preprocess full
+# SoulX-FlashHead Lite: drafts only (long-take drift unmeasured). Same endpoint,
+# ~8x faster per chunk, no compile
+uv run tools/soulx.py --image presenter_16x9.png --audio voiceover.mp3 \
+  --model lite --width 512 --height 288 --output draft.mp4
+
+# SadTalker: warp-based, cheap and near-realtime drafts, and the option when Modal is unavailable;
+# square crop unless --preprocess full
 uv run tools/sadtalker.py --image presenter_16x9.png --audio voiceover.mp3 \
   --preprocess full --still --expression-scale 0.8 --output narrator.mp4
 ```
@@ -357,8 +368,9 @@ uv run tools/sadtalker.py --image presenter_16x9.png --audio voiceover.mp3 \
 | Need | Use |
 |------|-----|
 | Anything a viewer watches — narrator in frame, held shot, finished video | **soulx** |
-| Throwaway drafts, or many takes to choose between | **sadtalker** |
+| Throwaway drafts, or many takes to choose between | **soulx --model lite** or **sadtalker** (Lite: drafts only; long-take drift unmeasured) |
 | Non-square source image you don't want to fight | **soulx** (no `--preprocess` needed) |
+| Modal unavailable (RunPod only) | **sadtalker** |
 
 **Identity holds over long takes, which is why this is the default.** Segment-chained
 talking heads re-anchor each segment on the previous segment's output, so the failure is
@@ -367,13 +379,17 @@ Oracle-Guided Bidirectional Distillation against exactly that. Measured at **97%
 frame-zero sharpness at 70s**, flat across all 72 segments. There is no short-render
 ceiling to design around, so per-scene generation is a choice rather than a workaround.
 
-**Cost:** ~$0.0024 per second of output against SadTalker's ~$0.0014 — only ~1.7x, so cost
-is rarely the deciding factor between them any more.
+**Cost:** Pro ~$0.0024 per second of output, Lite ~$0.0004, SadTalker ~$0.0014. Lite is the
+cheapest per second, but it is for drafts only: it has been tested on ~2.6s clips, its
+long-take drift is unmeasured, and the 70s sharpness figure above is Pro's.
 
 **Key flags:**
 - soulx: `--size 768` — aspect follows the image and snaps to the model's grid
-- soulx: `--width`/`--height` for exact dimensions; **both must be multiples of 16**, and
-  nothing upstream validates that (an off-grid size floors silently and renders wrong)
+- soulx: `--width`/`--height` for exact dimensions; **Pro needs multiples of 16, Lite multiples
+  of 32** (768x432 is illegal on Lite; 512x288 and 1024x576 are exact 16:9). The tool checks
+  per model; nothing upstream does (an off-grid size floors silently and renders wrong)
+- soulx: `--model lite` never compiles and is unloaded before any Pro render, so mixing the
+  two in one container doesn't eat Pro's VRAM headroom
 - sadtalker: `--preprocess full` — **Critical!** Preserves input dimensions (default `crop`
   outputs square)
 - sadtalker: `--still` and `--expression-scale 0.8` — calmer, more professional look

@@ -159,15 +159,17 @@ class ProgressReporter:
 # Cost estimation
 # ---------------------------------------------------------------------------
 
-# GPU hourly rates (approximate, as of March 2026)
+# GPU hourly rates (approximate). Modal: modal.com/pricing, checked 2026-10-02.
+# RunPod: as of March 2026, not re-checked since.
 _GPU_HOURLY_RATES = {
     "modal": {
         "A10G": 1.10,
-        "A100": 3.73,      # 40GB
-        "A100-80GB": 4.68,
+        "L40S": 1.95,
+        "A100": 2.10,      # 40GB
+        "A100-80GB": 2.50,
         "T4": 0.59,
         "L4": 0.80,
-        "H100": 8.10,
+        "H100": 3.95,
     },
     "runpod": {
         "ADA_24": 0.44,    # RTX 4090
@@ -184,7 +186,7 @@ _TOOL_GPU = {
         "flux2": "A10G",
         "upscale": "A10G",
         "sadtalker": "A10G",
-        "image_edit": "A10G",
+        "image_edit": "A100-80GB",
         "music_gen": "A10G",
         "dewatermark": "A10G",
         "ltx2": "A100-80GB",
@@ -202,12 +204,23 @@ _TOOL_GPU = {
 }
 
 
-def _estimate_cost(provider: str, tool_name: str, elapsed_seconds: float) -> float | None:
+# Deploy-time model switches that also move the app to another GPU, keyed by
+# the "model" the endpoint reports.
+_MODEL_GPU = {
+    "modal": {
+        "black-forest-labs/FLUX.2-klein-9B": "L40S",  # FLUX2_MODEL=klein-9b
+    },
+}
+
+
+def _estimate_cost(provider: str, tool_name: str, elapsed_seconds: float,
+                   model: str | None = None) -> float | None:
     """Estimate cost for a job based on GPU time.
 
     Returns estimated USD cost, or None if pricing data unavailable.
     """
-    gpu = _TOOL_GPU.get(provider, {}).get(tool_name)
+    gpu = (_MODEL_GPU.get(provider, {}).get(model)
+           or _TOOL_GPU.get(provider, {}).get(tool_name))
     rate = _GPU_HOURLY_RATES.get(provider, {}).get(gpu)
     if rate is None:
         return None
@@ -304,7 +317,7 @@ def call_cloud_endpoint(
 
     # Print cost estimate
     if progress and elapsed > 0 and not result.get("error"):
-        cost = _estimate_cost(provider, tool_name, elapsed)
+        cost = _estimate_cost(provider, tool_name, elapsed, result.get("model"))
         if cost is not None:
             progress.event("cost", f"Est. cost: ${cost:.4f} ({elapsed:.0f}s on {provider})",
                            level="dim")
