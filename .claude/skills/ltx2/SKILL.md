@@ -7,6 +7,7 @@ description: AI video generation with LTX-2.3 22B — text-to-video, image-to-vi
 
 Generate ~5 second video clips from text prompts or images using the LTX-2.3 22B DiT model.
 Runs on Modal (A100-80GB). Requires `MODAL_LTX2_ENDPOINT_URL` in `.env`.
+LTX-2.5 is a deploy-time opt-in on the same endpoint; see [LTX-2.5 (opt-in)](#ltx-25-opt-in).
 
 ## Quick Reference
 
@@ -46,7 +47,9 @@ uv run tools/ltx2.py --prompt "..." --seed 42 --output reproducible.mp4
 
 ## Style LoRAs
 
-Style LoRAs bias the output toward a specific visual aesthetic. They're baked into the Modal image and selected per-request; switching LoRAs forces a pipeline rebuild (~60s one-time cost per container lifetime per switch).
+Style LoRAs bias the output toward a specific visual aesthetic. They're baked into the Modal image and selected per-request; switching LoRAs rebuilds the server pipeline.
+
+**On an `LTX2_VERSION=2.5` deployment:** the presets below were trained on LTX-2.3. `crt-terminal` was checked on 2.5 (2026-10-12) and does not reproduce its CRT look there: it changes the output, but the result is a photoreal scene with green text. Use a 2.3 deployment for it. Keys that don't match are skipped without an error, so compare any other 2.3 LoRA with 2.3 before relying on it.
 
 ### `crt-terminal` — CRT / pixel-art terminals
 
@@ -188,10 +191,10 @@ LTX-2 generates raw clips. Combine with the rest of the toolkit:
 ## Technical Details
 
 - **Model:** LTX-2.3 22B DiT (Lightricks), bf16
-- **GPU:** A100-80GB on Modal (~$4.68/hr)
+- **GPU:** A100-80GB on Modal (~$2.50/hr)
 - **Inference:** ~2.5 min per clip (768x512, 121 frames, 30 steps)
-- **Cost:** ~$0.20-0.25 per 5s clip
-- **Cold start:** ~60-90s (loading ~55GB weights)
+- **Cost:** ~$0.07 per 5s clip warm, ~$0.12 cold at $2.50/hr (benchmark in docs/ltx2.md)
+- **Weights:** ~80GB baked into the image. Not kept in VRAM between requests: every request (warm or cold) loads the text encoder and the transformer for each stage, then frees them
 - **Output:** H.264 MP4 with synchronized ambient audio (24fps)
 - **Max duration:** ~8s (193 frames) per clip
 
@@ -209,7 +212,7 @@ LTX-2 generates raw clips. Combine with the rest of the toolkit:
 # 1. Create Modal secret for HuggingFace (one-time)
 uv run modal secret create huggingface-token HF_TOKEN=hf_your_token
 
-# 2. Deploy (downloads ~55GB of weights, takes ~10 min)
+# 2. Deploy (downloads ~80GB of weights, takes ~10 min)
 uv run modal deploy docker/modal-ltx2/app.py
 
 # 3. Save endpoint URL to .env
@@ -219,4 +222,25 @@ echo "MODAL_LTX2_ENDPOINT_URL=https://yourname--video-toolkit-ltx2-ltx2-generate
 uv run tools/ltx2.py --prompt "A candle flickering on a dark table, cinematic" --output test.mp4
 ```
 
-**Important:** HuggingFace token needs read-access scope. Accept the [Gemma 3 license](https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized) before deploying. Unauthenticated downloads are severely rate-limited.
+**Important:** HuggingFace token needs read-access scope. Its account needs access to Google's gated [Gemma 3 text encoder](https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized); Google approves these requests by hand, so ask before deploying. Unauthenticated downloads are severely rate-limited.
+
+## LTX-2.5 (opt-in)
+
+`LTX2_VERSION=2.5` at deploy time swaps LTX-2.3 for LTX-2.5 behind the same endpoint, request format and tool. LTX-2.3 stays the default until 2.5 has been benchmarked at the default size, for image-to-video and with the LoRA.
+
+```bash
+# Git Bash / macOS / Linux. In PowerShell: $env:LTX2_VERSION='2.5' first, and
+# Remove-Item Env:LTX2_VERSION before deploying 2.3 again.
+LTX2_VERSION=2.5 uv run modal deploy --strategy recreate docker/modal-ltx2/app.py
+
+# Back to 2.3 (its cached image is reused, nothing rebuilds)
+uv run modal deploy --strategy recreate docker/modal-ltx2/app.py
+```
+
+- **Access:** `Lightricks/LTX-2.5` is gated. Click "Agree and Access" on [the model page](https://huggingface.co/Lightricks/LTX-2.5) with the token's account first (approved automatically; it shares your contact info). It bundles a Gemma 4 text encoder, so 2.5 doesn't need the Gemma 3 access.
+- **License:** LTX-2.x Community License. Free under $10M annual revenue, commercial use included; don't remove watermark or provenance features.
+- **Check:** the tool prints `Model: Lightricks/LTX-2.5` (or `Lightricks/LTX-2.3`) after each clip.
+- **LoRAs:** `crt-terminal` doesn't keep its look on 2.5, see Style LoRAs above.
+- **Speed:** about 25-45% slower per clip than 2.3 (benchmark in `docs/ltx2.md`).
+
+Details, differences and the benchmark plan: `docs/ltx2.md`.

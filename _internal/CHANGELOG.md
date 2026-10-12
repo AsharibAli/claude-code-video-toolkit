@@ -9,9 +9,10 @@ All notable changes to claude-code-video-toolkit.
 ## Unreleased
 
 Model refresh, checked against each upstream on 2026-10-02. The entries below move
-several defaults to newer releases and add the newer non-commercial image models as
-deploy-time opt-ins; models not listed keep their current version. Endpoint URLs are
-unchanged, and RunPod images are untouched.
+several defaults to newer releases and add newer models as opt-ins (a deploy-time
+variable for the Modal apps, `--model 4.5` for Ideogram); models not listed keep their
+current version. Endpoint URLs are unchanged, and RunPod images
+are untouched.
 
 ### Changed
 - **`modal-flux2`: FLUX.2-small-decoder** (Apache-2.0, ~1.4x faster decode) and the
@@ -64,6 +65,16 @@ unchanged, and RunPod images are untouched.
   sends the same requests as before; its cost log now shows QUALITY at $0.10 (was
   $0.09) and warns that FLASH currently returns HTTP 400. 4.5 is checked against
   Ideogram's docs and a mocked run, not yet run live.
+- **LTX-2.5 as a deploy-time opt-in** (`LTX2_VERSION=2.5` on `modal-ltx2`). LTX-2.3
+  stays the default and its image is unchanged, so redeploying 2.3 rebuilds nothing.
+  2.5 runs LTX-2 v1.4.2 on torch 2.13 / CUDA 13.0 with the gated `Lightricks/LTX-2.5`
+  weights (Gemma 4 text encoder bundled), pinned to one HF revision. LTX-2.x Community
+  licence: free under $10M annual revenue, commercial use included; watermark and
+  provenance features must not be removed. Same endpoint and request format; responses
+  gain a `model` field, which `ltx2.py` prints as `Model:`. The `crt-terminal` LoRA was
+  trained on 2.3 and doesn't keep its look on 2.5. Benchmarked against 2.3 at the
+  default size, for image-to-video and with the LoRA (table in `docs/ltx2.md`): 2.5 is
+  about 25-45% slower per clip, so 2.3 stays the default.
 
 ### Fixed
 - **Modal setup docs:** every GPU app needs a payment method on a new workspace, not

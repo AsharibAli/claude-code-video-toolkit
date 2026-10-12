@@ -74,10 +74,10 @@
     },
     "ltx2": {
       "path": ".claude/skills/ltx2/",
-      "description": "AI video generation — prompting guide, parameters, video production use cases (b-roll, animated slides, portraits)",
+      "description": "AI video generation — prompting guide, parameters, video production use cases (b-roll, animated slides, portraits); LTX-2.5 as a deploy-time opt-in",
       "status": "beta",
       "created": "2026-03-25",
-      "updated": "2026-04-08"
+      "updated": "2026-10-12"
     },
     "moviepy": {
       "path": ".claude/skills/moviepy/",
@@ -689,12 +689,12 @@
     },
     "ltx2": {
       "path": "tools/ltx2.py",
-      "description": "AI video generation using LTX-2.3 22B - text-to-video, image-to-video clips with synchronized audio",
+      "description": "AI video generation using LTX-2.3 22B (LTX-2.5 as a Modal deploy-time opt-in) - text-to-video, image-to-video clips with synchronized audio",
       "usage": "uv run tools/ltx2.py --prompt \"A sunset over the ocean\" --output sunset.mp4",
       "status": "beta",
       "category": "video-generation",
-      "backend": "ltx-2.3-22b",
-      "requires": "Modal account, HuggingFace token",
+      "backend": "ltx-2.3-22b (default) / ltx-2.5-22b (LTX2_VERSION=2.5 at Modal deploy time)",
+      "requires": "Modal account, huggingface-token Modal secret whose account can download the gated weights: Google's Gemma 3 text encoder for 2.3 (approved by hand), Lightricks/LTX-2.5 for the opt-in (accept its terms)",
       "options": {
         "modes": [
           "text-to-video",
@@ -725,9 +725,10 @@
       "envVars": [
         "MODAL_LTX2_ENDPOINT_URL"
       ],
-      "estimatedCost": "$0.20-0.25 per 5s clip",
+      "estimatedCost": "~$0.07 warm / ~$0.12 cold per 5s clip (LTX-2.3); ~$0.09-0.10 warm / ~$0.16 cold (LTX-2.5 opt-in). Measured 2026-10-12, GPU time at $2.50/h",
+      "note": "LTX-2.5 is an opt-in. Benchmarked against 2.3 on 2026-10-12 (docs/ltx2.md): 25-45% slower per clip, and the crt-terminal preset does not keep its look on 2.5. Responses carry a model field, printed as Model:.",
       "created": "2026-03-25",
-      "updated": "2026-04-21"
+      "updated": "2026-10-12"
     },
     "chain_video": {
       "path": "tools/chain_video.py",
@@ -735,7 +736,7 @@
       "usage": "uv run tools/chain_video.py --scenes-dir images/ --output-dir videos/ --prompt \"Cinematic flow\"",
       "status": "beta",
       "category": "video-generation",
-      "backend": "ltx-2.3-22b (via ltx2.py)",
+      "backend": "ltx-2.3-22b, or ltx-2.5-22b on an LTX2_VERSION=2.5 deployment (via ltx2.py)",
       "requires": "Modal account (same as ltx2)",
       "options": {
         "inputModes": [
@@ -753,7 +754,7 @@
       "envVars": [
         "MODAL_LTX2_ENDPOINT_URL"
       ],
-      "estimatedCost": "$0.20-0.25 per scene (delegates to ltx2)",
+      "estimatedCost": "~$0.07-0.12 per scene on LTX-2.3 (delegates to ltx2)",
       "created": "2026-04-04",
       "updated": "2026-04-04"
     },
@@ -979,11 +980,12 @@
             "image-to-video"
           ],
           "gpu": "A100-80GB",
-          "estimatedCost": "$0.20-0.25 per 5s clip"
+          "model": "LTX-2.3 22B dev + distilled LoRA (LTX-2 a2c3f24, torch 2.7), or LTX-2.5 22B dev + distilled LoRA via LTX2_VERSION=2.5 (LTX-2 v1.4.2, torch 2.13; HF revision pinned)",
+          "estimatedCost": "~$0.07 warm / ~$0.12 cold per 5s clip (LTX-2.3); ~$0.09-0.10 warm / ~$0.16 cold (LTX-2.5 opt-in). Measured 2026-10-12, GPU time at $2.50/h"
         }
       },
       "created": "2026-03-23",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     }
   },
   "templates": {

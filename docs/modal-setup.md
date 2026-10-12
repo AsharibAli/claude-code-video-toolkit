@@ -99,6 +99,7 @@ account also needs access to Google's gated Gemma 3 text encoder,
 https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized. Google approves those
 requests by hand, so ask well before you deploy. The deploy fails on a missing secret
 *before* it ever reaches the GPU check, and without Gemma access with a 401/403 mid-build.
+(The LTX-2.5 opt-in below needs access to `Lightricks/LTX-2.5` instead of Gemma 3.)
 
 **Newer non-commercial models are opt-in.** `flux2` and `image-edit` deploy the
 Apache-2.0 FLUX.2-klein-4B and Qwen-Image-Edit-2511 by default. A deploy-time variable
@@ -115,6 +116,18 @@ FLUX2_MODEL=klein-9b uv run modal deploy --strategy recreate docker/modal-flux2/
 IMAGE_EDIT_MODEL=qwen-image-2.1 uv run modal deploy --strategy recreate docker/modal-image-edit/app.py
 ```
 
+`ltx2` has an opt-in as well: LTX-2.5 in place of LTX-2.3. It is not a non-commercial
+model. The LTX-2.x Community License is free under $10M annual revenue, commercial use
+included, and forbids removing watermark or provenance features. It stays opt-in until it
+has been benchmarked against 2.3 (see `docs/ltx2.md`). The repo is gated: accept the terms
+at https://huggingface.co/Lightricks/LTX-2.5 with the `huggingface-token` account first
+(approval is automatic, but you share your contact info):
+
+```bash
+# LTX-2.5 builds its own ~80GB image on the first deploy. Same A100-80GB GPU.
+LTX2_VERSION=2.5 uv run modal deploy --strategy recreate docker/modal-ltx2/app.py
+```
+
 The endpoint URL stays the same; deploy again without the variable, also with
 `--strategy recreate`, to switch back. `--strategy recreate` stops the containers that
 were running before the deploy, so a warm container from the previous variant can't
@@ -124,7 +137,8 @@ the tools as `Model:`) says which one ran, so check it right after switching.
 The inline `VAR=value command` form above is Git Bash / macOS / Linux syntax. In
 PowerShell, set the variable first: `$env:FLUX2_MODEL='klein-9b'`, then run the deploy.
 It stays set for the rest of that PowerShell session, so clear it with
-`Remove-Item Env:FLUX2_MODEL` before you deploy the default again.
+`Remove-Item Env:FLUX2_MODEL` before you deploy the default again. The same goes for
+`IMAGE_EDIT_MODEL` and `LTX2_VERSION`.
 
 Each deploy prints an endpoint URL like:
 ```
