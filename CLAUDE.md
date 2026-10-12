@@ -129,7 +129,7 @@ This is especially critical for background commands where the working directory 
 | Type | Tools | When to Use |
 |------|-------|-------------|
 | **Project tools** | voiceover, music, music_gen, sfx, sync_timing, qc | During video creation workflow |
-| **Utility tools** | redub, addmusic, notebooklm_brand, locate_watermark | Quick transformations on existing videos |
+| **Utility tools** | redub, addmusic, notebooklm_brand, locate_watermark, cutdown | Quick transformations on existing videos |
 | **Cloud GPU** | image_edit, upscale, dewatermark, sadtalker, soulx, qwen3_tts, music_gen, flux2 | AI processing via RunPod or Modal (`--cloud runpod\|modal`; soulx is Modal-only) |
 | **Publishing** | youtube_upload | Upload a finished render to YouTube (use `/publish` for the guided workflow) |
 
@@ -377,6 +377,30 @@ uv run tools/music_gen.py --list-presets
 ```
 
 8 scene presets: `corporate-bg`, `upbeat-tech`, `ambient`, `dramatic`, `tension`, `hopeful`, `cta`, `lofi`. See `.claude/skills/acestep/` for prompt engineering patterns and video production integration guide.
+
+### Social Cut-downs (16:9 → 9:16 / 1:1 / 4:5)
+
+```bash
+uv run tools/cutdown.py --input out/video.mp4 --platform shorts                 # whole video, 9:16
+uv run tools/cutdown.py --input out/video.mp4 -f 9:16 -f 1:1 --start 1:05 --end 1:50
+uv run tools/cutdown.py --input out/video.mp4 --mode crop \
+    --segment 0:04-0:11 --segment 0:42-0:58@0.25                                 # highlight reel
+```
+
+Pure ffmpeg, works on any MP4. Outputs land beside the input as `<name>-9x16.mp4` etc.
+
+- **Pick the mode by content.** `blur` (default) fits the whole frame over a blurred copy, so
+  nothing is cut: right for slides and screen recordings. `crop` fills the frame by cutting the
+  sides: right for talking heads and single-subject shots; `--focus 0-1` (or `@FOCUS` per
+  segment) picks what to keep. `pad` is `blur` over a solid colour (`--brand` uses `bgDark`).
+- **Fitted modes shrink text.** In 9:16 a 1080p source shows at 56% scale, so burned captions
+  get small. `--zoom 1.3` trades a little of each side for size. For a vertical cut of a
+  captioned Remotion video, consider re-rendering it with larger captions first.
+- **Shorts and Reels cap at 3 minutes** (TikTok 10). `--platform` warns past the limit; a
+  longer upload just posts as a regular video. YouTube makes any vertical or square upload ≤3 min a Short,
+  so `/publish` needs no special flag.
+- `--overlay frame.png` lays a full-frame PNG (with transparency) on top, e.g. a branded header
+  band made with Ideogram or by hand.
 
 ### Watermark Removal
 

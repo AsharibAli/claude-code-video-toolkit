@@ -181,7 +181,8 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 ### Phase 4: Polish & Advanced
 
 **Output & Accessibility:**
-- [ ] Multi-format output (MP4, WebM, GIF, social formats)
+- [x] Social formats: 9:16 / 1:1 / 4:5 cut-downs (`tools/cutdown.py`)
+- [ ] Multi-format output (WebM, GIF)
 - [x] Subtitle generation from voiceover scripts (`tools/captions.py` + `<Captions>`)
 - [x] Thumbnail auto-generation (`/thumbnail` — Ideogram 4 JSON caption from `project.json` + brand)
 

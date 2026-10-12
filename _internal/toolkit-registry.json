@@ -366,6 +366,33 @@
       "created": "2025-12-29",
       "updated": "2025-12-29"
     },
+    "cutdown": {
+      "path": "tools/cutdown.py",
+      "description": "Social cut-downs: reframe a finished 16:9 video to 9:16 / 1:1 / 4:5 for Shorts, Reels, TikTok and feeds, optionally cut to one or more time ranges. Pure ffmpeg, works on any MP4",
+      "usage": "uv run tools/cutdown.py --input out/video.mp4 --platform shorts [--mode blur|crop|pad] [--start 1:05 --end 1:50 | --segment START-END[@FOCUS] ...]",
+      "status": "beta",
+      "category": "utility",
+      "requires": "ffmpeg",
+      "options": {
+        "format": [
+          "9:16",
+          "1:1",
+          "4:5"
+        ],
+        "platform": "shorts, reels (9:16, 3 min), tiktok (9:16, 10 min), square (1:1), feed (4:5) - sets the default format and warns past the short-form limit",
+        "mode": "blur (fit over a blurred copy, default), crop (fill, cut the sides; --focus 0-1), pad (fit over --pad-color or --brand bgDark)",
+        "segments": "--start/--end for one range, repeated --segment for a highlight reel joined with click-free audio fades; @FOCUS sets crop focus per segment",
+        "extras": [
+          "--zoom",
+          "--overlay",
+          "--output-dir",
+          "--dry-run",
+          "--json"
+        ]
+      },
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "image_edit": {
       "path": "tools/image_edit.py",
       "description": "AI image editing using Qwen-Image (Edit-2511 by default, Apache-2.0; 2.1 as a non-commercial Modal opt-in) - style transfer, backgrounds, prompts",

@@ -79,6 +79,15 @@ are untouched.
   `<Captions>` component (`lib/components`) renders it with karaoke highlighting; sprint-review,
   sprint-review-v2 and product-demo show captions automatically once the JSON exists
   (`captions: { enabled: false }` turns them off). No new npm dependency.
+- **Social cut-downs** (`tools/cutdown.py`): reframe a finished 16:9 video to 9:16, 1:1
+  or 4:5 for Shorts, Reels, TikTok and feeds. Three modes: `blur` (whole frame over a
+  blurred copy, the default), `crop` (fill the frame, with `--focus` choosing which part
+  to keep) and `pad` (solid colour, or a brand's `bgDark`). `--start/--end` keeps one
+  range; repeated `--segment` joins several into a highlight reel, with a 30ms audio
+  fade at each join and an optional crop focus per segment. Several `--format`s render
+  in one call. `--platform` warns past the 3-minute Shorts/Reels limit, and fitted
+  modes warn when the source shrinks enough to make burned captions small. Pure ffmpeg,
+  works on any MP4, no project needed.
 - **Opt-in non-commercial models, chosen at deploy time.** Licences differ, so the
   Apache-2.0 models stay the default and the newer ones need an explicit switch:
   - `FLUX2_MODEL=klein-9b` deploys FLUX.2-klein-9B (gated, FLUX Non-Commercial
