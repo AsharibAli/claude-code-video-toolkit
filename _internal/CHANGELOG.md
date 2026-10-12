@@ -15,6 +15,9 @@ current version. Endpoint URLs are unchanged, and RunPod images
 are untouched.
 
 ### Changed
+- **Release notes skip merge commits.** `release.yml` builds the GitHub Release body
+  from `git log --no-merges`, so "Merge pull request" and branch-sync merges no longer
+  appear as bullets; the commits they bring in still do.
 - **`modal-flux2`: FLUX.2-small-decoder** (Apache-2.0, ~1.4x faster decode) and the
   `diffusers==0.41.0` release in place of the git commit pin. klein-4B stays the
   default. Modal FLUX edits now default to 4 steps / guidance 1.0 (was 50 / 4.0), as
@@ -106,8 +109,9 @@ are untouched.
   Ideogram 4 presets that break them (720x1280, 1280x720, 720x1440, 1440x720,
   1296x3168, 3168x1296) exit 2 with a suggested size. Ideogram 4 stays the default and
   sends the same requests as before; its cost log now shows QUALITY at $0.10 (was
-  $0.09) and warns that FLASH currently returns HTTP 400. 4.5 is checked against
-  Ideogram's docs and a mocked run, not yet run live.
+  $0.09) and warns that FLASH currently returns HTTP 400. Run live, 4.5 renders JSON
+  captions near-perfectly but adds garbled filler text to plain prompts, so use it with
+  `--json`. 4.0 stays the default because 1280x720 (YouTube, `/thumbnail`) is off 4.5's grid.
 - **LTX-2.5 as a deploy-time opt-in** (`LTX2_VERSION=2.5` on `modal-ltx2`). LTX-2.3
   stays the default and its image is unchanged, so redeploying 2.3 rebuilds nothing.
   2.5 runs LTX-2 v1.4.2 on torch 2.13 / CUDA 13.0 with the gated `Lightricks/LTX-2.5`

@@ -311,7 +311,9 @@ Ideogram 4 chains with the processors like any generator: `ideogram4 → upscale
 Ideogram 4 is generate-only here (no editing). See `.claude/skills/ideogram4/` for the JSON caption
 format — Claude authors the caption as the "magic prompt" expander; needs `IDEOGRAM_API_KEY` in `.env`.
 `--model 4.5` opts into Ideogram 4.5 on the v2 API (same flags; `--speed` maps to its quality
-tiers); 4.0 stays the default until 4.5 has been run live.
+tiers). 4.5 has been run live: JSON captions render near-perfect text, plain prompts add
+garbled filler text, so always use JSON. 4.0 stays the default because 4.5 sizes must be
+multiples of 32, which rules out 1280x720 (`/thumbnail` relies on 4.0 for that exact size).
 
 ### AI Image Editing
 
