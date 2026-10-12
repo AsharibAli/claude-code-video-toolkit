@@ -132,7 +132,7 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 - [x] `voiceover.py` passes `--cloud` through to Qwen3-TTS
 - [x] `dewatermark.py` migrated to `cloud_gpu.py` (removed ~393 lines of inline RunPod code)
 - [x] `docs/modal-setup.md` — setup guide for Modal deployment
-- [ ] Add `--setup --cloud modal` to tools (currently manual `modal deploy`)
+- [x] One-command Modal setup: `tools/modal_setup.py` deploys apps and writes their URLs to `.env` (`qwen3_tts.py --setup --cloud modal` delegates to it)
 
 **Sprint Review v2:**
 - [x] `sprint-review-v2` template — composable scene-based architecture

@@ -45,6 +45,19 @@ are untouched.
   $3.95/h; L40S added) and the GPU each Modal app actually runs on.
 
 ### Added
+- **`tools/modal_setup.py`: one-command Modal setup.** `modal_setup.py qwen3_tts flux2`
+  (or `--all`, which leaves out `ltx2`) deploys each app in turn and writes its endpoint
+  URL into `.env`. It runs SoulX's `populate_weights` first, and reads every URL from
+  Modal's API, not the deploy log, which wraps and truncates long URLs. `--list` shows
+  what's deployed and whether `.env` agrees. `--sync-env` fills `.env` from apps you
+  already deployed, without redeploying. `--recreate` covers variant switches. Failed
+  deploys print a hint (payment method, rate limit, gated Hugging Face access).
+  `qwen3_tts.py --setup --cloud modal` now uses it.
+- **`HF_SECRET_NAME` deploy-time override** for the gated `ltx2` and `flux2` (klein-9B)
+  apps. They still default to the `huggingface-token` secret. Modal's Hugging Face template
+  names the secret `huggingface-secret`, which made first deploys fail. `modal_setup.py`
+  now checks that the secret exists before deploying, and picks up `huggingface-secret`
+  automatically; `--hf-secret NAME` overrides it.
 - **Opt-in non-commercial models, chosen at deploy time.** Licences differ, so the
   Apache-2.0 models stay the default and the newer ones need an explicit switch:
   - `FLUX2_MODEL=klein-9b` deploys FLUX.2-klein-9B (gated, FLUX Non-Commercial

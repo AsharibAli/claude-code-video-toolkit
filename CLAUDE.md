@@ -215,12 +215,19 @@ uv run tools/upscale.py --setup
 uv run tools/qwen3_tts.py --setup
 uv run tools/music_gen.py --setup
 
-# --- Modal setup (deploy each app you need) ---
+# --- Modal setup (deploys + writes each endpoint URL to .env) ---
 uv sync --extra modal && uv run modal setup
-uv run modal deploy docker/modal-upscale/app.py        # Then save URL to .env
-uv run modal deploy docker/modal-image-edit/app.py
+uv run tools/modal_setup.py upscale image_edit         # or --all (everything but ltx2)
+uv run tools/modal_setup.py --list                     # deployed? .env in sync?
+uv run tools/modal_setup.py --sync-env                 # deployed by hand? fill .env
 # See docs/modal-setup.md for full guide
 ```
+
+`modal_setup.py` reads URLs from Modal's API, never from the deploy log, which wraps and
+truncates them. Gated apps (`ltx2`, `flux2` with `FLUX2_MODEL=klein-9b`) need a Modal
+secret with `HF_TOKEN`. The apps default to the name `huggingface-token`, but Modal's
+template names it `huggingface-secret`. The tool detects that and sets `HF_SECRET_NAME`;
+`--hf-secret NAME` overrides it.
 
 ### AI Image Generation (FLUX.2 vs Ideogram 4)
 

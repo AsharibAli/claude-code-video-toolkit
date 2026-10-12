@@ -50,7 +50,6 @@ import argparse
 import base64
 import json
 import os
-import re
 import sys
 import time
 from pathlib import Path
@@ -59,24 +58,6 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from win_encoding import utf8_env
-
-_MODAL_URL_RE = re.compile(r"https://[A-Za-z0-9._-]+\.modal\.run")
-
-
-def _find_modal_url(text: str) -> str | None:
-    """First Modal endpoint URL in `text`, tolerating terminal line-wrapping.
-
-    Modal hard-wraps long URLs to the terminal width, so a URL can arrive split
-    across lines. Collapsing whitespace first is what makes the match reliable;
-    a per-line search silently finds nothing on a wrapped URL. The tree's `│`
-    goes with it: continuation lines on any branch but the last start with one,
-    and it would otherwise land in the middle of the URL.
-    """
-    if not text:
-        return None
-    m = _MODAL_URL_RE.search(re.sub(r"[\s│]+", "", text))
-    return m.group(0) if m else None
 
 # Docker image for RunPod endpoint
 QWEN3_TTS_DOCKER_IMAGE = "ghcr.io/conalmullan/video-toolkit-qwen3-tts:latest"
@@ -729,145 +710,29 @@ def setup_runpod(gpu_id: str = "AMPERE_24", verbose: bool = True) -> dict:
 def setup_modal(verbose: bool = True) -> dict:
     """Set up Modal endpoint for Qwen3-TTS.
 
-    Deploys the Modal app and saves the endpoint URL to .env.
-    Requires: uv sync --extra modal && uv run modal setup
+    Deploys the Modal app and saves the endpoint URL to .env, via the shared
+    tools/modal_setup.py. Requires: uv sync --extra modal && uv run modal setup
     """
-    import shutil
-    import subprocess
-
-    result = {
-        "success": False,
-        "endpoint_url": None,
-    }
-
-    if verbose:
-        print("=" * 60)
-        print("Modal Setup (Qwen3-TTS Speech Generation)")
-        print("=" * 60)
-        print()
-
-    # Check modal CLI is installed
-    if not shutil.which("modal"):
-        result["error"] = (
-            "Modal CLI not found. Install with:\n"
+    try:
+        import modal  # noqa: F401
+    except ImportError:
+        return {"success": False, "endpoint_url": None, "error": (
+            "Modal SDK not found. Install with:\n"
             "  uv sync --extra modal\n"
             "  uv run modal setup"
-        )
-        if verbose:
-            print(f"Error: {result['error']}", file=sys.stderr)
-        return result
+        )}
+    from modal_setup import APPS, deploy
 
-    # Find the app file
-    app_file = Path(__file__).parent.parent / "docker" / "modal-qwen3-tts" / "app.py"
-    if not app_file.exists():
-        result["error"] = f"Modal app file not found: {app_file}"
-        if verbose:
-            print(f"Error: {result['error']}", file=sys.stderr)
-        return result
-
+    result = deploy(APPS["qwen3_tts"])
     if verbose:
-        print(f"[1/3] Deploying Modal app: {app_file}")
-        print("  This will build the container image and create the web endpoint.")
-        print("  First deploy may take 5-10 minutes (downloading model weights)...")
-        print()
-
-    try:
-        deploy_result = subprocess.run(
-            ["modal", "deploy", str(app_file)],
-            capture_output=True,
-            text=True,
-            # Modal's progress output is full of box-drawing characters. Without an
-            # explicit codec, Windows decodes the child with cp1252 and the deploy
-            # dies with "'charmap' codec can't encode characters" mid-build.
-            encoding="utf-8",
-            errors="replace",
-            env=utf8_env(),
-            timeout=900,  # 15 min for first deploy with model download
-        )
-
-        if deploy_result.returncode != 0:
-            result["error"] = f"Modal deploy failed:\n{deploy_result.stderr}"
-            if verbose:
-                print(f"Error: {result['error']}", file=sys.stderr)
-            return result
-
-        if verbose:
-            print(deploy_result.stdout)
-
-        # Parse endpoint URL from deploy output.
-        # Modal prints: Created web endpoint ... => https://workspace--app-name-fn.modal.run
-        # but hard-wraps long URLs to the terminal width, so the URL arrives split
-        # across lines ("...qwen3tts-genera" / "te.modal.run"). Matching per line
-        # therefore finds nothing and the deploy looks like it failed when it did not.
-        # Collapse all whitespace first, then match.
-        endpoint_url = _find_modal_url(deploy_result.stdout) or _find_modal_url(
-            deploy_result.stderr
-        )
-
-        if not endpoint_url:
-            result["error"] = (
-                "Deploy succeeded but could not parse endpoint URL from output.\n"
-                "Check `uv run modal app list` for the URL and add to .env manually:\n"
-                "  MODAL_QWEN3_TTS_ENDPOINT_URL=https://your-workspace--video-toolkit-qwen3-tts-qwen3tts-generate.modal.run"
-            )
-            if verbose:
-                print(f"Warning: {result['error']}", file=sys.stderr)
-            return result
-
-        result["endpoint_url"] = endpoint_url
-
-        if verbose:
-            print(f"[2/3] Endpoint URL: {endpoint_url}")
-            print("[3/3] Saving configuration...")
-
-        # Save to .env
-        env_path = Path(__file__).parent.parent / ".env"
-        env_var = "MODAL_QWEN3_TTS_ENDPOINT_URL"
-
-        if env_path.exists():
-            env_content = env_path.read_text()
-            if env_var in env_content:
-                # Update existing
-                lines = env_content.splitlines()
-                updated = False
-                for i, line in enumerate(lines):
-                    if line.startswith(f"{env_var}="):
-                        lines[i] = f"{env_var}={endpoint_url}"
-                        updated = True
-                        break
-                if updated:
-                    env_path.write_text("\n".join(lines) + "\n")
-            else:
-                with open(env_path, "a") as f:
-                    f.write(f"\n{env_var}={endpoint_url}\n")
+        if result["success"]:
+            print(f"Saved: {result['env_var']}={result['endpoint_url']}")
+            print('You can now run:\n  uv run tools/qwen3_tts.py --text "Hello world" '
+                  '--cloud modal --output hello.mp3')
         else:
-            env_path.write_text(f"{env_var}={endpoint_url}\n")
-
-        if verbose:
-            print(f"  Saved: {env_var}={endpoint_url}")
-
-        result["success"] = True
-
-        if verbose:
-            print()
-            print("=" * 60)
-            print("Setup Complete!")
-            print("=" * 60)
-            print(f"Endpoint: {endpoint_url}")
-            print()
-            print("You can now run:")
-            print('  uv run tools/qwen3_tts.py --text "Hello world" --cloud modal --output hello.mp3')
-            print()
-
-    except subprocess.TimeoutExpired:
-        result["error"] = "Modal deploy timed out after 15 minutes"
-        if verbose:
             print(f"Error: {result['error']}", file=sys.stderr)
-    except Exception as e:
-        result["error"] = str(e)
-        if verbose:
-            print(f"Error: {e}", file=sys.stderr)
-
+            if result.get("hint"):
+                print(f"  {result['hint']}", file=sys.stderr)
     return result
 
 

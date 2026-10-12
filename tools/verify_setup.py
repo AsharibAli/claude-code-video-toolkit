@@ -361,6 +361,9 @@ def main():
             results["soulx_weights"] = soulx_weights
             if verbose:
                 print(f"  {'[x]' if soulx_weights['ok'] else '[ ]'} SoulX weights: {soulx_weights['detail']}")
+    if verbose and modal_configured < len(modal_env):
+        print("  Deploy + fill .env: uv run tools/modal_setup.py <app> | --all "
+              "(--sync-env if already deployed)")
     print()
 
     # 4. RunPod

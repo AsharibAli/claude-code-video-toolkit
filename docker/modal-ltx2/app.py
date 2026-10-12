@@ -14,8 +14,8 @@ LTX-2.3 is the default. LTX-2.5 is opt-in: benchmarked against 2.3 it is
 The 2.3 image is built exactly as before the switch existed, so a 2.3 redeploy
 reuses its cached layers.
 
-Both versions need the `huggingface-token` Modal secret (key HF_TOKEN), and the
-token's account needs access to a gated repo:
+Both versions need the `huggingface-token` Modal secret (key HF_TOKEN; set
+HF_SECRET_NAME at deploy time to use another name), and the token's account needs access to a gated repo:
 - 2.3: Google's Gemma 3 text encoder (google/gemma-3-12b-it-qat-q4_0-unquantized,
   approved by hand).
 - 2.5: Lightricks/LTX-2.5 ("Agree and Access" shares your contact info; approved
@@ -70,6 +70,11 @@ import modal
 LTX2_VERSION = os.environ.get("LTX2_VERSION", "2.3")
 if LTX2_VERSION not in ("2.3", "2.5"):
     raise ValueError(f"LTX2_VERSION must be '2.3' or '2.5', got {LTX2_VERSION!r}")
+
+# Modal secret holding HF_TOKEN (build-time downloads and the running container).
+# Modal's Hugging Face template names it "huggingface-secret"; tools/modal_setup.py
+# sets this for you. Like LTX2_VERSION, a non-default value rides into the image env.
+HF_SECRET_NAME = os.environ.get("HF_SECRET_NAME", "huggingface-token")
 
 app = modal.App("video-toolkit-ltx2")
 
@@ -194,7 +199,7 @@ def _image_23() -> modal.Image:
             "'ltx-2.3-22b-distilled-lora-384.safetensors', "
             "'ltx-2.3-spatial-upscaler-x2-1.1.safetensors'])"
             "\"",
-            secrets=[modal.Secret.from_name("huggingface-token")],
+            secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
         )
         # Bake Gemma 3 12B text encoder (~24GB of bf16 shards)
         # Gemma is a gated model — needs HF_TOKEN at build time
@@ -204,7 +209,7 @@ def _image_23() -> modal.Image:
             f"snapshot_download('{GEMMA_REPO}', local_dir='{GEMMA_DIR}', "
             ")"
             "\"",
-            secrets=[modal.Secret.from_name("huggingface-token")],
+            secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
         )
         # Bake style LoRAs (~500MB each). One hf_hub_download per entry so each
         # LoRA lives at /models/loras/<key>/<filename> and swaps are cheap.
@@ -286,7 +291,7 @@ def _image_25() -> modal.Image:
             f"snapshot_download('{HF_REPO}', revision='{HF_REVISION}', "
             f"local_dir='{MODEL_DIR}', allow_patterns=['{TRANSFORMER_FILE}'])"
             "\"",
-            secrets=[modal.Secret.from_name("huggingface-token")],
+            secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
         )
         # Gemma 4 12B text encoder + projections (26GB). Tokenizer and config are
         # embedded in the safetensors file.
@@ -296,7 +301,7 @@ def _image_25() -> modal.Image:
             f"snapshot_download('{HF_REPO}', revision='{HF_REVISION}', "
             f"local_dir='{MODEL_DIR}', allow_patterns=['{TEXT_ENCODER_FILE}'])"
             "\"",
-            secrets=[modal.Secret.from_name("huggingface-token")],
+            secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
         )
         # Distilled LoRA (8.9GB) + spatial upsampler (1GB) + video/audio VAEs (1.8GB)
         .run_commands(
@@ -307,7 +312,7 @@ def _image_25() -> modal.Image:
             f"allow_patterns=['{DISTILLED_LORA_FILE}', '{SPATIAL_UPSAMPLER_FILE}', "
             f"'{VIDEO_VAE_FILE}', '{AUDIO_VAE_FILE}'])"
             "\"",
-            secrets=[modal.Secret.from_name("huggingface-token")],
+            secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
         )
         # Bake style LoRAs (~500MB each). One hf_hub_download per entry so each
         # LoRA lives at /models/loras/<key>/<filename> and swaps are cheap.
@@ -335,6 +340,8 @@ image = _image_23() if LTX2_VERSION == "2.3" else _image_25()
 image_env = {"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"}
 if LTX2_VERSION != "2.3":
     image_env["LTX2_VERSION"] = LTX2_VERSION
+if HF_SECRET_NAME != "huggingface-token":
+    image_env["HF_SECRET_NAME"] = HF_SECRET_NAME
 
 
 @app.cls(
@@ -342,7 +349,7 @@ if LTX2_VERSION != "2.3":
     gpu="A100-80GB",
     timeout=900,
     scaledown_window=60,
-    secrets=[modal.Secret.from_name("huggingface-token")],
+    secrets=[modal.Secret.from_name(HF_SECRET_NAME)],
 )
 @modal.concurrent(max_inputs=1)
 class LTX2:
