@@ -226,7 +226,7 @@ uv run tools/ltx2.py --prompt "A candle flickering on a dark table, cinematic" -
 
 ## LTX-2.5 (opt-in)
 
-`LTX2_VERSION=2.5` at deploy time swaps LTX-2.3 for LTX-2.5 behind the same endpoint, request format and tool. LTX-2.3 stays the default until 2.5 has been benchmarked at the default size, for image-to-video and with the LoRA.
+`LTX2_VERSION=2.5` at deploy time swaps LTX-2.3 for LTX-2.5 behind the same endpoint, request format and tool. LTX-2.3 stays the default: benchmarked against it, 2.5 is ~25-45% slower per clip and the `crt-terminal` LoRA only works on 2.3 (see `docs/ltx2.md`).
 
 ```bash
 # Git Bash / macOS / Linux. In PowerShell: $env:LTX2_VERSION='2.5' first, and

@@ -169,7 +169,7 @@ Total baked weight: ~80 GB, including the ~0.4 GB `crt-terminal` style LoRA. The
 
 ## LTX-2.5 (opt-in)
 
-The same Modal app can deploy LTX-2.5 instead of LTX-2.3. It is a deploy-time switch, like `FLUX2_MODEL` and `IMAGE_EDIT_MODEL`: the endpoint URL, the request format and `tools/ltx2.py` stay the same, and every response's `model` field (printed by the tool as `Model:`) says which version ran. LTX-2.3 stays the default until LTX-2.5 has been benchmarked against it (see [Benchmarks](#benchmarks)).
+The same Modal app can deploy LTX-2.5 instead of LTX-2.3. It is a deploy-time switch, like `FLUX2_MODEL` and `IMAGE_EDIT_MODEL`: the endpoint URL, the request format and `tools/ltx2.py` stay the same, and every response's `model` field (printed by the tool as `Model:`) says which version ran. LTX-2.3 stays the default: LTX-2.5 is ~25-45% slower per clip and the `crt-terminal` LoRA only works on 2.3 (see [Benchmarks](#benchmarks)).
 
 ### Deploy LTX-2.5
 
