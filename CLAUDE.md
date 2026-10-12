@@ -128,7 +128,7 @@ This is especially critical for background commands where the working directory 
 
 | Type | Tools | When to Use |
 |------|-------|-------------|
-| **Project tools** | voiceover, music, music_gen, sfx, sync_timing | During video creation workflow |
+| **Project tools** | voiceover, music, music_gen, sfx, sync_timing, qc | During video creation workflow |
 | **Utility tools** | redub, addmusic, notebooklm_brand, locate_watermark, cutdown | Quick transformations on existing videos |
 | **Cloud GPU** | image_edit, upscale, dewatermark, sadtalker, soulx, qwen3_tts, music_gen, flux2 | AI processing via RunPod or Modal (`--cloud runpod\|modal`; soulx is Modal-only) |
 | **Publishing** | youtube_upload | Upload a finished render to YouTube (use `/publish` for the guided workflow) |
@@ -190,6 +190,48 @@ Knows sprint-review v1/v2 and product-demo configs, and falls back to a **generi
 config that pairs `*AudioFile` with `*DurationSeconds` fields (e.g. `tickets[]` with intro/outro
 narration) — so new template shapes work without touching the tool.
 
+### Pre-render QC (before every render)
+
+```bash
+uv run tools/qc.py --project projects/my-video                       # assets, timing, pacing, loudness
+uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4
+uv run tools/qc.py --project projects/my-video --fix                 # normalise scene VO loudness
+uv run tools/qc.py --render projects/my-video/out/video.mp4 --fix    # writes video.loudnorm.mp4
+```
+
+Exit 1 on errors (narration cut off, a missing asset the template doesn't guard), so it can
+gate a render. **Loudness is the check nothing else does:** the templates mix VO + music
+without normalising, and renders land well under YouTube's -14 LUFS — which YouTube turns
+*down* when too loud but never *up* when too quiet. Scene VO targets -16 LUFS (headroom for
+music); the render targets -14 LUFS / -1 dBTP. Optional keys (`backgroundMusicFile`,
+`chimeFile`, `screenshotFile`, `voiceoverFile`) are warnings, not errors: the templates skip
+them with `getStaticFiles()`, so the render succeeds silently without them.
+
+### Burned Captions (after voiceover)
+
+```bash
+uv run tools/captions.py projects/my-video/public/audio/scenes            # every scene MP3
+uv run tools/captions.py projects/my-video/public/audio/scenes --engine whisper   # local, free
+uv run tools/captions.py projects/my-video/public/audio/voiceover.mp3 --script narration.txt
+```
+
+Writes `<name>.captions.json` (word-level, `@remotion/captions` `Caption[]` shape) beside each
+audio file. sprint-review, sprint-review-v2 and product-demo render it through the shared
+`<Captions>` component (`lib/components/Captions.tsx`) as soon as the file exists, with karaoke
+highlighting in the theme's primary colour. `captions: { enabled: false }` in the config turns them
+off; any other `Captions` prop in that block restyles them (`fontSize`, `bottom`, `karaoke`, ...).
+
+- **Captions spell what the script says, not what was heard.** The words of the sibling `.txt`
+  (which `voiceover.py --scene-dir` leaves beside every MP3) are aligned onto the transcript's
+  timing, so "Remotion" never becomes "remote". A match below 60% means the `.txt` is stale.
+  `--script` must be narration only — markdown headings in it would become caption words.
+- **Engines:** `scribe` (ElevenLabs, default when `ELEVENLABS_API_KEY` is set) or `whisper`
+  (`uv sync --extra whisper`). Both just provide timing when a script is present.
+- **Re-run after re-timing audio.** The JSON holds times relative to the audio file, so changing
+  `durationSeconds` is fine, but regenerating or `--max-wpm`-clamping a scene's MP3 needs new captions.
+- `align_captions.py` is different: it re-times hand-written `cap()` phrases in a config, rather than
+  generating word captions.
+
 ### Qwen3-TTS (Standalone)
 
 ```bash
@@ -215,12 +257,19 @@ uv run tools/upscale.py --setup
 uv run tools/qwen3_tts.py --setup
 uv run tools/music_gen.py --setup
 
-# --- Modal setup (deploy each app you need) ---
+# --- Modal setup (deploys + writes each endpoint URL to .env) ---
 uv sync --extra modal && uv run modal setup
-uv run modal deploy docker/modal-upscale/app.py        # Then save URL to .env
-uv run modal deploy docker/modal-image-edit/app.py
+uv run tools/modal_setup.py upscale image_edit         # or --all (everything but ltx2)
+uv run tools/modal_setup.py --list                     # deployed? .env in sync?
+uv run tools/modal_setup.py --sync-env                 # deployed by hand? fill .env
 # See docs/modal-setup.md for full guide
 ```
+
+`modal_setup.py` reads URLs from Modal's API, never from the deploy log, which wraps and
+truncates them. Gated apps (`ltx2`, `flux2` with `FLUX2_MODEL=klein-9b`) need a Modal
+secret with `HF_TOKEN`. The apps default to the name `huggingface-token`, but Modal's
+template names it `huggingface-secret`. The tool detects that and sets `HF_SECRET_NAME`;
+`--hf-secret NAME` overrides it.
 
 ### AI Image Generation (FLUX.2 vs Ideogram 4)
 
@@ -501,8 +550,10 @@ uv run tools/youtube_upload.py --video out/video.mp4 --title "Test" --dry-run --
 7. **Sync timing** - Run `uv run tools/sync_timing.py --apply` to update config durations
 8. **Preview** - `npm run studio` in project directory
 9. **Iterate** - Adjust timing, content, styling with Claude Code
-10. **Render** - `npm run render` for final MP4
-11. **Publish** - Run `/publish` to upload the render to YouTube (metadata auto-filled from `project.json`)
+10. **QC** - `uv run tools/qc.py --project projects/my-video` before rendering
+11. **Render** - `npm run render`, then `qc.py --render out/video.mp4 [--fix]` for loudness
+12. **Thumbnail** - Run `/thumbnail` for a 1280×720 Ideogram 4 thumbnail (hook phrase + brand colours)
+13. **Publish** - Run `/publish` to upload the render to YouTube (metadata and thumbnail auto-filled from `project.json`)
 
 ## Project Lifecycle
 

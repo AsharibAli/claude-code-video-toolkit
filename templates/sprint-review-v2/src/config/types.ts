@@ -16,6 +16,8 @@ export type {
   ThemeTypography,
 } from '../../../../lib/theme';
 
+import type { CaptionsConfig } from '../../../../lib/components';
+
 // ─── Sprint Info ────────────────────────────────────────────
 
 export interface SprintInfo {
@@ -301,6 +303,8 @@ export interface SprintReviewConfig {
   audio: GlobalAudioConfig;
   narrator?: NarratorConfig;
   overlays?: OverlayConfig;
+  /** Burned captions from <audio>.captions.json files (uv run tools/captions.py). Shown when the JSON exists. */
+  captions?: CaptionsConfig;
 }
 
 // ─── Video Config ───────────────────────────────────────────

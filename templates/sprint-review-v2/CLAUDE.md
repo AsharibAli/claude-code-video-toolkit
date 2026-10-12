@@ -116,6 +116,25 @@ Place in `public/audio/`:
 - Background music: `background-music.mp3` (plays at 15% volume)
 - SFX chime: `sfx-chime.mp3`
 
+### Captions
+
+Burned captions appear automatically once a `<name>.captions.json` sits beside the voiceover
+audio. Generate them from the toolkit root after the voiceover:
+
+```bash
+uv run tools/captions.py projects/my-video/public/audio/scenes
+```
+
+Words are aligned to each scene's `.txt` script, and the active word highlights in the theme's
+`primary` colour. Turn them off or restyle them in the config:
+
+```typescript
+captions: { enabled: false }                 // off
+captions: { karaoke: false, fontSize: 40 }   // any <Captions> prop, see lib/components/Captions.tsx
+```
+
+Regenerate captions whenever a scene's audio is regenerated.
+
 ### Theme Colors
 
 Default theme uses orange accent (#ea580c). Customize in `theme.ts`.

@@ -189,6 +189,13 @@
       "created": "2026-03-23",
       "updated": "2026-10-01"
     },
+    "thumbnail": {
+      "path": ".claude/commands/thumbnail.md",
+      "description": "Generate a 1280x720 YouTube thumbnail for a project - hook phrase + brand colours as an Ideogram 4 JSON caption, text checked, written to out/thumbnail.png for /publish",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "publish": {
       "path": ".claude/commands/publish.md",
       "description": "Publish a finished video to YouTube - auto-fills metadata from project.json, then uploads",
@@ -341,6 +348,15 @@
       "status": "beta",
       "created": "2026-03-23",
       "updated": "2026-10-01"
+    },
+    "modal_setup": {
+      "path": "tools/modal_setup.py",
+      "description": "Deploy the Modal apps and write their endpoint URLs into .env (URLs read from Modal's API); --list shows deploy/.env status, --sync-env fixes .env without deploying, --hf-secret / HF_SECRET_NAME picks the Hugging Face secret for gated apps",
+      "usage": "uv run tools/modal_setup.py --all",
+      "status": "beta",
+      "requires": "uv sync --extra modal, authenticated Modal CLI",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "notebooklm_brand": {
       "path": "tools/notebooklm_brand.py",
@@ -620,6 +636,16 @@
       "created": "2026-02-24",
       "updated": "2026-02-24"
     },
+    "qc": {
+      "path": "tools/qc.py",
+      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP). --fix normalises loudness; scene originals kept in .qc-backup/",
+      "usage": "uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4",
+      "status": "beta",
+      "category": "project",
+      "requires": "ffmpeg + ffprobe",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "align_captions": {
       "path": "tools/align_captions.py",
       "description": "Align hand-estimated cap() caption timings in sprint-config.ts to actual TTS audio — transcribes each scene with ElevenLabs Scribe, fuzzy-matches phrases to word timestamps, patches fromSec/durSec in --apply mode",
@@ -635,6 +661,23 @@
       ],
       "created": "2026-05-07",
       "updated": "2026-10-02"
+    },
+    "captions": {
+      "path": "tools/captions.py",
+      "description": "Word-level <name>.captions.json beside each narration file for the <Captions> component. Transcribes with ElevenLabs Scribe or local whisper and aligns the scene's .txt script onto the timing, so captions spell names as written",
+      "usage": "uv run tools/captions.py projects/my-video/public/audio/scenes [--engine scribe|whisper] [--script FILE] [--json]",
+      "status": "beta",
+      "category": "project",
+      "requires": "ElevenLabs API key (scribe) or `uv sync --extra whisper` (whisper)",
+      "options": {
+        "engine": "auto (default: scribe when ELEVENLABS_API_KEY is set, else whisper), scribe, whisper",
+        "script": "Narration text to align to (default: sibling <name>.txt); --no-script burns the raw transcript"
+      },
+      "envVars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "flux2": {
       "path": "tools/flux2.py",
@@ -917,6 +960,7 @@
       "name": "Modal",
       "description": "Serverless GPU cloud with Python-native deployment and fast cold starts",
       "documentation": "docs/modal-setup.md",
+      "setupTool": "tools/modal_setup.py",
       "envVars": [
         "MODAL_TOKEN_ID",
         "MODAL_TOKEN_SECRET"
@@ -1021,21 +1065,21 @@
       "description": "Sprint review videos with demos, stats, and voiceover",
       "status": "stable",
       "created": "2025-12-04",
-      "updated": "2025-12-09"
+      "updated": "2026-10-12"
     },
     "sprint-review-v2": {
       "path": "templates/sprint-review-v2/",
       "description": "Composable scene-based sprint review with film-quality upgrades",
       "status": "beta",
       "created": "2026-02-19",
-      "updated": "2026-02-19"
+      "updated": "2026-10-12"
     },
     "product-demo": {
       "path": "templates/product-demo/",
       "description": "Marketing videos with dark tech aesthetic, stats, CTA",
       "status": "stable",
       "created": "2025-12-09",
-      "updated": "2025-12-10"
+      "updated": "2026-10-12"
     },
     "concept-explainer-short": {
       "path": "templates/concept-explainer-short/",
@@ -1179,6 +1223,13 @@
       "status": "stable",
       "created": "2025-12-09",
       "updated": "2026-01-12"
+    },
+    "Captions": {
+      "path": "lib/components/Captions.tsx",
+      "description": "Burned narration captions with karaoke highlight, from tools/captions.py JSON; renders nothing until the file exists",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "Envelope": {
       "path": "lib/components/Envelope.tsx",

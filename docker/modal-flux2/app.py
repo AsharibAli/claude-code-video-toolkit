@@ -14,7 +14,8 @@ LICENSES -- they differ, which is why 4B stays the default:
   review of outputs. Sharper, but opt in only for personal/non-commercial work.
   Gated on Hugging Face: accept the terms at
   https://huggingface.co/black-forest-labs/FLUX.2-klein-9B and put a token in the
-  `huggingface-token` Modal secret (key HF_TOKEN) before deploying. Needs an L40S.
+  `huggingface-token` Modal secret (key HF_TOKEN) before deploying -- or set
+  HF_SECRET_NAME to use another secret name. Needs an L40S.
 
 Input format (POST JSON to web endpoint):
 {
@@ -66,6 +67,10 @@ if FLUX2_MODEL not in VARIANTS:
 VARIANT = VARIANTS[FLUX2_MODEL]
 MODEL_ID = VARIANT["repo"]
 
+# Modal secret holding HF_TOKEN for the gated 9B download. Modal's Hugging Face
+# template names it "huggingface-secret"; tools/modal_setup.py sets this for you.
+HF_SECRET_NAME = os.environ.get("HF_SECRET_NAME", "huggingface-token")
+
 # Distilled VAE decoder (Apache-2.0): ~1.4x faster decode and ~1.4x less decode
 # VRAM, encoder unchanged. A drop-in for every open FLUX.2 model. Needs
 # AutoencoderKLFlux2's decoder_block_out_channels, i.e. diffusers>=0.38.
@@ -103,7 +108,7 @@ image = (
         f"snapshot_download('{MODEL_ID}', "
         f"ignore_patterns=['{VARIANT['single_file']}', '*.jpg'])"
         '"',
-        secrets=[modal.Secret.from_name("huggingface-token")] if VARIANT["gated"] else [],
+        secrets=[modal.Secret.from_name(HF_SECRET_NAME)] if VARIANT["gated"] else [],
     )
     .run_commands(
         'python -c "'

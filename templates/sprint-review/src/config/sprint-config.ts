@@ -85,6 +85,14 @@ export const sprintConfig: SprintConfig = {
     size: 'md',
     // startFrame: 120,                  // Defaults to voiceoverStartFrame
   },
+
+  // Burned captions: appear once `uv run tools/captions.py <project>/public/audio/scenes`
+  // has written a <name>.captions.json beside each voiceover file. Style props
+  // (fontSize, bottom, highlightColor, karaoke, ...) are documented in lib/components/Captions.tsx.
+  captions: {
+    enabled: true,
+    karaoke: true,
+  },
 };
 
 // Video output configuration
