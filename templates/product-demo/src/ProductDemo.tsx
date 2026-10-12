@@ -2,6 +2,7 @@ import { AbsoluteFill, Series, Audio, staticFile, Sequence } from 'remotion';
 import { ThemeProvider, defaultTheme } from './config/theme';
 import { demoConfig, videoConfig, calculateTotalFrames } from './config/demo-config';
 import { AnimatedBackground, Vignette, LogoWatermark, NarratorPiP } from './components/core';
+import { Captions, captionsFor } from '../../../lib/components';
 import {
   TitleSlide,
   ProblemSlide,
@@ -22,6 +23,7 @@ import type {
 export const ProductDemo: React.FC = () => {
   const { fps } = videoConfig;
   const totalFrames = calculateTotalFrames(demoConfig, fps);
+  const { enabled: captionsEnabled = true, ...captionStyle } = demoConfig.captions ?? {};
 
   // Calculate scene frame offsets for narrator timing
   let currentFrame = 0;
@@ -112,6 +114,18 @@ export const ProductDemo: React.FC = () => {
             );
           })}
         </Series>
+
+        {/* Burned captions for the voiceover (renders nothing until its .captions.json exists) */}
+        {captionsEnabled && demoConfig.audio?.voiceoverFile && (
+          <Sequence from={demoConfig.audio.voiceoverStartFrame || 0}>
+            <Captions
+              src={captionsFor(demoConfig.audio.voiceoverFile)}
+              fontFamily={defaultTheme.fonts.primary}
+              highlightColor={defaultTheme.colors.primary}
+              {...captionStyle}
+            />
+          </Sequence>
+        )}
       </AbsoluteFill>
     </ThemeProvider>
   );

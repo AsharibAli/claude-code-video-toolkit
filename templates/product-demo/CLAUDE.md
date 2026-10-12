@@ -64,6 +64,25 @@ Place in `public/audio/`:
 - `voiceover.mp3` - Main narration
 - `background-music.mp3` - Background track
 
+### Captions
+
+Burned captions appear automatically once a `<name>.captions.json` sits beside the voiceover
+audio. Generate them from the toolkit root after the voiceover:
+
+```bash
+uv run tools/captions.py projects/my-video/public/audio/voiceover.mp3
+```
+
+Words are aligned to the sibling `voiceover.txt` script (or `--script FILE`, narration text
+only), and the active word highlights in the theme's `primary` colour. Turn them off or restyle them in the config:
+
+```typescript
+captions: { enabled: false }                 // off
+captions: { karaoke: false, fontSize: 40 }   // any <Captions> prop, see lib/components/Captions.tsx
+```
+
+Regenerate captions whenever the voiceover is regenerated.
+
 ### Narrator PiP
 
 Enable picture-in-picture narrator:

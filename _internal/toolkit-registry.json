@@ -635,6 +635,23 @@
       "created": "2026-05-07",
       "updated": "2026-10-02"
     },
+    "captions": {
+      "path": "tools/captions.py",
+      "description": "Word-level <name>.captions.json beside each narration file for the <Captions> component. Transcribes with ElevenLabs Scribe or local whisper and aligns the scene's .txt script onto the timing, so captions spell names as written",
+      "usage": "uv run tools/captions.py projects/my-video/public/audio/scenes [--engine scribe|whisper] [--script FILE] [--json]",
+      "status": "beta",
+      "category": "project",
+      "requires": "ElevenLabs API key (scribe) or `uv sync --extra whisper` (whisper)",
+      "options": {
+        "engine": "auto (default: scribe when ELEVENLABS_API_KEY is set, else whisper), scribe, whisper",
+        "script": "Narration text to align to (default: sibling <name>.txt); --no-script burns the raw transcript"
+      },
+      "envVars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "flux2": {
       "path": "tools/flux2.py",
       "description": "AI image generation and editing using FLUX.2 Klein (4B by default, Apache-2.0; 9B as a non-commercial Modal opt-in) - text-to-image, image editing, and scene presets",
@@ -1021,21 +1038,21 @@
       "description": "Sprint review videos with demos, stats, and voiceover",
       "status": "stable",
       "created": "2025-12-04",
-      "updated": "2025-12-09"
+      "updated": "2026-10-12"
     },
     "sprint-review-v2": {
       "path": "templates/sprint-review-v2/",
       "description": "Composable scene-based sprint review with film-quality upgrades",
       "status": "beta",
       "created": "2026-02-19",
-      "updated": "2026-02-19"
+      "updated": "2026-10-12"
     },
     "product-demo": {
       "path": "templates/product-demo/",
       "description": "Marketing videos with dark tech aesthetic, stats, CTA",
       "status": "stable",
       "created": "2025-12-09",
-      "updated": "2025-12-10"
+      "updated": "2026-10-12"
     },
     "concept-explainer-short": {
       "path": "templates/concept-explainer-short/",
@@ -1179,6 +1196,13 @@
       "status": "stable",
       "created": "2025-12-09",
       "updated": "2026-01-12"
+    },
+    "Captions": {
+      "path": "lib/components/Captions.tsx",
+      "description": "Burned narration captions with karaoke highlight, from tools/captions.py JSON; renders nothing until the file exists",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "Envelope": {
       "path": "lib/components/Envelope.tsx",

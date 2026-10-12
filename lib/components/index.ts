@@ -34,6 +34,10 @@ export type { SlideTransitionProps, TransitionStyle } from './SlideTransition';
 export { SplitScreen } from './SplitScreen';
 export type { SplitScreenProps } from './SplitScreen';
 
+// Captions (word-level JSON from tools/captions.py)
+export { Captions, captionsFor } from './Captions';
+export type { CaptionsProps, CaptionsConfig, CaptionWord } from './Captions';
+
 // Narrator (needs refinement - see component docs)
 export { NarratorPiP } from './NarratorPiP';
 export type { NarratorPiPProps } from './NarratorPiP';
