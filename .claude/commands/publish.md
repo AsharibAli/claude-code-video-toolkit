@@ -142,6 +142,7 @@ run a dry-run before the real upload.
 - Default API quota is **10,000 units/day**; each upload costs **~1,600 units → ~6 uploads/day**.
 - Hitting quota returns HTTP 403 `quotaExceeded` (the tool reports `errorType: "quota"`).
 - Custom thumbnails require a channel with a verified phone number.
+- **Shorts:** YouTube makes any vertical or square upload of 3 minutes or less a Short; there is no flag for it. To publish a Short of a 16:9 video, cut it down first with `uv run tools/cutdown.py --input <render> --platform shorts` and upload the `-9x16.mp4` it writes.
 
 ---
 
