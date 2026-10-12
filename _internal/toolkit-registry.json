@@ -189,6 +189,13 @@
       "created": "2026-03-23",
       "updated": "2026-10-01"
     },
+    "thumbnail": {
+      "path": ".claude/commands/thumbnail.md",
+      "description": "Generate a 1280x720 YouTube thumbnail for a project - hook phrase + brand colours as an Ideogram 4 JSON caption, text checked, written to out/thumbnail.png for /publish",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "publish": {
       "path": ".claude/commands/publish.md",
       "description": "Publish a finished video to YouTube - auto-fills metadata from project.json, then uploads",
@@ -601,6 +608,16 @@
       "requires": "ffprobe (from ffmpeg)",
       "created": "2026-02-24",
       "updated": "2026-02-24"
+    },
+    "qc": {
+      "path": "tools/qc.py",
+      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP). --fix normalises loudness; scene originals kept in .qc-backup/",
+      "usage": "uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4",
+      "status": "beta",
+      "category": "project",
+      "requires": "ffmpeg + ffprobe",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "align_captions": {
       "path": "tools/align_captions.py",
