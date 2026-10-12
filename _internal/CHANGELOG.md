@@ -8,13 +8,21 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
-Model refresh, checked against each upstream on 2026-10-02. The entries below move
+Five new production steps: pre-render QC with loudness (`tools/qc.py`), `/thumbnail`,
+one-command Modal setup (`tools/modal_setup.py`), burned captions for the Remotion
+templates (`tools/captions.py` + `<Captions>`) and social cut-downs (`tools/cutdown.py`).
+
+Also a model refresh, checked against each upstream on 2026-10-02. The entries below move
 several defaults to newer releases and add newer models as opt-ins (a deploy-time
 variable for the Modal apps, `--model 4.5` for Ideogram); models not listed keep their
 current version. Endpoint URLs are unchanged, and RunPod images
 are untouched.
 
 ### Changed
+- **Remotion skills synced to upstream v4.0.535** (via 4.0.533; #105, #113).
+- **concept-explainer-short captions pick Whisper `turbo` on CUDA.** `whisperModel: "auto"`
+  (the new template default) uses turbo with a GPU and `base` on CPU; an explicit model
+  name still wins. Needs `openai-whisper>=20240930`.
 - **Release notes skip merge commits.** `release.yml` builds the GitHub Release body
   from `git log --no-merges`, so "Merge pull request" and branch-sync merges no longer
   appear as bullets; the commits they bring in still do.
@@ -124,6 +132,11 @@ are untouched.
   about 25-45% slower per clip, so 2.3 stays the default.
 
 ### Fixed
+- **`modal-flux2` and `modal-image-edit` crash-looped on fresh builds** (seen as an
+  endless cold start): open-ended `transformers` now needs torch 2.6, so both images
+  move to torch 2.6.0 (#106). The RunPod flux2 and qwen-edit Dockerfiles get the same
+  bump, and their pip specifiers are now quoted, since the shell had been reading `>=`
+  as a redirect and dropping every version floor. RunPod images are not rebuilt yet.
 - **Modal setup docs:** every GPU app needs a payment method on a new workspace, not
   just the A100s (A10G deploys fail too). Also documented: Modal's Hugging Face secret
   template defaults to the name `huggingface-secret`, `ltx2` needs access to Google's
@@ -131,6 +144,8 @@ are untouched.
   switching an opt-in should use `modal deploy --strategy recreate`.
 
 ### Notes
+- Upload-Post (multi-platform publishing) is listed under the README's Community
+  add-ons (#103, #107).
 - `FLUX2_MODEL=klein-9b` needs the `huggingface-token` Modal secret too (gated
   weights), like `modal-ltx2`.
 - `qwen-tts` pinned to 0.1.1 in `modal-qwen3-tts`; no newer Qwen TTS model exists.
