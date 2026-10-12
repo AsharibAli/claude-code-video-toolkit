@@ -103,6 +103,7 @@ Claude Code has deep knowledge in:
 | `/generate-voiceover` | Generate AI voiceover from a script |
 | `/redub` | Redub existing video with a different voice |
 | `/voice-clone` | Record, test, and save a cloned voice to a brand |
+| `/thumbnail` | Generate a YouTube thumbnail with Ideogram 4 (hook phrase + brand colours) |
 | `/publish` | Publish a finished video to YouTube (metadata auto-filled from `project.json`) |
 | `/versions` | Check dependency versions and toolkit updates |
 

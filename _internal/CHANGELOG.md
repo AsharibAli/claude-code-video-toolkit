@@ -45,6 +45,12 @@ are untouched.
   $3.95/h; L40S added) and the GPU each Modal app actually runs on.
 
 ### Added
+- **`/thumbnail` command.** Generates a 1280×720 YouTube thumbnail for a project.
+  Claude reads the project, script and brand, proposes a 1–3 word hook phrase, writes
+  an Ideogram 4 JSON caption (text on the left, nothing under YouTube's duration badge),
+  renders it with `ideogram4.py --resolution 1280x720`, reads the image back to check the
+  spelling, and records it as `publish.thumbnail` so `/publish` uploads it. ~$0.10 per
+  image.
 - **Opt-in non-commercial models, chosen at deploy time.** Licences differ, so the
   Apache-2.0 models stay the default and the newer ones need an explicit switch:
   - `FLUX2_MODEL=klein-9b` deploys FLUX.2-klein-9B (gated, FLUX Non-Commercial

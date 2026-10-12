@@ -478,7 +478,8 @@ uv run tools/youtube_upload.py --video out/video.mp4 --title "Test" --dry-run --
 8. **Preview** - `npm run studio` in project directory
 9. **Iterate** - Adjust timing, content, styling with Claude Code
 10. **Render** - `npm run render` for final MP4
-11. **Publish** - Run `/publish` to upload the render to YouTube (metadata auto-filled from `project.json`)
+11. **Thumbnail** - Run `/thumbnail` for a 1280×720 Ideogram 4 thumbnail (hook phrase + brand colours)
+12. **Publish** - Run `/publish` to upload the render to YouTube (metadata and thumbnail auto-filled from `project.json`)
 
 ## Project Lifecycle
 

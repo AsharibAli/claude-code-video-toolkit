@@ -183,7 +183,7 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 **Output & Accessibility:**
 - [ ] Multi-format output (MP4, WebM, GIF, social formats)
 - [ ] Subtitle generation from voiceover scripts
-- [ ] Thumbnail auto-generation
+- [x] Thumbnail auto-generation (`/thumbnail` — Ideogram 4 JSON caption from `project.json` + brand)
 
 **Skills:**
 - [ ] Video accessibility skill
