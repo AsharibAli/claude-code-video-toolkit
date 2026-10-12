@@ -496,7 +496,8 @@ uv run tools/youtube_upload.py --video out/video.mp4 --title "Test" --dry-run --
 9. **Iterate** - Adjust timing, content, styling with Claude Code
 10. **QC** - `uv run tools/qc.py --project projects/my-video` before rendering
 11. **Render** - `npm run render`, then `qc.py --render out/video.mp4 [--fix]` for loudness
-12. **Publish** - Run `/publish` to upload the render to YouTube (metadata auto-filled from `project.json`)
+12. **Thumbnail** - Run `/thumbnail` for a 1280×720 Ideogram 4 thumbnail (hook phrase + brand colours)
+13. **Publish** - Run `/publish` to upload the render to YouTube (metadata and thumbnail auto-filled from `project.json`)
 
 ## Project Lifecycle
 

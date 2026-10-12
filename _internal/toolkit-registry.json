@@ -189,6 +189,13 @@
       "created": "2026-03-23",
       "updated": "2026-10-01"
     },
+    "thumbnail": {
+      "path": ".claude/commands/thumbnail.md",
+      "description": "Generate a 1280x720 YouTube thumbnail for a project - hook phrase + brand colours as an Ideogram 4 JSON caption, text checked, written to out/thumbnail.png for /publish",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "publish": {
       "path": ".claude/commands/publish.md",
       "description": "Publish a finished video to YouTube - auto-fills metadata from project.json, then uploads",
