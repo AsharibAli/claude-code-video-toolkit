@@ -150,7 +150,7 @@ Frame the pitch:
 - All 7 toolkit tools typically cost $0.50-2.00/month with normal use
 - Faster cold starts than RunPod
 - Scale to zero — no charges when idle
-- Simple deployment: `uv run modal deploy docker/modal-xxx/app.py`
+- Simple deployment: `uv run tools/modal_setup.py <app>` (deploys and writes `.env`)
 
 Setup flow:
 ```
@@ -309,47 +309,33 @@ Recommend "all" — with Modal's free tier, there's no cost to having them deplo
 
 ### Modal Deployment Flow
 
-For each selected tool, run `uv run modal deploy` and capture the endpoint URL:
+Deploy the selected apps with `tools/modal_setup.py`. It deploys one at a time (Modal
+rate-limits parallel `AppCreate`), runs SoulX's `populate_weights` first, reads each
+endpoint URL from Modal's API, and writes it to `.env`. Don't parse URLs out of the deploy
+log yourself, because Modal wraps and truncates them.
 
 ```bash
-# Windows: required, or every deploy below dies with a 'charmap' codec error
-# mid-build. Harmless everywhere else.
+# Windows: required, or the deploys die with a 'charmap' codec error mid-build.
+# Harmless everywhere else.
 export PYTHONIOENCODING=utf-8
 
-# Deploy each app and capture the URL from output
-uv run modal deploy docker/modal-qwen3-tts/app.py
-uv run modal deploy docker/modal-flux2/app.py        # klein-4B, Apache-2.0
-uv run modal deploy docker/modal-image-edit/app.py   # Qwen-Image-Edit-2511, Apache-2.0
-uv run modal deploy docker/modal-upscale/app.py
-uv run modal deploy docker/modal-music-gen/app.py
-uv run modal deploy docker/modal-sadtalker/app.py
-uv run modal deploy docker/modal-propainter/app.py
-
-# SoulX keeps its weights in a Modal Volume instead of baking them into the
-# image, so populate the volume FIRST (one-off, ~15GB, ~5 min). Skip this and
-# the app deploys fine but every render fails with "SoulX weights are missing".
-uv run modal run docker/modal-soulx/app.py::populate_weights
-uv run modal deploy docker/modal-soulx/app.py
+uv run tools/modal_setup.py --all                       # "all of the above"
+uv run tools/modal_setup.py qwen3_tts flux2 soulx       # or just the chosen ones
 ```
 
-After each deploy, Modal prints the endpoint URL. Parse it and save to .env:
-```
-MODAL_QWEN3_TTS_ENDPOINT_URL=https://username--video-toolkit-qwen3-tts-...modal.run
-MODAL_FLUX2_ENDPOINT_URL=https://username--video-toolkit-flux2-...modal.run
-MODAL_SOULX_ENDPOINT_URL=https://username--video-toolkit-soulx-...modal.run
-```
+Map menu choices to app names: `qwen3_tts`, `flux2`, `image_edit`, `upscale`,
+`music_gen`, `sadtalker`, `soulx`, `dewatermark` (ProPainter). `--all` deploys these
+eight. `ltx2` is never included: offer it separately, and only after the user confirms
+the Hugging Face secret and their Gemma 3 access (see `docs/modal-setup.md`).
 
-SoulX prints two URLs (`health` and `generate_web`) — save the `generate_web` one. Modal
-truncates that URL's label, so identify it by the `SoulXFlashHead.generate_web =>` line it
-follows, not by the URL text.
+Deploys stream their logs and can take 5-15 minutes each on a first build, so run the
+command in the background and report each app's `OK`/`!!` line as it lands. A failed app
+prints a hint (payment method, rate limit, Hugging Face access); fix it and re-run with
+just that app's name.
 
-**Important**: The deploy output contains the URL. Look for lines containing `.modal.run` in the output. The URL format is typically:
-`https://{username}--{app-name}-{class}-{method}.modal.run`
-
-Modal wraps long URLs onto the next line, sometimes mid-word (`...generate-web.moda` /
-`l.run`), and appends `(label truncated)` when it shortens a label. Join the lines after
-the `=>` and drop that suffix before saving — a search for `.modal.run` on one line misses
-a wrapped URL.
+If the user already deployed some apps by hand, `uv run tools/modal_setup.py --sync-env`
+writes the live URLs to `.env` without redeploying anything. `--list` shows what's
+deployed and whether `.env` agrees.
 
 ### RunPod Deployment Flow
 

@@ -349,6 +349,15 @@
       "created": "2026-03-23",
       "updated": "2026-10-01"
     },
+    "modal_setup": {
+      "path": "tools/modal_setup.py",
+      "description": "Deploy the Modal apps and write their endpoint URLs into .env (URLs read from Modal's API); --list shows deploy/.env status, --sync-env fixes .env without deploying, --hf-secret / HF_SECRET_NAME picks the Hugging Face secret for gated apps",
+      "usage": "uv run tools/modal_setup.py --all",
+      "status": "beta",
+      "requires": "uv sync --extra modal, authenticated Modal CLI",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "notebooklm_brand": {
       "path": "tools/notebooklm_brand.py",
       "description": "Post-process NotebookLM videos with custom branding (trim outro, add logo/URL)",
@@ -907,6 +916,7 @@
       "name": "Modal",
       "description": "Serverless GPU cloud with Python-native deployment and fast cold starts",
       "documentation": "docs/modal-setup.md",
+      "setupTool": "tools/modal_setup.py",
       "envVars": [
         "MODAL_TOKEN_ID",
         "MODAL_TOKEN_SECRET"
