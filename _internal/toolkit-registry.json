@@ -600,6 +600,16 @@
       "created": "2026-02-24",
       "updated": "2026-02-24"
     },
+    "qc": {
+      "path": "tools/qc.py",
+      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP). --fix normalises loudness; scene originals kept in .qc-backup/",
+      "usage": "uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4",
+      "status": "beta",
+      "category": "project",
+      "requires": "ffmpeg + ffprobe",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "align_captions": {
       "path": "tools/align_captions.py",
       "description": "Align hand-estimated cap() caption timings in sprint-config.ts to actual TTS audio — transcribes each scene with ElevenLabs Scribe, fuzzy-matches phrases to word timestamps, patches fromSec/durSec in --apply mode",

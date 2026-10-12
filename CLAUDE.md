@@ -128,7 +128,7 @@ This is especially critical for background commands where the working directory 
 
 | Type | Tools | When to Use |
 |------|-------|-------------|
-| **Project tools** | voiceover, music, music_gen, sfx, sync_timing | During video creation workflow |
+| **Project tools** | voiceover, music, music_gen, sfx, sync_timing, qc | During video creation workflow |
 | **Utility tools** | redub, addmusic, notebooklm_brand, locate_watermark | Quick transformations on existing videos |
 | **Cloud GPU** | image_edit, upscale, dewatermark, sadtalker, soulx, qwen3_tts, music_gen, flux2 | AI processing via RunPod or Modal (`--cloud runpod\|modal`; soulx is Modal-only) |
 | **Publishing** | youtube_upload | Upload a finished render to YouTube (use `/publish` for the guided workflow) |
@@ -189,6 +189,23 @@ uv run tools/sync_timing.py --json                   # Machine-readable output
 Knows sprint-review v1/v2 and product-demo configs, and falls back to a **generic mode** for any
 config that pairs `*AudioFile` with `*DurationSeconds` fields (e.g. `tickets[]` with intro/outro
 narration) — so new template shapes work without touching the tool.
+
+### Pre-render QC (before every render)
+
+```bash
+uv run tools/qc.py --project projects/my-video                       # assets, timing, pacing, loudness
+uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4
+uv run tools/qc.py --project projects/my-video --fix                 # normalise scene VO loudness
+uv run tools/qc.py --render projects/my-video/out/video.mp4 --fix    # writes video.loudnorm.mp4
+```
+
+Exit 1 on errors (narration cut off, a missing asset the template doesn't guard), so it can
+gate a render. **Loudness is the check nothing else does:** the templates mix VO + music
+without normalising, and renders land well under YouTube's -14 LUFS — which YouTube turns
+*down* when too loud but never *up* when too quiet. Scene VO targets -16 LUFS (headroom for
+music); the render targets -14 LUFS / -1 dBTP. Optional keys (`backgroundMusicFile`,
+`chimeFile`, `screenshotFile`, `voiceoverFile`) are warnings, not errors: the templates skip
+them with `getStaticFiles()`, so the render succeeds silently without them.
 
 ### Qwen3-TTS (Standalone)
 
@@ -477,9 +494,10 @@ uv run tools/youtube_upload.py --video out/video.mp4 --title "Test" --dry-run --
 7. **Sync timing** - Run `uv run tools/sync_timing.py --apply` to update config durations
 8. **Preview** - `npm run studio` in project directory
 9. **Iterate** - Adjust timing, content, styling with Claude Code
-10. **Render** - `npm run render` for final MP4
-11. **Thumbnail** - Run `/thumbnail` for a 1280×720 Ideogram 4 thumbnail (hook phrase + brand colours)
-12. **Publish** - Run `/publish` to upload the render to YouTube (metadata and thumbnail auto-filled from `project.json`)
+10. **QC** - `uv run tools/qc.py --project projects/my-video` before rendering
+11. **Render** - `npm run render`, then `qc.py --render out/video.mp4 [--fix]` for loudness
+12. **Thumbnail** - Run `/thumbnail` for a 1280×720 Ideogram 4 thumbnail (hook phrase + brand colours)
+13. **Publish** - Run `/publish` to upload the render to YouTube (metadata and thumbnail auto-filled from `project.json`)
 
 ## Project Lifecycle
 

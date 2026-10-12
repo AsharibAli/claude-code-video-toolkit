@@ -45,6 +45,15 @@ are untouched.
   $3.95/h; L40S added) and the GPU each Modal app actually runs on.
 
 ### Added
+- **`tools/qc.py` — pre-render QC + loudness.** One command run before `npm run render`
+  (or `build.py`): missing media referenced by the config, narration longer than its scene
+  (cut off) or >3s shorter (dead air), wpm pacing per scene, and per-scene loudness
+  consistency. `--render out/video.mp4` checks the finished video against YouTube's
+  -14 LUFS / -1 dBTP; nothing in the templates normalises loudness, and the first project
+  checked had shipped at -22.5 LUFS. `--fix` normalises loudness only: scene VO to
+  -16 LUFS in place (originals in `.qc-backup/`), the render to a new `<name>.loudnorm.mp4`
+  with the video stream copied. Reuses `sync_timing.py`'s config parsing and `pacing.py`'s
+  labels; reads Remotion projects and concept-explainer-short `scenes.json`.
 - **`/thumbnail` command.** Generates a 1280×720 YouTube thumbnail for a project.
   Claude reads the project, script and brand, proposes a 1–3 word hook phrase, writes
   an Ideogram 4 JSON caption (text on the left, nothing under YouTube's duration badge),
