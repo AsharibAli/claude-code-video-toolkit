@@ -26,7 +26,7 @@
       "description": "ElevenLabs audio - TTS, voice cloning, music, SFX",
       "status": "stable",
       "created": "2025-12-04",
-      "updated": "2025-12-04"
+      "updated": "2026-10-12"
     },
     "ffmpeg": {
       "path": ".claude/skills/ffmpeg/",
@@ -56,7 +56,7 @@
       "category": "image-editing",
       "backend": "qwen-image-edit-2511 (default) / qwen-image-2.1 (modal opt-in)",
       "created": "2026-01-03",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "runpod": {
       "path": ".claude/skills/runpod/",
@@ -70,7 +70,7 @@
       "description": "AI music generation — prompt engineering, scene presets, lyrics formatting, video production integration",
       "status": "beta",
       "created": "2026-03-22",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "ltx2": {
       "path": ".claude/skills/ltx2/",
@@ -92,7 +92,7 @@
       "status": "beta",
       "category": "image-generation",
       "backend": "ideogram-4 hosted v4 API (json_prompt)",
-      "note": "Skill teaches the JSON caption format; Claude is the magic-prompt expander. Tool: tools/ideogram4.py. Hosted paid API (commercial license, ~$0.03–0.10/img); not self-hosted. Needs IDEOGRAM_API_KEY. Ideogram 4.5 is an opt-in (--model 4.5, v2 API) that reads the same captions; not yet run live.",
+      "note": "Skill teaches the JSON caption format; Claude is the magic-prompt expander. Tool: tools/ideogram4.py. Hosted paid API (commercial license, ~$0.03–0.10/img); not self-hosted. Needs IDEOGRAM_API_KEY. Ideogram 4.5 is an opt-in (--model 4.5, v2 API) that reads the same captions; run live, near-perfect with JSON captions, garbled filler text with plain prompts.",
       "created": "2026-06-08",
       "updated": "2026-10-12"
     }
@@ -135,10 +135,10 @@
     },
     "generate-voiceover": {
       "path": ".claude/commands/generate-voiceover.md",
-      "description": "Generate TTS voiceover using ElevenLabs or Qwen3-TTS",
+      "description": "Generate TTS voiceover using ElevenLabs or Qwen3-TTS, with optional burned captions",
       "status": "stable",
       "created": "2025-12-08",
-      "updated": "2026-02-19"
+      "updated": "2026-10-12"
     },
     "contribute": {
       "path": ".claude/commands/contribute.md",
@@ -187,7 +187,7 @@
       "description": "First-time toolkit setup - cloud GPU, file transfer, voice, and prerequisites",
       "status": "beta",
       "created": "2026-03-23",
-      "updated": "2026-10-01"
+      "updated": "2026-10-12"
     },
     "thumbnail": {
       "path": ".claude/commands/thumbnail.md",
@@ -198,10 +198,10 @@
     },
     "publish": {
       "path": ".claude/commands/publish.md",
-      "description": "Publish a finished video to YouTube - auto-fills metadata from project.json, then uploads",
+      "description": "Publish a finished video to YouTube - auto-fills metadata and thumbnail (from /thumbnail) from project.json, then uploads; Shorts via tools/cutdown.py first",
       "status": "beta",
       "created": "2026-06-09",
-      "updated": "2026-06-09"
+      "updated": "2026-10-12"
     }
   },
   "tools": {
@@ -220,7 +220,7 @@
       },
       "status": "stable",
       "created": "2025-12-08",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "music": {
       "path": "tools/music.py",
@@ -276,7 +276,7 @@
         "MODAL_MUSIC_GEN_ENDPOINT_URL"
       ],
       "created": "2026-03-22",
-      "updated": "2026-04-03"
+      "updated": "2026-10-12"
     },
     "sfx": {
       "path": "tools/sfx.py",
@@ -296,7 +296,7 @@
         "model": "eleven_multilingual_v2 (default), eleven_flash_v2_5, eleven_v3, eleven_v4 (also on --sync, with stability+similarity). Deprecated eleven_turbo_v2_5 is accepted with a warning and sent as eleven_flash_v2_5"
       },
       "created": "2025-12-28",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "addmusic": {
       "path": "tools/addmusic.py",
@@ -312,7 +312,7 @@
       "usage": "uv run tools/dewatermark.py --input video.mp4 --preset sora --output clean.mp4 --runpod",
       "status": "beta",
       "optional": true,
-      "requires": "RunPod account OR local NVIDIA GPU + ProPainter (~2GB)",
+      "requires": "Modal or RunPod account, OR local NVIDIA GPU + ProPainter (~2GB)",
       "presets": [
         "notebooklm",
         "tiktok",
@@ -322,7 +322,7 @@
         "stock-center"
       ],
       "created": "2025-12-29",
-      "updated": "2025-12-30"
+      "updated": "2026-10-12"
     },
     "locate_watermark": {
       "path": "tools/locate_watermark.py",
@@ -347,7 +347,7 @@
       "usage": "uv run tools/verify_setup.py [--test] [--json]",
       "status": "beta",
       "created": "2026-03-23",
-      "updated": "2026-10-01"
+      "updated": "2026-10-12"
     },
     "modal_setup": {
       "path": "tools/modal_setup.py",
@@ -440,7 +440,7 @@
       ],
       "estimatedCost": "$0.01-0.02 per image",
       "created": "2026-01-01",
-      "updated": "2026-01-05"
+      "updated": "2026-10-12"
     },
     "upscale": {
       "path": "tools/upscale.py",
@@ -449,7 +449,7 @@
       "status": "stable",
       "category": "image-editing",
       "backend": "realesrgan",
-      "requires": "RunPod account",
+      "requires": "Modal or RunPod account",
       "options": {
         "scale": [
           2,
@@ -473,7 +473,7 @@
       ],
       "estimatedCost": "$0.01-0.05 per image",
       "created": "2026-01-04",
-      "updated": "2026-01-05"
+      "updated": "2026-10-12"
     },
     "sadtalker": {
       "path": "tools/sadtalker.py",
@@ -482,7 +482,7 @@
       "status": "beta",
       "category": "video-generation",
       "backend": "sadtalker",
-      "requires": "RunPod account",
+      "requires": "Modal or RunPod account",
       "options": {
         "presets": [
           "default",
@@ -510,7 +510,7 @@
       "estimatedCost": "$0.02-0.15 per video (depends on audio length)",
       "documentation": "docs/sadtalker.md",
       "created": "2026-01-11",
-      "updated": "2026-01-12"
+      "updated": "2026-10-12"
     },
     "soulx": {
       "path": "tools/soulx.py",
@@ -535,7 +535,7 @@
       "estimatedCost": "Pro ~$0.0024 per second of output (measured 6.4-7.9x realtime on A10G), plus a one-off ~600s torch.compile per container per resolution; Lite ~$0.0004 per second of output",
       "documentation": "docs/soulx.md",
       "created": "2026-08-31",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "qwen3_tts": {
       "path": "tools/qwen3_tts.py",
@@ -544,7 +544,7 @@
       "status": "beta",
       "category": "audio-generation",
       "backend": "qwen3-tts",
-      "requires": "RunPod account",
+      "requires": "Modal or RunPod account",
       "options": {
         "speakers": [
           "Ryan",
@@ -586,7 +586,7 @@
       ],
       "estimatedCost": "$0.005-0.10 per generation",
       "created": "2026-02-19",
-      "updated": "2026-06-09"
+      "updated": "2026-10-12"
     },
     "sixtydb_tts": {
       "path": "tools/sixtydb_tts.py",
@@ -660,7 +660,7 @@
         "ELEVENLABS_API_KEY"
       ],
       "created": "2026-05-07",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "captions": {
       "path": "tools/captions.py",
@@ -728,7 +728,7 @@
       ],
       "estimatedCost": "$0.01-0.03 per image warm; ~$0.06 including a Modal cold start",
       "created": "2026-03-14",
-      "updated": "2026-10-02"
+      "updated": "2026-10-12"
     },
     "ideogram4": {
       "path": "tools/ideogram4.py",
@@ -745,7 +745,7 @@
         ],
         "model": [
           "4 (default)",
-          "4.5 (opt-in, v2 API; not yet run live)"
+          "4.5 (opt-in, v2 API; use with --json)"
         ],
         "rendering_speed": [
           "FLASH",
@@ -755,7 +755,9 @@
         ],
         "brand": true
       },
-      "note": "Commercial license via paid API. Skill `.claude/skills/ideogram4/` teaches the JSON caption format; Claude is the magic-prompt expander. Live-tested on --model 4, the default (json_prompt + text_prompt paths). --model 4.5 (opt-in) posts multipart to /v2/image/generate/ideogram-4-5: --speed maps to quality (FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high) and --resolution must be auto or WxH (multiples of 32, sides >= 256, <= 2048x2048 pixels, aspect <= 6:1). Checked against Ideogram's docs and a mocked run; not yet run live."
+      "note": "Commercial license via paid API. Skill `.claude/skills/ideogram4/` teaches the JSON caption format; Claude is the magic-prompt expander. Live-tested on --model 4, the default (json_prompt + text_prompt paths). --model 4.5 (opt-in) posts multipart to /v2/image/generate/ideogram-4-5: --speed maps to quality (FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high) and --resolution must be auto or WxH (multiples of 32, sides >= 256, <= 2048x2048 pixels, aspect <= 6:1). Run live 2026-10-12: JSON captions render near-perfect text, plain prompts gain garbled filler text. 4.0 stays the default because 1280x720 is off 4.5's 32-pixel grid.",
+      "created": "2026-06-08",
+      "updated": "2026-10-12"
     },
     "ltx2": {
       "path": "tools/ltx2.py",
@@ -1087,7 +1089,7 @@
       "stack": "python-moviepy",
       "status": "beta",
       "created": "2026-06-09",
-      "updated": "2026-06-09"
+      "updated": "2026-10-12"
     }
   },
   "transitions": {

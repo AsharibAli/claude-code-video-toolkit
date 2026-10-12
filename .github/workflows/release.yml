@@ -74,8 +74,8 @@ jobs:
           echo "" >> changelog.md
 
           # Get commits since previous tag
-          git log --pretty=format:"* %s (%h)" "$PREV_TAG".."$CURRENT_TAG" 2>/dev/null >> changelog.md || \
-          git log --pretty=format:"* %s (%h)" "$PREV_TAG"..HEAD >> changelog.md
+          git log --no-merges --pretty=format:"* %s (%h)" "$PREV_TAG".."$CURRENT_TAG" 2>/dev/null >> changelog.md || \
+          git log --no-merges --pretty=format:"* %s (%h)" "$PREV_TAG"..HEAD >> changelog.md
 
           echo "" >> changelog.md
           echo "" >> changelog.md

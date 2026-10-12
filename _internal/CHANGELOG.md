@@ -8,13 +8,24 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
-Model refresh, checked against each upstream on 2026-10-02. The entries below move
+Five new production steps: pre-render QC with loudness (`tools/qc.py`), `/thumbnail`,
+one-command Modal setup (`tools/modal_setup.py`), burned captions for the Remotion
+templates (`tools/captions.py` + `<Captions>`) and social cut-downs (`tools/cutdown.py`).
+
+Also a model refresh, checked against each upstream on 2026-10-02. The entries below move
 several defaults to newer releases and add newer models as opt-ins (a deploy-time
 variable for the Modal apps, `--model 4.5` for Ideogram); models not listed keep their
 current version. Endpoint URLs are unchanged, and RunPod images
 are untouched.
 
 ### Changed
+- **Remotion skills synced to upstream v4.0.535** (via 4.0.533; #105, #113).
+- **concept-explainer-short captions pick Whisper `turbo` on CUDA.** `whisperModel: "auto"`
+  (the new template default) uses turbo with a GPU and `base` on CPU; an explicit model
+  name still wins. Needs `openai-whisper>=20240930`.
+- **Release notes skip merge commits.** `release.yml` builds the GitHub Release body
+  from `git log --no-merges`, so "Merge pull request" and branch-sync merges no longer
+  appear as bullets; the commits they bring in still do.
 - **`modal-flux2`: FLUX.2-small-decoder** (Apache-2.0, ~1.4x faster decode) and the
   `diffusers==0.41.0` release in place of the git commit pin. klein-4B stays the
   default. Modal FLUX edits now default to 4 steps / guidance 1.0 (was 50 / 4.0), as
@@ -106,8 +117,9 @@ are untouched.
   Ideogram 4 presets that break them (720x1280, 1280x720, 720x1440, 1440x720,
   1296x3168, 3168x1296) exit 2 with a suggested size. Ideogram 4 stays the default and
   sends the same requests as before; its cost log now shows QUALITY at $0.10 (was
-  $0.09) and warns that FLASH currently returns HTTP 400. 4.5 is checked against
-  Ideogram's docs and a mocked run, not yet run live.
+  $0.09) and warns that FLASH currently returns HTTP 400. Run live, 4.5 renders JSON
+  captions near-perfectly but adds garbled filler text to plain prompts, so use it with
+  `--json`. 4.0 stays the default because 1280x720 (YouTube, `/thumbnail`) is off 4.5's grid.
 - **LTX-2.5 as a deploy-time opt-in** (`LTX2_VERSION=2.5` on `modal-ltx2`). LTX-2.3
   stays the default and its image is unchanged, so redeploying 2.3 rebuilds nothing.
   2.5 runs LTX-2 v1.4.2 on torch 2.13 / CUDA 13.0 with the gated `Lightricks/LTX-2.5`
@@ -120,6 +132,11 @@ are untouched.
   about 25-45% slower per clip, so 2.3 stays the default.
 
 ### Fixed
+- **`modal-flux2` and `modal-image-edit` crash-looped on fresh builds** (seen as an
+  endless cold start): open-ended `transformers` now needs torch 2.6, so both images
+  move to torch 2.6.0 (#106). The RunPod flux2 and qwen-edit Dockerfiles get the same
+  bump, and their pip specifiers are now quoted, since the shell had been reading `>=`
+  as a redirect and dropping every version floor. RunPod images are not rebuilt yet.
 - **Modal setup docs:** every GPU app needs a payment method on a new workspace, not
   just the A100s (A10G deploys fail too). Also documented: Modal's Hugging Face secret
   template defaults to the name `huggingface-secret`, `ltx2` needs access to Google's
@@ -127,6 +144,8 @@ are untouched.
   switching an opt-in should use `modal deploy --strategy recreate`.
 
 ### Notes
+- Upload-Post (multi-platform publishing) is listed under the README's Community
+  add-ons (#103, #107).
 - `FLUX2_MODEL=klein-9b` needs the `huggingface-token` Modal secret too (gated
   weights), like `modal-ltx2`.
 - `qwen-tts` pinned to 0.1.1 in `modal-qwen3-tts`; no newer Qwen TTS model exists.

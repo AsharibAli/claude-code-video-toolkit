@@ -76,9 +76,10 @@ uv run tools/ideogram4.py --json caption.json --speed QUALITY --resolution 2048x
 ## Ideogram 4.5 (opt-in)
 
 `--model 4.5` sends the same flags to Ideogram 4.5 on the v2 API
-(`POST /v2/image/generate/ideogram-4-5`, multipart like the v1 call). It has **not been run
-live yet**: it is checked against Ideogram's docs and a mocked run only, so Ideogram 4 stays
-the default until it has been.
+(`POST /v2/image/generate/ideogram-4-5`, multipart like the v1 call). It has been run live:
+**JSON captions render near-perfect text; plain prompts add garbled filler text**, so always
+send a JSON caption to 4.5. Ideogram 4 stays the default because 4.5 sizes must be multiples
+of 32, which rules out exact YouTube 1280x720 (`/thumbnail` uses 4.0 for that).
 
 ```bash
 uv run tools/ideogram4.py --model 4.5 --json caption.json --speed QUALITY --resolution 1440x2560 --output card.png

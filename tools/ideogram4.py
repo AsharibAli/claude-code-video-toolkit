@@ -12,8 +12,9 @@ Backend: Ideogram's hosted v4 API (POST /v1/ideogram-v4/generate). Paid plans in
 commercial license. Needs IDEOGRAM_API_KEY in .env (get a key at developer.ideogram.ai).
 
 Ideogram 4.5 is an opt-in (--model 4.5). The same flags go to its v2 endpoint
-(POST /v2/image/generate/ideogram-4-5), also as multipart/form-data. It has not been run
-live yet, so Ideogram 4 stays the default. What differs on 4.5:
+(POST /v2/image/generate/ideogram-4-5), also as multipart/form-data. Run live, it renders
+JSON captions near-perfectly but adds garbled filler text to plain prompts. Ideogram 4 stays
+the default because 4.5 sizes must be multiples of 32 (no exact 1280x720). What differs on 4.5:
   - Both prompt modes fill its single `prompt` field (a --json caption as compact JSON).
   - --speed sets `quality`: FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high.
   - --resolution is sent as `size`: 'auto', or WIDTHxHEIGHT with both sides multiples of
@@ -364,7 +365,7 @@ posts the caption as the API's json_prompt (no server-side magic prompt — Clau
 With --model 4.5 it goes in `prompt`: a valid caption skips magic prompt, an invalid one
 is rewritten by it.
 
---model 4.5 is an opt-in that has not been run live yet. It posts multipart to
+--model 4.5 is an opt-in (use it with --json; plain prompts gain filler text). It posts multipart to
 /v2/image/generate/ideogram-4-5 with the caption or text in `prompt`, --speed as `quality`
 (FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high) and --resolution as `size`.
         """,
@@ -385,7 +386,7 @@ is rewritten by it.
     parser.add_argument("--output", "-o", required=True, help="Output PNG path")
     parser.add_argument("--brand", help="Brand name — inject brands/<name>/brand.json colors into the caption palette (JSON mode)")
     parser.add_argument("--model", choices=MODELS, default=DEFAULT_MODEL,
-                        help="Ideogram model: 4 (default) or 4.5 (opt-in, v2 API; not yet run live)")
+                        help="Ideogram model: 4 (default) or 4.5 (opt-in, v2 API; use with --json)")
     parser.add_argument("--speed", choices=RENDERING_SPEEDS, default="DEFAULT",
                         help="Rendering speed / quality tier (default: DEFAULT). With --model 4.5 it sets "
                              "quality: FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high")
