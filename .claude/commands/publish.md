@@ -45,7 +45,7 @@ editable, and re-runnable. If a `publish` block already exists, use it as defaul
 | `description` | Existing `publish.description`, else auto-draft: a 1–2 line summary from the scene narration/titles + a channel footer (links, hashtags). Keep ≤5000 chars. |
 | `tags` | Existing `publish.tags`, else derive 5–12 topical tags from scene titles + the brand. Comma-joined when passed to the tool. |
 | `category` | Default `"22"` (People & Blogs). Override per channel/topic — e.g. `"28"` (Science & Tech), `"27"` (Education), `"24"` (Entertainment). |
-| `thumbnail` | Look for `out/thumbnail.*` or `public/thumbnail.*`. If none and the user wants one, offer to generate via `tools/ideogram4.py` (see the `ideogram4` skill). |
+| `thumbnail` | Existing `publish.thumbnail`, else `out/thumbnail.*` or `public/thumbnail.*`. If none and the user wants one, run `/thumbnail` first. |
 | `privacy` | Default **`private`** (safe — the video uploads but stays hidden until you flip it). Offer `unlisted`, `public`, or a scheduled go-live (`--publish-at`, e.g. next morning ~09:00 local in UTC) if the user asks. |
 | `playlist` | Optional; only if the user has one. |
 

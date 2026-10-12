@@ -58,6 +58,25 @@ and add its `bin\` directory to `PATH`.
 
 Each AI tool has its own Modal app. Deploy only what you need, or deploy all of them — idle apps cost nothing.
 
+`tools/modal_setup.py` deploys apps and writes each endpoint URL into `.env` for you:
+
+```bash
+uv run tools/modal_setup.py --list               # deployed? in .env? stale?
+uv run tools/modal_setup.py qwen3_tts flux2      # deploy these, save their URLs
+uv run tools/modal_setup.py --all                # every app except ltx2
+uv run tools/modal_setup.py ltx2                 # ltx2 is never part of --all
+uv run tools/modal_setup.py --sync-env           # no deploy: fix .env from what's live
+uv run tools/modal_setup.py --all --dry-run      # print the commands instead
+```
+
+It deploys one app at a time, runs SoulX's `populate_weights` before SoulX's deploy, and
+asks Modal's API for each URL rather than parsing the deploy log, so wrapped lines and
+truncated labels can't garble it. Before deploying an app that needs gated Hugging Face
+weights, it checks that the secret exists (see below). `--sync-env` is the quick fix if
+you deployed by hand, or if `.env` went stale after a redeploy under another workspace.
+
+The manual equivalent, and what the tool runs under the hood:
+
 ```bash
 # Speech generation (most commonly used)
 uv run modal deploy docker/modal-qwen3-tts/app.py
@@ -93,8 +112,12 @@ deploys cost you nothing extra in compute — only wall-clock.
 functions` (seen 2026-10-02), not just the bigger GPUs. The Starter plan's $30/month of
 included compute still covers typical use. The image still gets built and cached before
 that error, so re-deploying after adding a payment method is fast. `ltx2` additionally
-needs a Modal secret named `huggingface-token` (key `HF_TOKEN`). Modal's Hugging Face
-secret template fills in `huggingface-secret` as the name, so change it. The token's
+needs a Modal secret holding your Hugging Face token under the key `HF_TOKEN`. The apps
+look for a secret named `huggingface-token`. Modal's Hugging Face secret template fills in
+`huggingface-secret` as the name instead. Either rename it, or deploy with
+`HF_SECRET_NAME=huggingface-secret` set. `modal_setup.py` sets that variable for you when
+`huggingface-secret` is the only one it finds, and `--hf-secret NAME` picks any other
+name. The token's
 account also needs access to Google's gated Gemma 3 text encoder,
 https://huggingface.co/google/gemma-3-12b-it-qat-q4_0-unquantized. Google approves those
 requests by hand, so ask well before you deploy. The deploy fails on a missing secret
@@ -128,6 +151,9 @@ at https://huggingface.co/Lightricks/LTX-2.5 with the `huggingface-token` accoun
 LTX2_VERSION=2.5 uv run modal deploy --strategy recreate docker/modal-ltx2/app.py
 ```
 
+With `modal_setup.py`, pass `--recreate` in place of `--strategy recreate`, e.g.
+`FLUX2_MODEL=klein-9b uv run tools/modal_setup.py flux2 --recreate`.
+
 The endpoint URL stays the same; deploy again without the variable, also with
 `--strategy recreate`, to switch back. `--strategy recreate` stops the containers that
 were running before the deploy, so a warm container from the previous variant can't
@@ -140,7 +166,7 @@ It stays set for the rest of that PowerShell session, so clear it with
 `Remove-Item Env:FLUX2_MODEL` before you deploy the default again. The same goes for
 `IMAGE_EDIT_MODEL` and `LTX2_VERSION`.
 
-Each deploy prints an endpoint URL like:
+If you deploy by hand, each deploy prints an endpoint URL like:
 ```
 https://yourname--video-toolkit-qwen3-tts-ttsengine-generate.modal.run
 ```
@@ -166,7 +192,8 @@ URL Modal actually prints; don't reconstruct it from the pattern. Note that the 
 log wraps long URLs across lines, so check for a `(label truncated)` marker and rejoin
 the pieces.
 
-> **Tip:** `/setup` automates this — it runs each deploy, parses the URL, and writes it to `.env` for you.
+> **Tip:** skip the copying: `uv run tools/modal_setup.py --sync-env` reads every deployed
+> app's URL from Modal and writes it to `.env`.
 
 ## Cloudflare R2 (Recommended)
 
@@ -282,6 +309,9 @@ uv run modal billing report --for today --json
 # View container logs
 uv run modal app logs video-toolkit-upscale
 
+# Which apps are deployed, and does .env agree?
+uv run tools/modal_setup.py --list
+
 # Verify your setup
 uv run tools/verify_setup.py
 ```
@@ -304,7 +334,7 @@ RunPod is also supported as a fallback provider. Use `--cloud runpod` on any too
 | Aspect | Modal | RunPod |
 |--------|-------|--------|
 | **Free tier** | $30/mo compute | None (pay-as-you-go) |
-| **Setup** | `modal deploy` | `--setup` flag per tool |
+| **Setup** | `tools/modal_setup.py` | `--setup` flag per tool |
 | **Cold start** | Faster (cached layers) | Slower (Docker pull) |
 | **Invocation** | Synchronous POST | Async submit + poll |
 | **Auth** | Token optional for web endpoints | `RUNPOD_API_KEY` required |

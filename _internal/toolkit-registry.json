@@ -189,6 +189,13 @@
       "created": "2026-03-23",
       "updated": "2026-10-01"
     },
+    "thumbnail": {
+      "path": ".claude/commands/thumbnail.md",
+      "description": "Generate a 1280x720 YouTube thumbnail for a project - hook phrase + brand colours as an Ideogram 4 JSON caption, text checked, written to out/thumbnail.png for /publish",
+      "status": "beta",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
+    },
     "publish": {
       "path": ".claude/commands/publish.md",
       "description": "Publish a finished video to YouTube - auto-fills metadata from project.json, then uploads",
@@ -341,6 +348,15 @@
       "status": "beta",
       "created": "2026-03-23",
       "updated": "2026-10-01"
+    },
+    "modal_setup": {
+      "path": "tools/modal_setup.py",
+      "description": "Deploy the Modal apps and write their endpoint URLs into .env (URLs read from Modal's API); --list shows deploy/.env status, --sync-env fixes .env without deploying, --hf-secret / HF_SECRET_NAME picks the Hugging Face secret for gated apps",
+      "usage": "uv run tools/modal_setup.py --all",
+      "status": "beta",
+      "requires": "uv sync --extra modal, authenticated Modal CLI",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "notebooklm_brand": {
       "path": "tools/notebooklm_brand.py",
@@ -592,6 +608,16 @@
       "requires": "ffprobe (from ffmpeg)",
       "created": "2026-02-24",
       "updated": "2026-02-24"
+    },
+    "qc": {
+      "path": "tools/qc.py",
+      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP). --fix normalises loudness; scene originals kept in .qc-backup/",
+      "usage": "uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4",
+      "status": "beta",
+      "category": "project",
+      "requires": "ffmpeg + ffprobe",
+      "created": "2026-10-12",
+      "updated": "2026-10-12"
     },
     "align_captions": {
       "path": "tools/align_captions.py",
@@ -907,6 +933,7 @@
       "name": "Modal",
       "description": "Serverless GPU cloud with Python-native deployment and fast cold starts",
       "documentation": "docs/modal-setup.md",
+      "setupTool": "tools/modal_setup.py",
       "envVars": [
         "MODAL_TOKEN_ID",
         "MODAL_TOKEN_SECRET"

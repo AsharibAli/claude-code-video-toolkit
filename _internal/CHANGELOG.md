@@ -45,6 +45,34 @@ are untouched.
   $3.95/h; L40S added) and the GPU each Modal app actually runs on.
 
 ### Added
+- **`tools/qc.py` — pre-render QC + loudness.** One command run before `npm run render`
+  (or `build.py`): missing media referenced by the config, narration longer than its scene
+  (cut off) or >3s shorter (dead air), wpm pacing per scene, and per-scene loudness
+  consistency. `--render out/video.mp4` checks the finished video against YouTube's
+  -14 LUFS / -1 dBTP; nothing in the templates normalises loudness, and the first project
+  checked had shipped at -22.5 LUFS. `--fix` normalises loudness only: scene VO to
+  -16 LUFS in place (originals in `.qc-backup/`), the render to a new `<name>.loudnorm.mp4`
+  with the video stream copied. Reuses `sync_timing.py`'s config parsing and `pacing.py`'s
+  labels; reads Remotion projects and concept-explainer-short `scenes.json`.
+- **`/thumbnail` command.** Generates a 1280×720 YouTube thumbnail for a project.
+  Claude reads the project, script and brand, proposes a 1–3 word hook phrase, writes
+  an Ideogram 4 JSON caption (text on the left, nothing under YouTube's duration badge),
+  renders it with `ideogram4.py --resolution 1280x720`, reads the image back to check the
+  spelling, and records it as `publish.thumbnail` so `/publish` uploads it. ~$0.10 per
+  image.
+- **`tools/modal_setup.py`: one-command Modal setup.** `modal_setup.py qwen3_tts flux2`
+  (or `--all`, which leaves out `ltx2`) deploys each app in turn and writes its endpoint
+  URL into `.env`. It runs SoulX's `populate_weights` first, and reads every URL from
+  Modal's API, not the deploy log, which wraps and truncates long URLs. `--list` shows
+  what's deployed and whether `.env` agrees. `--sync-env` fills `.env` from apps you
+  already deployed, without redeploying. `--recreate` covers variant switches. Failed
+  deploys print a hint (payment method, rate limit, gated Hugging Face access).
+  `qwen3_tts.py --setup --cloud modal` now uses it.
+- **`HF_SECRET_NAME` deploy-time override** for the gated `ltx2` and `flux2` (klein-9B)
+  apps. They still default to the `huggingface-token` secret. Modal's Hugging Face template
+  names the secret `huggingface-secret`, which made first deploys fail. `modal_setup.py`
+  now checks that the secret exists before deploying, and picks up `huggingface-secret`
+  automatically; `--hf-secret NAME` overrides it.
 - **Burned captions for the Remotion templates.** `tools/captions.py` transcribes narration
   (ElevenLabs Scribe or local whisper) and writes a word-level `<name>.captions.json` beside each
   audio file, aligned to the scene's `.txt` script so names are spelled as written. A new shared
