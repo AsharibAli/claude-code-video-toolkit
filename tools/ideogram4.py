@@ -11,10 +11,20 @@ advantage lives in the model's structured JSON caption format. See the `ideogram
 Backend: Ideogram's hosted v4 API (POST /v1/ideogram-v4/generate). Paid plans include a
 commercial license. Needs IDEOGRAM_API_KEY in .env (get a key at developer.ideogram.ai).
 
+Ideogram 4.5 is an opt-in (--model 4.5). The same flags go to its v2 endpoint
+(POST /v2/image/generate/ideogram-4-5), also as multipart/form-data. It has not been run
+live yet, so Ideogram 4 stays the default. What differs on 4.5:
+  - Both prompt modes fill its single `prompt` field (a --json caption as compact JSON).
+  - --speed sets `quality`: FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high.
+  - --resolution is sent as `size`: 'auto', or WIDTHxHEIGHT with both sides multiples of
+    32 and at least 256px, at most 2048x2048 pixels in total, aspect ratio at most 6:1.
+
 Two prompt modes (mutually exclusive, mirroring the API's text_prompt vs json_prompt):
-  --json    Post a structured JSON caption as json_prompt (recommended for text/layout).
-            Claude authors the caption via the ideogram4 skill. Pass a file or '-' for stdin.
-  --prompt  Post plain text as text_prompt (Ideogram's server-side magic prompt expands it).
+  --json    Post a structured JSON caption as json_prompt (recommended for text/layout);
+            with --model 4.5 it goes in `prompt`. Claude authors the caption via the
+            ideogram4 skill. Pass a file or '-' for stdin.
+  --prompt  Post plain text as text_prompt, or `prompt` with --model 4.5 (Ideogram's
+            server-side magic prompt expands it).
 
 Examples:
   # Structured caption (recommended) — Claude writes caption.json via the skill
@@ -31,11 +41,15 @@ Examples:
 
   # Quality tier + resolution
   uv run tools/ideogram4.py --json caption.json --speed QUALITY --resolution 2048x2048 --output slide.png
+
+  # Ideogram 4.5 (opt-in)
+  uv run tools/ideogram4.py --model 4.5 --json caption.json --resolution 1440x2560 --output card.png
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Optional
@@ -54,8 +68,28 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 API_URL = "https://api.ideogram.ai/v1/ideogram-v4/generate"
 RENDERING_SPEEDS = ["FLASH", "TURBO", "DEFAULT", "QUALITY"]
-# Rough per-image cost by tier (USD) for cost-awareness logging.
-SPEED_COST = {"FLASH": 0.02, "TURBO": 0.03, "DEFAULT": 0.06, "QUALITY": 0.09}
+# Per-image list price by tier (USD) for cost-awareness logging, from ideogram.ai/pricing
+# (API tab, checked 2026-10-12). FLASH has no published price: Ideogram's docs say it is
+# "coming soon" for Ideogram 4 and currently returns HTTP 400. It stays selectable.
+SPEED_COST = {"TURBO": 0.03, "DEFAULT": 0.06, "QUALITY": 0.10}
+
+# Ideogram 4.5, opt-in via --model 4.5. Sent as multipart/form-data like the v1 call.
+MODELS = ["4", "4.5"]
+DEFAULT_MODEL = "4"
+API_URL_45 = "https://api.ideogram.ai/v2/image/generate/ideogram-4-5"
+# --speed -> 4.5 `quality`. TURBO, DEFAULT and QUALITY map to low, medium and high at
+# the same price as on Ideogram 4. FLASH has no Ideogram 4 price; it maps to low too,
+# the cheapest tier text-to-image accepts (4.5's very_low needs source images).
+SPEED_TO_QUALITY_45 = {"FLASH": "low", "TURBO": "low", "DEFAULT": "medium", "QUALITY": "high"}
+# 4.5 per-image list price by quality (USD, same source); 1K and 2K sizes cost the same.
+QUALITY_COST_45 = {"low": 0.03, "medium": 0.06, "high": 0.10}
+# v1 resolution presets that break 4.5's size rules, each with a size that passes. The
+# first four keep the exact aspect ratio at twice the size.
+SIZE_SUGGESTIONS_45 = {
+    "720x1280": "1440x2560", "1280x720": "2560x1440",
+    "720x1440": "1440x2880", "1440x720": "2880x1440",
+    "1296x3168": "1280x3072", "3168x1296": "3072x1280",
+}
 
 
 def log(msg: str, level: str = "info"):
@@ -119,26 +153,15 @@ def inject_brand_palette(caption: dict, palette: list[str]) -> dict:
     return caption
 
 
-def generate(
-    api_key: str,
+def build_fields_4(
+    text_prompt: Optional[str],
+    json_prompt: Optional[dict],
     *,
-    text_prompt: Optional[str] = None,
-    json_prompt: Optional[dict] = None,
-    output_path: str,
-    rendering_speed: str = "DEFAULT",
-    resolution: Optional[str] = None,
-    copyright_detection: bool = False,
-    timeout: int = 300,
-) -> Optional[str]:
-    """Call the Ideogram v4 generate endpoint and download the result.
-
-    Exactly one of text_prompt / json_prompt must be provided. Returns the output path
-    on success, None on failure.
-    """
-    if (text_prompt is None) == (json_prompt is None):
-        log("Provide exactly one of text_prompt / json_prompt.", "error")
-        return None
-
+    rendering_speed: str,
+    resolution: Optional[str],
+    copyright_detection: bool,
+) -> dict[str, tuple]:
+    """Multipart fields for Ideogram 4 on POST /v1/ideogram-v4/generate (the default)."""
     # Multipart/form-data: send each field as (None, value). json_prompt is serialized
     # compactly with non-ASCII preserved, per the model's caption format.
     fields: dict[str, tuple] = {"rendering_speed": (None, rendering_speed)}
@@ -155,12 +178,117 @@ def generate(
     if copyright_detection:
         fields["enable_copyright_detection"] = (None, "true")
 
-    cost = SPEED_COST.get(rendering_speed, 0.06)
-    log(f"Speed: {rendering_speed} (~${cost:.2f}/image)  Resolution: {resolution or 'API default'}", "dim")
+    if rendering_speed == "FLASH":
+        log("Ideogram's docs say FLASH currently returns HTTP 400 for Ideogram 4 ('coming soon'); "
+            "TURBO is the cheapest tier that works. Sending FLASH as asked.", "warn")
+    cost = SPEED_COST.get(rendering_speed)
+    price = f"~${cost:.2f}/image" if cost is not None else "no published price"
+    log(f"Speed: {rendering_speed} ({price})  Resolution: {resolution or 'API default'}", "dim")
+    return fields
+
+
+def size_error_45(size: str) -> Optional[str]:
+    """Check --resolution against Ideogram 4.5's documented size rules.
+
+    Returns an error message, or None when the size passes. Passing is necessary but not
+    sufficient: a text-to-image size must also be one of Ideogram's supported 1K/2K
+    presets, which aren't published as a list, so the API can still answer HTTP 400.
+    """
+    if size == "auto":
+        return None
+    if size == "source":
+        return ("--resolution source needs source images, which this tool doesn't send. "
+                "Use 'auto' or WIDTHxHEIGHT.")
+    m = re.fullmatch(r"(\d+)x(\d+)", size)
+    if not m:
+        return f"--resolution must be 'auto' or WIDTHxHEIGHT, e.g. 1440x2560 (got {size!r})."
+    w, h = int(m.group(1)), int(m.group(2))
+    problems = []
+    if w % 32 or h % 32:
+        problems.append("both sides must be multiples of 32")
+    if min(w, h) < 256:
+        problems.append("both sides must be at least 256px")
+    if w * h > 2048 * 2048:
+        problems.append("at most 2048x2048 pixels in total")
+    if max(w, h) > 6 * min(w, h):
+        problems.append("aspect ratio at most 6:1")
+    if not problems:
+        return None
+    hint = SIZE_SUGGESTIONS_45.get(size)
+    try_size = f"--resolution {hint}" if hint else "a preset such as 1024x1024, 2048x2048 or 1440x2560"
+    return f"Ideogram 4.5 can't use --resolution {size} ({'; '.join(problems)}). Try {try_size}, or 'auto'."
+
+
+def build_fields_45(
+    text_prompt: Optional[str],
+    json_prompt: Optional[dict],
+    *,
+    rendering_speed: str,
+    resolution: Optional[str],
+    copyright_detection: bool,
+) -> dict[str, tuple]:
+    """Multipart fields for Ideogram 4.5 on POST /v2/image/generate/ideogram-4-5 (opt-in).
+
+    v2 has one `prompt` field for plain text or a JSON caption (4.5 reads the Ideogram 4
+    caption format). Values go as (None, str) `files=` entries, as in the v1 call, because
+    requests sends `data=` on its own as form-urlencoded rather than multipart.
+    """
+    if text_prompt is not None:
+        prompt = text_prompt
+        log(f"prompt: {text_prompt}", "info")
+    else:
+        prompt = json.dumps(json_prompt, separators=(",", ":"), ensure_ascii=False)
+        hld = json_prompt.get("high_level_description", "")
+        log(f"prompt (JSON caption): {hld or '(structured caption)'}", "info")
+    quality = SPEED_TO_QUALITY_45[rendering_speed]
+    fields: dict[str, tuple] = {"prompt": (None, prompt), "quality": (None, quality)}
+    if resolution:
+        fields["size"] = (None, resolution)
+    if copyright_detection:
+        fields["enable_copyright_detection"] = (None, "true")
+
+    cost = QUALITY_COST_45[quality]
+    log(f"Quality: {quality} (from --speed {rendering_speed}, ~${cost:.2f}/image)"
+        f"  Size: {resolution or 'API default (auto)'}", "dim")
+    return fields
+
+
+def generate(
+    api_key: str,
+    *,
+    text_prompt: Optional[str] = None,
+    json_prompt: Optional[dict] = None,
+    output_path: str,
+    rendering_speed: str = "DEFAULT",
+    resolution: Optional[str] = None,
+    copyright_detection: bool = False,
+    timeout: int = 300,
+    model: str = DEFAULT_MODEL,
+) -> Optional[str]:
+    """Call the Ideogram generate endpoint for `model` and download the result.
+
+    Exactly one of text_prompt / json_prompt must be provided. Returns the output path
+    on success, None on failure.
+    """
+    if (text_prompt is None) == (json_prompt is None):
+        log("Provide exactly one of text_prompt / json_prompt.", "error")
+        return None
+
+    if model == "4.5":
+        api_url, build_fields = API_URL_45, build_fields_45
+    else:
+        api_url, build_fields = API_URL, build_fields_4
+    fields = build_fields(
+        text_prompt,
+        json_prompt,
+        rendering_speed=rendering_speed,
+        resolution=resolution,
+        copyright_detection=copyright_detection,
+    )
 
     try:
         response = requests.post(
-            API_URL,
+            api_url,
             headers={"Api-Key": api_key},
             files=fields,
             timeout=timeout,
@@ -229,33 +357,52 @@ Examples:
   cat caption.json | %(prog)s --json - --output title.png
   %(prog)s --prompt "Title card: 'SHIP FASTER' bold" --output thumb.png
   %(prog)s --json caption.json --brand digital-samba --speed QUALITY --output cta.png
+  %(prog)s --model 4.5 --json caption.json --resolution 1440x2560 --output card.png
 
 Authoring captions: see the `ideogram4` skill (.claude/skills/ideogram4/). The --json path
 posts the caption as the API's json_prompt (no server-side magic prompt — Claude is the expander).
+With --model 4.5 it goes in `prompt`: a valid caption skips magic prompt, an invalid one
+is rewritten by it.
+
+--model 4.5 is an opt-in that has not been run live yet. It posts multipart to
+/v2/image/generate/ideogram-4-5 with the caption or text in `prompt`, --speed as `quality`
+(FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high) and --resolution as `size`.
         """,
     )
 
     prompt_group = parser.add_mutually_exclusive_group(required=True)
     prompt_group.add_argument(
         "--json", dest="json_src", metavar="FILE",
-        help="Structured JSON caption file (or '-' for stdin) — posted as json_prompt",
+        help="Structured JSON caption file (or '-' for stdin), posted as json_prompt "
+             "(Ideogram 4) or as prompt (--model 4.5)",
     )
     prompt_group.add_argument(
         "--prompt", "-p",
-        help="Plain text prompt — posted as text_prompt (server-side magic prompt expands it)",
+        help="Plain text prompt, posted as text_prompt (Ideogram 4) or prompt "
+             "(--model 4.5); server-side magic prompt expands it",
     )
 
     parser.add_argument("--output", "-o", required=True, help="Output PNG path")
     parser.add_argument("--brand", help="Brand name — inject brands/<name>/brand.json colors into the caption palette (JSON mode)")
+    parser.add_argument("--model", choices=MODELS, default=DEFAULT_MODEL,
+                        help="Ideogram model: 4 (default) or 4.5 (opt-in, v2 API; not yet run live)")
     parser.add_argument("--speed", choices=RENDERING_SPEEDS, default="DEFAULT",
-                        help="Rendering speed / quality tier (default: DEFAULT)")
-    parser.add_argument("--resolution", help="Resolution e.g. 2048x2048 (omit for API default; see Ideogram docs for valid values)")
+                        help="Rendering speed / quality tier (default: DEFAULT). With --model 4.5 it sets "
+                             "quality: FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high")
+    parser.add_argument("--resolution", help="Resolution e.g. 2048x2048 (omit for API default; see Ideogram docs for valid values). "
+                        "With --model 4.5: 'auto' or WIDTHxHEIGHT, both sides multiples of 32 and at least 256, "
+                        "at most 2048x2048 pixels in total, aspect ratio at most 6:1")
     parser.add_argument("--copyright-detection", action="store_true",
                         help="Enable Ideogram's copyright detection")
     parser.add_argument("--timeout", type=int, default=300, help="Request timeout seconds (default: 300)")
     parser.add_argument("--json-out", action="store_true", help="Emit a machine-readable result line to stdout")
 
     args = parser.parse_args()
+
+    if args.model == "4.5" and args.resolution:
+        size_err = size_error_45(args.resolution)
+        if size_err:
+            parser.error(size_err)
 
     from config import get_ideogram_api_key
     api_key = get_ideogram_api_key()
@@ -283,7 +430,10 @@ posts the caption as the API's json_prompt (no server-side magic prompt — Clau
             log("--brand only applies in --json mode (no palette field in plain text). Ignoring.", "warn")
 
     print(file=sys.stderr)
-    log("Ideogram 4 (hosted v4 API)", "info")
+    if args.model == "4.5":
+        log("Ideogram 4.5 (hosted v2 API, opt-in)", "info")
+    else:
+        log("Ideogram 4 (hosted v4 API)", "info")
 
     result = generate(
         api_key,
@@ -294,6 +444,7 @@ posts the caption as the API's json_prompt (no server-side magic prompt — Clau
         resolution=args.resolution,
         copyright_detection=args.copyright_detection,
         timeout=args.timeout,
+        model=args.model,
     )
 
     if args.json_out:

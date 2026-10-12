@@ -234,7 +234,7 @@ The toolkit has **two** text-to-image generators. They barely overlap — the de
 uv run tools/flux2.py --preset title-bg --brand digital-samba   # background for Remotion text overlay
 uv run tools/flux2.py --prompt "Abstract tech background, no text"
 
-# Ideogram 4 — legible IN-IMAGE text + exact color/layout (hosted API, ~$0.03-0.09/img, commercial-OK)
+# Ideogram 4 — legible IN-IMAGE text + exact color/layout (hosted API, ~$0.03-0.10/img, commercial-OK)
 uv run tools/ideogram4.py --json caption.json --output title.png   # text baked into the image
 uv run tools/ideogram4.py --prompt "Thumbnail: 'SHIP FASTER' bold" --output thumb.png
 ```
@@ -261,6 +261,8 @@ Ideogram 4 chains with the processors like any generator: `ideogram4 → upscale
 `ideogram4 → ltx2.py --input` (animate the still), or drop the PNG straight into Remotion `<Img>`.
 Ideogram 4 is generate-only here (no editing). See `.claude/skills/ideogram4/` for the JSON caption
 format — Claude authors the caption as the "magic prompt" expander; needs `IDEOGRAM_API_KEY` in `.env`.
+`--model 4.5` opts into Ideogram 4.5 on the v2 API (same flags; `--speed` maps to its quality
+tiers); 4.0 stays the default until 4.5 has been run live.
 
 ### AI Image Editing
 

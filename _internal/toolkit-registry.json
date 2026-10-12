@@ -92,9 +92,9 @@
       "status": "beta",
       "category": "image-generation",
       "backend": "ideogram-4 hosted v4 API (json_prompt)",
-      "note": "Skill teaches the JSON caption format; Claude is the magic-prompt expander. Tool: tools/ideogram4.py. Hosted paid API (commercial license, ~$0.03–0.09/img); not self-hosted. Needs IDEOGRAM_API_KEY.",
+      "note": "Skill teaches the JSON caption format; Claude is the magic-prompt expander. Tool: tools/ideogram4.py. Hosted paid API (commercial license, ~$0.03–0.10/img); not self-hosted. Needs IDEOGRAM_API_KEY. Ideogram 4.5 is an opt-in (--model 4.5, v2 API) that reads the same captions; not yet run live.",
       "created": "2026-06-08",
-      "updated": "2026-06-08"
+      "updated": "2026-10-12"
     }
   },
   "commands": {
@@ -666,12 +666,16 @@
       "usage": "uv run tools/ideogram4.py --json caption.json --output title.png",
       "status": "beta",
       "category": "image-generation",
-      "backend": "ideogram-4 hosted v4 API",
+      "backend": "ideogram-4 hosted v4 API (default); ideogram-4-5 hosted v2 API (--model 4.5 opt-in)",
       "requires": "IDEOGRAM_API_KEY (developer.ideogram.ai)",
       "options": {
         "modes": [
           "json_prompt (--json)",
           "text_prompt (--prompt)"
+        ],
+        "model": [
+          "4 (default)",
+          "4.5 (opt-in, v2 API; not yet run live)"
         ],
         "rendering_speed": [
           "FLASH",
@@ -681,7 +685,7 @@
         ],
         "brand": true
       },
-      "note": "Commercial license via paid API. Skill `.claude/skills/ideogram4/` teaches the JSON caption format; Claude is the magic-prompt expander. Live-tested (json_prompt + text_prompt paths)."
+      "note": "Commercial license via paid API. Skill `.claude/skills/ideogram4/` teaches the JSON caption format; Claude is the magic-prompt expander. Live-tested on --model 4, the default (json_prompt + text_prompt paths). --model 4.5 (opt-in) posts multipart to /v2/image/generate/ideogram-4-5: --speed maps to quality (FLASH and TURBO -> low, DEFAULT -> medium, QUALITY -> high) and --resolution must be auto or WxH (multiples of 32, sides >= 256, <= 2048x2048 pixels, aspect <= 6:1). Checked against Ideogram's docs and a mocked run; not yet run live."
     },
     "ltx2": {
       "path": "tools/ltx2.py",

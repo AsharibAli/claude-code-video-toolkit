@@ -19,7 +19,7 @@ caption Ideogram 4 was trained on.
 > accepts a structured `json_prompt`, so everything this skill teaches applies directly — Claude
 > builds the caption, the tool posts it as `json_prompt`. Paid API plans include a **commercial
 > license**, which the self-hostable weights (non-commercial) do not — that's why we use the API.
-> Cost is ~$0.03/image (turbo) to ~$0.09/image (quality).
+> Cost is ~$0.03/image (turbo) to ~$0.10/image (quality).
 
 ## When to Use This Skill
 
@@ -72,6 +72,42 @@ uv run tools/ideogram4.py --json caption.json --brand digital-samba --output cta
 # Quality tier + resolution
 uv run tools/ideogram4.py --json caption.json --speed QUALITY --resolution 2048x2048 --output slide.png
 ```
+
+## Ideogram 4.5 (opt-in)
+
+`--model 4.5` sends the same flags to Ideogram 4.5 on the v2 API
+(`POST /v2/image/generate/ideogram-4-5`, multipart like the v1 call). It has **not been run
+live yet**: it is checked against Ideogram's docs and a mocked run only, so Ideogram 4 stays
+the default until it has been.
+
+```bash
+uv run tools/ideogram4.py --model 4.5 --json caption.json --speed QUALITY --resolution 1440x2560 --output card.png
+```
+
+- **Prompt:** both modes go in 4.5's single `prompt` field. `--json` sends the caption as
+  compact JSON. 4.5 reads the Ideogram 4 caption format, and a valid caption skips
+  server-side magic prompt. `--prompt` text is expanded by magic prompt, as on v1.
+- **`--speed` maps to `quality`**: TURBO, DEFAULT and QUALITY at the same price as on
+  Ideogram 4, and FLASH, which has no Ideogram 4 price, to low (Ideogram's list prices,
+  checked 2026-10-12; 1K and 2K sizes cost the same):
+
+  | `--speed` | 4.5 `quality` | Per image |
+  |-----------|---------------|-----------|
+  | FLASH, TURBO | `low` | $0.03 |
+  | DEFAULT (the default) | `medium` | $0.06 |
+  | QUALITY | `high` | $0.10 |
+
+  4.5's `very_low` tier needs source images, so the tool never sends it. On `--model 4`,
+  FLASH is still sent as is, but Ideogram's docs say it currently returns HTTP 400.
+- **`--resolution` is sent as `size`:** `auto`, or WIDTHxHEIGHT with both sides multiples of
+  32 and at least 256px, at most 2048x2048 pixels in total, and an aspect ratio of at most
+  6:1. Omit it and Ideogram picks a size from the prompt. The tool checks these rules before
+  calling the API and exits 2 when a size breaks them. `1440x2560` (the 9:16 card size) and
+  `2048x2048` pass. Six Ideogram 4 presets don't, and the error suggests a replacement:
+  720x1280 (1440x2560), 1280x720 (2560x1440), 720x1440 (1440x2880), 1440x720 (2880x1440),
+  1296x3168 (1280x3072), 3168x1296 (3072x1280). Without source images Ideogram also needs
+  one of its supported 1K/2K presets, a list it doesn't publish, so a size that passes the
+  checks can still get an HTTP 400.
 
 ## Key Files
 

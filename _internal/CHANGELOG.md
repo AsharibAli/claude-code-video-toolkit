@@ -55,6 +55,15 @@ unchanged, and RunPod images are untouched.
   SadTalker; long-take drift unmeasured (tested on ~2.6s clips). ~8x faster per chunk
   than Pro at ~$0.0004 per second of output, no torch.compile. Sizes snap to a 32px
   grid. Lite is unloaded before any Pro render.
+- **Ideogram 4.5 as an opt-in** (`ideogram4.py --model 4.5`), posted as multipart to
+  `/v2/image/generate/ideogram-4-5`. `--speed` maps to its quality tiers: TURBO,
+  DEFAULT and QUALITY → low $0.03, medium $0.06 and high $0.10, the same prices as on
+  Ideogram 4; FLASH, which has no Ideogram 4 price, → low. `--resolution` is checked against 4.5's size rules; the six
+  Ideogram 4 presets that break them (720x1280, 1280x720, 720x1440, 1440x720,
+  1296x3168, 3168x1296) exit 2 with a suggested size. Ideogram 4 stays the default and
+  sends the same requests as before; its cost log now shows QUALITY at $0.10 (was
+  $0.09) and warns that FLASH currently returns HTTP 400. 4.5 is checked against
+  Ideogram's docs and a mocked run, not yet run live.
 
 ### Fixed
 - **Modal setup docs:** every GPU app needs a payment method on a new workspace, not
