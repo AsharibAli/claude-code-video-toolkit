@@ -220,7 +220,7 @@
       },
       "status": "stable",
       "created": "2025-12-08",
-      "updated": "2026-10-12"
+      "updated": "2026-10-21"
     },
     "music": {
       "path": "tools/music.py",
@@ -284,7 +284,7 @@
       "usage": "uv run tools/sfx.py --preset whoosh --output sfx.mp3",
       "status": "stable",
       "created": "2025-12-08",
-      "updated": "2025-12-08"
+      "updated": "2026-10-21"
     },
     "redub": {
       "path": "tools/redub.py",
@@ -586,7 +586,7 @@
       ],
       "estimatedCost": "$0.005-0.10 per generation",
       "created": "2026-02-19",
-      "updated": "2026-10-12"
+      "updated": "2026-10-21"
     },
     "sixtydb_tts": {
       "path": "tools/sixtydb_tts.py",

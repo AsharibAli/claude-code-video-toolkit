@@ -248,7 +248,7 @@ An open-source, AI-native video production workspace for Claude Code, featuring:
 | Commands | 15 | setup, video, brand, template, skills, contribute, record-demo, generate-voiceover, scene-review, design, versions, redub, voice-clone, thumbnail, publish |
 | Components | 12 | AnimatedBackground, SlideTransition, Label, Vignette, FilmGrain, LogoWatermark, SplitScreen, NarratorPiP, Captions, Envelope, PointingHand, MazeDecoration |
 | Transitions | 7 | glitch, rgbSplit, zoomBlur, lightLeak, clockWipe, pixelate, checkerboard |
-| Examples | 8 | hello-world, quick-spot, data-viz-chart, ds-crt-stinger, sky-blue-short, digital-samba-skill-demo, sprint-review-cho-oyu, the-space-between |
+| Examples | 10 | hello-world, quick-spot, data-viz-chart, ds-crt-stinger, sky-blue-short, digital-samba-skill-demo, sprint-review-cho-oyu, the-space-between, ds-release-649, ds-free-schedule-demo |
 
 ---
 
