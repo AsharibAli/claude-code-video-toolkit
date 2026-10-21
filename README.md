@@ -12,15 +12,15 @@ Tell [Claude Code](https://claude.ai/code) what video you want — it writes the
 
 Every frame below was generated in this workspace — click to watch.
 
-| | | |
-|:--:|:--:|:--:|
-| <a href="https://demos.digitalsamba.com/video/q2-townhall-longarm-ad.mp4"><img src="assets/readme-thumbs/q2-townhall-longarm-ad.jpg" height="280" alt="Super Bowl-style launch ad"></a> | <a href="https://demos.digitalsamba.com/video/hallucinations_short.mp4"><img src="assets/readme-thumbs/hallucinations-short.jpg" height="280" alt="AI hallucinations explainer short"></a> | <a href="https://demos.digitalsamba.com/video/short-blue-sky.mp4"><img src="assets/readme-thumbs/sky-blue-short.jpg" height="280" alt="Why is the sky blue? short"></a> |
-| **Super Bowl-style launch ad**<br>LTX-2 animated cameo,<br>dramatic AI announcer | **AI hallucinations explainer**<br>9:16 short — Ideogram 4 cards,<br>cloned voice, burned captions | **"Why is the sky blue?"**<br>52s vertical short,<br>~$0.80 in generation |
-
 | | |
 |:--:|:--:|
 | <a href="https://demos.digitalsamba.com/video/ds-release-649.mp4"><img src="assets/readme-thumbs/ds-release-649.jpg" width="430" alt="Release-notes video with product UI rebuilt from source"></a> | <a href="https://demos.digitalsamba.com/video/ds-free-schedule-demo.mp4"><img src="assets/readme-thumbs/ds-free-schedule-demo.jpg" width="430" alt="Product demo with an AI narrator tile"></a> |
 | **Release-notes video**<br>product UI rebuilt from source,<br>no screen recording | **Product demo**<br>scripted cursor and camera,<br>AI narrator tile |
+
+| | | |
+|:--:|:--:|:--:|
+| <a href="https://demos.digitalsamba.com/video/q2-townhall-longarm-ad.mp4"><img src="assets/readme-thumbs/q2-townhall-longarm-ad.jpg" height="280" alt="Super Bowl-style launch ad"></a> | <a href="https://demos.digitalsamba.com/video/hallucinations_short.mp4"><img src="assets/readme-thumbs/hallucinations-short.jpg" height="280" alt="AI hallucinations explainer short"></a> | <a href="https://demos.digitalsamba.com/video/short-blue-sky.mp4"><img src="assets/readme-thumbs/sky-blue-short.jpg" height="280" alt="Why is the sky blue? short"></a> |
+| **Super Bowl-style launch ad**<br>LTX-2 animated cameo,<br>dramatic AI announcer | **AI hallucinations explainer**<br>9:16 short — Ideogram 4 cards,<br>cloned voice, burned captions | **"Why is the sky blue?"**<br>52s vertical short,<br>~$0.80 in generation |
 
 More in the [showcase table](#templates) below.
 
