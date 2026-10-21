@@ -8,6 +8,13 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+---
+
+## 2026-10-21 (v0.21.1)
+
+Two showcase examples made without screen recording (product UIs rebuilt from source and driven by a
+scripted cursor and camera), two TTS/SFX fixes, and the Remotion skills sync to 4.0.536.
+
 ### Added
 
 - **Two synthetic demo examples**: `examples/ds-release-649` (an 80s release-notes video) and `examples/ds-free-schedule-demo` (a 26s product demo). Nothing is screen-recorded. The product screens are rebuilt from their source code and driven by a scripted cursor and camera, narrated by Lugh. (#119)
