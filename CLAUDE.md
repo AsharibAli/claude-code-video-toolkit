@@ -105,6 +105,13 @@ Reusable video components in `lib/components/`. See registry `components` sectio
 import { AnimatedBackground, SlideTransition, Label } from '../../../../lib/components';
 ```
 
+**Synthetic UI demos:** `Stage` (browser window, camera zoom/pan keyframes, cursor layer) and `Cursor` (eased
+keyframe path, click ripples) drive product screens rebuilt as static React from the app's source, so nothing is
+screen-recorded. Coordinates are canvas pixels (1440x810 by default) and every click is a frame number. For product
+walkthroughs and release-notes videos, prefer this to a Playwright recording when the app's source is readable. The
+method and its gotchas are in `.claude/skills/synthetic-ui-demo/`. The reference builds are
+`examples/ds-free-schedule-demo` and `examples/ds-release-649`, and their screen kits stay in the examples.
+
 ## Python Tools
 
 Audio, video, and image tools in `tools/`. See registry `tools` section for the full catalog with descriptions, options, presets, and env vars. Every tool supports `--help`.
