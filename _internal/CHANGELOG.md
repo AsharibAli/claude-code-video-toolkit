@@ -8,6 +8,10 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Added
+
+- **Two synthetic demo examples**: `examples/ds-release-649` (an 80s release-notes video) and `examples/ds-free-schedule-demo` (a 26s product demo). Nothing is screen-recorded. The product screens are rebuilt from their source code and driven by a scripted cursor and camera, narrated by Lugh.
+
 ### Fixed
 
 - **`sfx.py --preset pop` works.** Its 0.3s duration was under ElevenLabs' 0.5s minimum, so every call was rejected.
