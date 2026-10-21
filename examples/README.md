@@ -11,6 +11,8 @@ Curated showcase projects demonstrating toolkit capabilities.
 | data-viz-chart | moviepy + matplotlib | — | Animated time-series chart with deterministic title and source attribution. Runs with included data file. | Beginner |
 | ds-crt-stinger | LTX-2 + moviepy + PIL | — | 6s brand stinger — LTX-2 CRT LoRA footage + post-processed grunged logo | Intermediate |
 | sky-blue-short | concept-explainer-short (moviepy) | — | 52s vertical 9:16 explainer short — Qwen3 VO + Ideogram cards + LTX b-roll + burned captions. All assets committed; re-renders with `uv run build.py`. | Intermediate |
+| ds-release-649 | Remotion (custom) | [Digital Samba](https://digitalsamba.com) | 80s synthetic release-notes video. Product UIs rebuilt from source, scripted cursor and camera, Lugh voice. All assets committed. | Advanced |
+| ds-free-schedule-demo | Remotion (custom) | [Digital Samba](https://digitalsamba.com) | 26s synthetic product demo with a SoulX narrator tile. All assets committed. | Intermediate |
 | digital-samba-skill-demo | Remotion product-demo | [Digital Samba](https://digitalsamba.com) | Marketing video for Claude Code skill | Intermediate |
 | sprint-review-cho-oyu | Remotion sprint-review | [Digital Samba](https://digitalsamba.com) | iOS sprint review for Digital Samba Mobile | Intermediate |
 
@@ -22,13 +24,13 @@ Thank you to these organizations and individuals for sharing their video project
 
 | Contributor | Website | Examples Shared |
 |-------------|---------|-----------------|
-| Digital Samba | [digitalsamba.com](https://digitalsamba.com) | digital-samba-skill-demo, sprint-review-cho-oyu |
+| Digital Samba | [digitalsamba.com](https://digitalsamba.com) | digital-samba-skill-demo, sprint-review-cho-oyu, ds-release-649, ds-free-schedule-demo |
 
 *Want your project featured? Run `/contribute` and select "Share an example project".*
 
 ## Using Examples
 
-**Remotion examples** (`hello-world`, `digital-samba-skill-demo`, `sprint-review-cho-oyu`):
+**Remotion examples** (`hello-world`, `digital-samba-skill-demo`, `sprint-review-cho-oyu`, `ds-release-649`, `ds-free-schedule-demo`):
 
 ```bash
 cp -r examples/example-name projects/my-project

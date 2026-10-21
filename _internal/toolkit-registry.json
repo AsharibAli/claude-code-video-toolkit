@@ -1335,6 +1335,26 @@
       "complexity": "intermediate",
       "demo": "https://demos.digitalsamba.com/video/short-blue-sky.mp4",
       "created": "2026-06-10"
+    },
+    "ds-release-649": {
+      "path": "examples/ds-release-649/",
+      "description": "80s synthetic release-notes video for Digital Samba 649: room, dashboard and account-center screens rebuilt from product code and driven by a scripted cursor and camera; Lugh voice (Qwen3 clone), FLUX.2 portraits",
+      "template": "custom",
+      "stack": "remotion",
+      "complexity": "advanced",
+      "contributor": "Digital Samba",
+      "demo": "https://demos.digitalsamba.com/video/ds-release-649.mp4",
+      "created": "2026-10-21"
+    },
+    "ds-free-schedule-demo": {
+      "path": "examples/ds-free-schedule-demo/",
+      "description": "26s synthetic product demo of scheduling a call in the DS Free account center, with a SoulX Pro Lugh narrator tile",
+      "template": "custom",
+      "stack": "remotion",
+      "complexity": "intermediate",
+      "contributor": "Digital Samba",
+      "demo": "https://demos.digitalsamba.com/video/ds-free-schedule-demo.mp4",
+      "created": "2026-10-21"
     }
   },
   "config": {
