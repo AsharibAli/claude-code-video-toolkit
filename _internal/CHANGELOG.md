@@ -8,6 +8,11 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Fixed
+
+- **`sfx.py --preset pop` works.** Its 0.3s duration was under ElevenLabs' 0.5s minimum, so every call was rejected.
+- **`--min-tempo` for the pace clamp** (`voiceover.py`, `qwen3_tts.py`). The 0.85x stretch floor can now go as low as 0.7x, and a take that is still over `--max-wpm` after the clamp is reported as `floored`, with a hint. Before this, voices that rush hard needed a manual atempo afterwards.
+
 ---
 
 ## 2026-10-12 (v0.21.0)

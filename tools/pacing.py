@@ -12,9 +12,10 @@ This module provides the two halves of that fix:
   * measure_wpm()/pace_label() — words-per-minute from script text + audio
     duration, with "fast"/"slow"/"ok" labels for QC gates
   * clamp_pace() — pitch-preserving ffmpeg `atempo` slow-down applied when
-    a take exceeds a target wpm (floor 0.85x so it never sounds processed)
+    a take exceeds a target wpm (floor 0.85x so it never sounds processed;
+    `--min-tempo` lowers it to as far as 0.7x for voices that rush harder)
 
-Used by voiceover.py and qwen3_tts.py (`--max-wpm`). Comfortable narration
+Used by voiceover.py and qwen3_tts.py (`--max-wpm`, `--min-tempo`). Comfortable narration
 is ~140-160 wpm; see CLAUDE.md "Speaking Rate Tiers".
 """
 from __future__ import annotations
@@ -35,6 +36,16 @@ MIN_WORDS_FOR_LABEL = 6
 
 # Never stretch harder than this; beyond it artifacts become audible.
 MIN_ATEMPO = 0.85
+# How far set_min_tempo() may lower that floor. Past ~0.7x atempo smears consonants.
+MIN_ATEMPO_LIMIT = 0.7
+
+
+def set_min_tempo(value: float) -> None:
+    """Lower (or raise) the stretch floor for this process, e.g. from --min-tempo."""
+    global MIN_ATEMPO
+    if not MIN_ATEMPO_LIMIT <= value <= 1.0:
+        raise ValueError(f"min tempo must be between {MIN_ATEMPO_LIMIT} and 1.0, got {value}")
+    MIN_ATEMPO = value
 
 _MARKUP = re.compile(
     r"\[pause[^\]]*\]"          # [pause 1.0s] script markers
@@ -97,16 +108,20 @@ def clamp_pace(
     audio_path: str,
     text: str,
     max_wpm: float,
-    min_atempo: float = MIN_ATEMPO,
+    min_atempo: float | None = None,
     verbose: bool = True,
 ) -> dict:
     """Slow `audio_path` in place (pitch-preserving) if it exceeds max_wpm.
 
-    Returns {applied, wpm, atempo?, duration_seconds?, error?}:
+    Returns {applied, wpm, atempo?, floored?, duration_seconds?, error?}:
       * applied=False, no error — pace was already within target
       * applied=True — file replaced; duration_seconds is the new duration
+      * floored=True — the stretch hit the floor and the take is still over
+        max_wpm; a lower --min-tempo (or a slower reference) would finish the job
       * error set — ffmpeg/ffprobe problem; original file left untouched
     """
+    if min_atempo is None:
+        min_atempo = MIN_ATEMPO
     duration = _probe_duration(audio_path)
     wpm = measure_wpm(text, duration)
     if wpm is None:
@@ -136,10 +151,12 @@ def clamp_pace(
 
     new_duration = _probe_duration(audio_path)
     new_wpm = measure_wpm(text, new_duration)
+    floored = atempo == min_atempo and new_wpm is not None and new_wpm > max_wpm + 1
     if verbose:
         print(
             f"  Pace clamp: {wpm:.0f} wpm > {max_wpm:.0f} target — "
-            f"stretched x{1/atempo:.2f} → {new_wpm:.0f} wpm",
+            f"stretched x{1/atempo:.2f} → {new_wpm:.0f} wpm"
+            + (f" (hit the {min_atempo}x floor; try --min-tempo {max(MIN_ATEMPO_LIMIT, round(min_atempo - 0.05, 2))})" if floored else ""),
             file=sys.stderr,
         )
     return {
@@ -147,5 +164,6 @@ def clamp_pace(
         "wpm": new_wpm,
         "original_wpm": wpm,
         "atempo": round(atempo, 4),
+        "floored": floored,
         "duration_seconds": round(new_duration, 2) if new_duration else None,
     }

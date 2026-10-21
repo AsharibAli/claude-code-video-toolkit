@@ -48,7 +48,7 @@ PRESETS = {
     },
     "pop": {
         "prompt": "Soft pop sound, bubble pop, light playful UI sound",
-        "duration": 0.3,
+        "duration": 0.5,  # ElevenLabs' minimum; 0.3 was rejected on every call
     },
     "slide": {
         "prompt": "Smooth slide sound, panel sliding, drawer opening, subtle movement",

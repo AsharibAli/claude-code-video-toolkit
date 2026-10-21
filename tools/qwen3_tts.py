@@ -362,6 +362,7 @@ def generate_audio(
                         item_result["pace_adjusted"] = {
                             "original_wpm": clamp["original_wpm"],
                             "atempo": clamp["atempo"],
+                            "floored": clamp["floored"],
                         }
                     elif clamp.get("error") and verbose:
                         print(f"  Pace clamp skipped: {clamp['error']}", file=sys.stderr)
@@ -853,6 +854,13 @@ Examples:
              "voices inherit pace from the reference and resist temperature.",
     )
     parser.add_argument(
+        "--min-tempo",
+        type=float,
+        default=None,
+        help="Stretch floor for --max-wpm (default 0.85, lowest 0.7). Lower it "
+             "when a voice still lands over target after the clamp.",
+    )
+    parser.add_argument(
         "--cloud",
         type=str,
         default="modal",
@@ -908,6 +916,13 @@ Examples:
 def main():
     args = parse_args()
     verbose = not args.json
+    if args.min_tempo is not None:
+        import pacing
+        try:
+            pacing.set_min_tempo(args.min_tempo)
+        except ValueError as e:
+            print(f"Error: --min-tempo: {e}", file=sys.stderr)
+            sys.exit(1)
 
     from cloud_gpu import ProgressReporter
     reporter = ProgressReporter(mode=args.progress)
