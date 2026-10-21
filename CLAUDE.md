@@ -661,7 +661,7 @@ TTS engines do NOT consistently produce 150 WPM output. In practice:
 | Demo too fast for narration | Viewer can't follow | Decrease `playbackRate` or cut narration |
 | Demo too slow for narration | Waiting for demo to catch up | Increase `playbackRate` (1.5-2x typical) |
 | Pauses lost in TTS | Script felt spacious, audio feels rushed | Add explicit `<break time="1s"/>` in SSML or extend scene padding |
-| Cloned voice rushes | Scenes land >170 wpm; retakes also fast (temperature doesn't help) | Pace is inherited from the reference audio. Use `--max-wpm 165` (pitch-preserving atempo clamp, both voiceover.py and qwen3_tts.py), and record clone references as 12-25s of varied sentences *at narration pace* |
+| Cloned voice rushes | Scenes land >170 wpm; retakes also fast (temperature doesn't help) | Pace is inherited from the reference audio. Use `--max-wpm 165` (pitch-preserving atempo clamp, both voiceover.py and qwen3_tts.py; if a take still lands fast it hit the 0.85x floor, so add `--min-tempo 0.8`), and record clone references as 12-25s of varied sentences *at narration pace* |
 
 **Pacing QC:** voiceover.py and qwen3_tts.py report `wpm` and a `pacing` label
 (fast/slow/ok) per generated file — check these before composition. Comfortable

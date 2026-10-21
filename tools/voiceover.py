@@ -320,6 +320,13 @@ Examples:
              "Results always include wpm + a pacing label for QC.",
     )
     parser.add_argument(
+        "--min-tempo",
+        type=float,
+        default=None,
+        help="Stretch floor for --max-wpm (default 0.85, lowest 0.7). Lower it "
+             "when a voice still lands over target after the clamp.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output result as JSON (for machine parsing)",
@@ -594,6 +601,7 @@ def _apply_pacing_qc(result: dict, script: str, max_wpm: float | None) -> None:
             result["pace_adjusted"] = {
                 "original_wpm": clamp["original_wpm"],
                 "atempo": clamp["atempo"],
+                "floored": clamp["floored"],
             }
     wpm, label = pace_label(script, result.get("duration_seconds"))
     result["wpm"] = wpm
@@ -918,7 +926,8 @@ def _pace_note(result: dict) -> str:
         return ""
     note = f", {wpm:.0f} wpm"
     if result.get("pace_adjusted"):
-        note += f" [clamped from {result['pace_adjusted']['original_wpm']:.0f}]"
+        note += f" [clamped from {result['pace_adjusted']['original_wpm']:.0f}"
+        note += "; hit the tempo floor, try --min-tempo 0.8]" if result["pace_adjusted"].get("floored") else "]"
     elif result.get("pacing") in ("fast", "slow"):
         note += f" [{result['pacing'].upper()} — try --max-wpm 165]"
     return note
@@ -976,6 +985,13 @@ def main():
     load_dotenv()
     args = parse_args()
     args.model = resolve_model_id(args.model)
+    if args.min_tempo is not None:
+        import pacing
+        try:
+            pacing.set_min_tempo(args.min_tempo)
+        except ValueError as e:
+            print(f"Error: --min-tempo: {e}", file=sys.stderr)
+            sys.exit(1)
 
     provider = args.provider
 
