@@ -12,6 +12,11 @@ All notable changes to claude-code-video-toolkit.
 
 - **Two synthetic demo examples**: `examples/ds-release-649` (an 80s release-notes video) and `examples/ds-free-schedule-demo` (a 26s product demo). Nothing is screen-recorded. The product screens are rebuilt from their source code and driven by a scripted cursor and camera, narrated by Lugh.
 
+### Fixed
+
+- **`sfx.py --preset pop` works.** Its 0.3s duration was under ElevenLabs' 0.5s minimum, so every call was rejected.
+- **`--min-tempo` for the pace clamp** (`voiceover.py`, `qwen3_tts.py`). The 0.85x stretch floor can now go as low as 0.7x, and a take that is still over `--max-wpm` after the clamp is reported as `floored`, with a hint. Before this, voices that rush hard needed a manual atempo afterwards.
+
 ---
 
 ## 2026-10-12 (v0.21.0)
