@@ -49,6 +49,13 @@ export type { EnvelopeProps } from './Envelope';
 export { PointingHand } from './PointingHand';
 export type { PointingHandProps } from './PointingHand';
 
+// Synthetic UI demos (see .claude/skills/synthetic-ui-demo/)
+export { Stage, cameraAt, typed } from './Stage';
+export type { StageProps, CameraKeyframe } from './Stage';
+
+export { Cursor, cursorAt, press, near } from './Cursor';
+export type { CursorProps, CursorPoint } from './Cursor';
+
 // Utilities
 export { hexToRgba, SIZE_PRESETS, POSITION_PRESETS } from './utils';
 export type { SizePreset, PositionPreset } from './utils';

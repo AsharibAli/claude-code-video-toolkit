@@ -95,6 +95,14 @@
       "note": "Skill teaches the JSON caption format; Claude is the magic-prompt expander. Tool: tools/ideogram4.py. Hosted paid API (commercial license, ~$0.03–0.10/img); not self-hosted. Needs IDEOGRAM_API_KEY. Ideogram 4.5 is an opt-in (--model 4.5, v2 API) that reads the same captions; run live, near-perfect with JSON captions, garbled filler text with plain prompts.",
       "created": "2026-06-08",
       "updated": "2026-10-12"
+    },
+    "synthetic-ui-demo": {
+      "path": ".claude/skills/synthetic-ui-demo/",
+      "description": "Product demo and release-notes videos with no screen recording: rebuild the app's screens as static React from its source, drive them with a scripted cursor and camera (Stage + Cursor)",
+      "status": "beta",
+      "note": "Reference builds: examples/ds-free-schedule-demo (one flow) and examples/ds-release-649 (a whole release). Product screen kits stay in the project, not lib.",
+      "created": "2026-10-21",
+      "updated": "2026-10-21"
     }
   },
   "commands": {
@@ -1244,6 +1252,20 @@
       "description": "Animated hand emoji with directional slide-in and pulse",
       "created": "2025-12-10",
       "updated": "2025-12-10"
+    },
+    "Stage": {
+      "path": "lib/components/Stage.tsx",
+      "description": "Browser window around a fixed-size app canvas, with camera zoom/pan keyframes (clamped to the window), a scripted cursor on top and an optional AI-generated note; for synthetic UI demos",
+      "status": "beta",
+      "created": "2026-10-21",
+      "updated": "2026-10-21"
+    },
+    "Cursor": {
+      "path": "lib/components/Cursor.tsx",
+      "description": "Scripted mouse cursor: eased keyframe path, click ripples and press squash; cursorAt/near helpers for hover states",
+      "status": "beta",
+      "created": "2026-10-21",
+      "updated": "2026-10-21"
     },
     "MazeDecoration": {
       "path": "lib/components/MazeDecoration.tsx",
