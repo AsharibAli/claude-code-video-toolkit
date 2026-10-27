@@ -393,6 +393,7 @@ software or a service we can't bundle. We haven't reviewed them; check each proj
 | [VOICEPEAK for voiceover.py](https://github.com/fialuxe/claude-code-video-toolkit-expand-ja-voicepeak/) | Offline Japanese TTS provider (patches `voiceover.py`) | VOICEPEAK (paid, local) |
 | [arkiv](https://github.com/vulture-s/arkiv) | Natural-language search (EN/中文/日本語) over your own footage archive, returning scenes with start/end timecodes to use as a template's `videoFile` | A local arkiv instance (source-available, PolyForm Perimeter) |
 | [Upload-Post publishing](https://github.com/Upload-Post/claude-code-video-toolkit-upload-post) | Publish a rendered video to TikTok, Instagram, YouTube, LinkedIn, Facebook, X, Threads, Pinterest and Bluesky via a `/publish-social` command | An Upload-Post account and API key (hosted, free plan available) |
+| [CommentKeyword comment-to-DM](https://github.com/commentkeyword/agent-toolkit/tree/main/integrations/claude-code-video-toolkit) | Sets up the Instagram auto-DM behind a video's "Comment KEYWORD" CTA, armed for the next post, via a `/comment-dm` command | A CommentKeyword account and API token (hosted, free plan available; Instagram only) |
 
 To be listed, open an issue with a link and a one-line description. Integrations that need a
 hosted third-party service live here rather than in the toolkit itself — see
