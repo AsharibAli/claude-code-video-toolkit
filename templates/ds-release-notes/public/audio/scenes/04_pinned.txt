@@ -1,0 +1,1 @@
+And a participant's avatar now fits inside a pinned audio tile, however small it gets next to shared content.

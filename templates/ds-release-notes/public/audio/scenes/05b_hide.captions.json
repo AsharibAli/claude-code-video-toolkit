@@ -1,0 +1,58 @@
+[
+ {
+  "text": "Choose",
+  "startMs": 100,
+  "endMs": 480,
+  "timestampMs": 290,
+  "confidence": null
+ },
+ {
+  "text": " which",
+  "startMs": 600,
+  "endMs": 780,
+  "timestampMs": 690,
+  "confidence": null
+ },
+ {
+  "text": " roles",
+  "startMs": 880,
+  "endMs": 1240,
+  "timestampMs": 1060,
+  "confidence": null
+ },
+ {
+  "text": " stay",
+  "startMs": 1320,
+  "endMs": 1500,
+  "timestampMs": 1410,
+  "confidence": null
+ },
+ {
+  "text": " out",
+  "startMs": 1560,
+  "endMs": 1700,
+  "timestampMs": 1630,
+  "confidence": null
+ },
+ {
+  "text": " of",
+  "startMs": 1740,
+  "endMs": 1820,
+  "timestampMs": 1780,
+  "confidence": null
+ },
+ {
+  "text": " the",
+  "startMs": 1860,
+  "endMs": 1920,
+  "timestampMs": 1890,
+  "confidence": null
+ },
+ {
+  "text": " recording.",
+  "startMs": 1960,
+  "endMs": 2540,
+  "timestampMs": 2250,
+  "confidence": null
+ }
+]

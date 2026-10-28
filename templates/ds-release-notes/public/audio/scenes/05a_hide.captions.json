@@ -1,0 +1,107 @@
+[
+ {
+  "text": "In",
+  "startMs": 120,
+  "endMs": 260,
+  "timestampMs": 190,
+  "confidence": null
+ },
+ {
+  "text": " Digital",
+  "startMs": 340,
+  "endMs": 700,
+  "timestampMs": 520,
+  "confidence": null
+ },
+ {
+  "text": " Samba",
+  "startMs": 780,
+  "endMs": 1140,
+  "timestampMs": 960,
+  "confidence": null
+ },
+ {
+  "text": " Free,",
+  "startMs": 1140,
+  "endMs": 2160,
+  "timestampMs": 1650,
+  "confidence": null
+ },
+ {
+  "text": " hide",
+  "startMs": 2160,
+  "endMs": 2360,
+  "timestampMs": 2260,
+  "confidence": null
+ },
+ {
+  "text": " tiles",
+  "startMs": 2500,
+  "endMs": 2880,
+  "timestampMs": 2690,
+  "confidence": null
+ },
+ {
+  "text": " in",
+  "startMs": 2880,
+  "endMs": 3040,
+  "timestampMs": 2960,
+  "confidence": null
+ },
+ {
+  "text": " recordings",
+  "startMs": 3040,
+  "endMs": 3640,
+  "timestampMs": 3340,
+  "confidence": null
+ },
+ {
+  "text": " now",
+  "startMs": 3700,
+  "endMs": 3900,
+  "timestampMs": 3800,
+  "confidence": null
+ },
+ {
+  "text": " has",
+  "startMs": 3960,
+  "endMs": 4059,
+  "timestampMs": 4009,
+  "confidence": null
+ },
+ {
+  "text": " a",
+  "startMs": 4120,
+  "endMs": 4160,
+  "timestampMs": 4140,
+  "confidence": null
+ },
+ {
+  "text": " \"Hide",
+  "startMs": 4220,
+  "endMs": 4420,
+  "timestampMs": 4320,
+  "confidence": null
+ },
+ {
+  "text": " tiles",
+  "startMs": 4520,
+  "endMs": 4860,
+  "timestampMs": 4690,
+  "confidence": null
+ },
+ {
+  "text": " for\"",
+  "startMs": 4920,
+  "endMs": 5000,
+  "timestampMs": 4960,
+  "confidence": null
+ },
+ {
+  "text": " setting.",
+  "startMs": 5100,
+  "endMs": 5500,
+  "timestampMs": 5300,
+  "confidence": null
+ }
+]

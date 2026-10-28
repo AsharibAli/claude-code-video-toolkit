@@ -1,0 +1,79 @@
+[
+ {
+  "text": "On",
+  "startMs": 100,
+  "endMs": 180,
+  "timestampMs": 140,
+  "confidence": null
+ },
+ {
+  "text": " Samsung",
+  "startMs": 280,
+  "endMs": 740,
+  "timestampMs": 510,
+  "confidence": null
+ },
+ {
+  "text": " Internet,",
+  "startMs": 820,
+  "endMs": 1260,
+  "timestampMs": 1040,
+  "confidence": null
+ },
+ {
+  "text": " joining",
+  "startMs": 1920,
+  "endMs": 2260,
+  "timestampMs": 2090,
+  "confidence": null
+ },
+ {
+  "text": " no",
+  "startMs": 2300,
+  "endMs": 2420,
+  "timestampMs": 2360,
+  "confidence": null
+ },
+ {
+  "text": " longer",
+  "startMs": 2500,
+  "endMs": 2800,
+  "timestampMs": 2650,
+  "confidence": null
+ },
+ {
+  "text": " stalls",
+  "startMs": 2920,
+  "endMs": 3300,
+  "timestampMs": 3110,
+  "confidence": null
+ },
+ {
+  "text": " on",
+  "startMs": 3340,
+  "endMs": 3420,
+  "timestampMs": 3380,
+  "confidence": null
+ },
+ {
+  "text": " the",
+  "startMs": 3440,
+  "endMs": 3500,
+  "timestampMs": 3470,
+  "confidence": null
+ },
+ {
+  "text": " loading",
+  "startMs": 3540,
+  "endMs": 3860,
+  "timestampMs": 3700,
+  "confidence": null
+ },
+ {
+  "text": " screen.",
+  "startMs": 3940,
+  "endMs": 4320,
+  "timestampMs": 4130,
+  "confidence": null
+ }
+]

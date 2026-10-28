@@ -123,6 +123,11 @@ Provide context gathered:
 - Brand constraints (colors, fonts)
 - Technical constraints (Remotion/React, duration)
 
+Also read `.claude/skills/remotion/motion-craft.md`. frontend-design is written for web pages; that file holds
+the video-specific rules: motion timing in frames, read time for text, and the defaults that look generated.
+Where the two disagree (frontend-design suggests gradient meshes and decorative effects; motion-craft treats
+glows, particles and mesh gradients as off by default), follow motion-craft unless the brand calls for them.
+
 ---
 
 ## Step 6: Iterative Refinement
@@ -141,7 +146,7 @@ Work with user in a back-and-forth loop:
 - Typography (font choice, size, animation)
 - Color palette (mood, contrast, warmth/coolness)
 - Motion (timing, easing, entrance/exit)
-- Decorative elements (particles, shapes, glows)
+- Decorative elements (taken from the subject or brand; particles, floating shapes and glows only on purpose)
 - Visual hierarchy (what draws the eye)
 
 ---
@@ -203,6 +208,8 @@ When working with frontend-design skill on video scenes:
 3. **Time constraints** - Each scene has limited duration; don't over-animate
 4. **Narrative arc** - Consider how visual intensity builds across scenes
 5. **Contrast creates impact** - A calm scene makes the next dramatic scene hit harder
+6. **Avoid the generated look** - Check the scene against "Defaults that look generated" in
+   `.claude/skills/remotion/motion-craft.md`, and record any you keep on purpose in `designNotes`
 
 ---
 

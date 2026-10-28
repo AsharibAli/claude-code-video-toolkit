@@ -1,0 +1,65 @@
+[
+ {
+  "text": "Audio",
+  "startMs": 460,
+  "endMs": 840,
+  "timestampMs": 650,
+  "confidence": null
+ },
+ {
+  "text": " and",
+  "startMs": 880,
+  "endMs": 960,
+  "timestampMs": 920,
+  "confidence": null
+ },
+ {
+  "text": " shared",
+  "startMs": 1040,
+  "endMs": 1320,
+  "timestampMs": 1180,
+  "confidence": null
+ },
+ {
+  "text": " content",
+  "startMs": 1420,
+  "endMs": 1920,
+  "timestampMs": 1670,
+  "confidence": null
+ },
+ {
+  "text": " are",
+  "startMs": 1960,
+  "endMs": 2080,
+  "timestampMs": 2020,
+  "confidence": null
+ },
+ {
+  "text": " still",
+  "startMs": 2140,
+  "endMs": 2300,
+  "timestampMs": 2220,
+  "confidence": null
+ },
+ {
+  "text": " recorded",
+  "startMs": 2340,
+  "endMs": 2840,
+  "timestampMs": 2590,
+  "confidence": null
+ },
+ {
+  "text": " for",
+  "startMs": 2880,
+  "endMs": 3000,
+  "timestampMs": 2940,
+  "confidence": null
+ },
+ {
+  "text": " everyone.",
+  "startMs": 3060,
+  "endMs": 3380,
+  "timestampMs": 3220,
+  "confidence": null
+ }
+]

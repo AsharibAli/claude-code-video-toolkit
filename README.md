@@ -122,6 +122,7 @@ Pre-built video structures in `templates/`:
 - **sprint-review-v2** — Composable scene-based sprint review with modular architecture
 - **product-demo** — Marketing videos with dark tech aesthetic, stats, CTA
 - **concept-explainer-short** — 9:16 vertical TikTok/Reels/Shorts explainers (Python/moviepy, no Remotion)
+- **ds-release-notes** — Synthetic release-notes videos: product screens rebuilt from source, scripted cursor and camera, sentence-level cloned narration (ships as the Digital Samba 650 build)
 
 See `examples/` for finished projects you can learn from (newest first — scroll down to watch the toolkit evolve in reverse):
 

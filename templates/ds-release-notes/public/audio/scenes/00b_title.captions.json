@@ -1,0 +1,23 @@
+[
+ {
+  "text": "Here's",
+  "startMs": 140,
+  "endMs": 420,
+  "timestampMs": 280,
+  "confidence": null
+ },
+ {
+  "text": " what's",
+  "startMs": 460,
+  "endMs": 700,
+  "timestampMs": 580,
+  "confidence": null
+ },
+ {
+  "text": " new.",
+  "startMs": 740,
+  "endMs": 920,
+  "timestampMs": 830,
+  "confidence": null
+ }
+]

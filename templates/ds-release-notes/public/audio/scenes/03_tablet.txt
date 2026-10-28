@@ -1,0 +1,1 @@
+Background blur and images work again on Android tablets, instead of blurring the whole picture.

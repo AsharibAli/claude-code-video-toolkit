@@ -192,7 +192,8 @@ Ask what needs to change:
 
 ### Refine (frontend-design skill)
 For visual/aesthetic improvements beyond config changes:
-1. Invoke the `frontend-design` skill
+1. Invoke the `frontend-design` skill, and read `.claude/skills/remotion/motion-craft.md` for the video rules
+   (motion timing in frames, read time, the defaults that look generated, and the review questions)
 2. Read the slide component (e.g., `src/components/slides/TitleSlide.tsx`)
 3. Also read adjacent scenes to understand the visual narrative arc
 4. Work with user iteratively on:
@@ -210,6 +211,8 @@ For visual/aesthetic improvements beyond config changes:
 - When user says something "doesn't feel right" or wants more impact
 - When visual contrast between scenes needs work
 - When animations feel too basic or too busy
+- When the scene shows a default from motion-craft's "Defaults that look generated" list (every element fading
+  and sliding up, a title that keeps drifting, floating shapes, three cards in a row)
 
 ### Flag
 Record an issue without blocking:
