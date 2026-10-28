@@ -146,7 +146,7 @@ export const SceneLabel: React.FC<{ kind: string; title: string }> = ({ kind, ti
         zIndex: 50,
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: kind === 'Fixed' ? '#1eaf3f' : BLUE }}>{kind}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: kind === 'Fixed' ? '#178831' : BLUE }}>{kind}</div>
       <div style={{ fontSize: 34, fontWeight: 600, color: NAVY, marginTop: 4 }}>{title}</div>
     </div>
   );

@@ -74,7 +74,7 @@ export const Samsung: React.FC = () => {
     <AbsoluteFill style={{ background: BG, fontFamily: RFONT, opacity: intro }}>
       {/* Phone */}
       <div style={{ position: 'absolute', left: PH.x, top: PH.y, width: PH.w, height: PH.h, borderRadius: 54, background: '#111', boxShadow: '0 40px 90px rgba(10,15,40,0.4), 0 0 0 2px #333' }} />
-      <div style={{ position: 'absolute', left: screen.x, top: screen.y, width: screen.w, height: screen.h, borderRadius: 42, background: '#000', overflow: 'hidden' }}>
+      <div data-qc="product" style={{ position: 'absolute', left: screen.x, top: screen.y, width: screen.w, height: screen.h, borderRadius: 42, background: '#000', overflow: 'hidden' }}>
         {/* status + browser bar */}
         <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 36, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 28px', color: '#fff', fontSize: 14, fontWeight: 600 }}>
           <span>10:42</span>
@@ -129,7 +129,7 @@ export const Samsung: React.FC = () => {
       <div style={{ position: 'absolute', left: 1230, top: 380, width: 520, fontSize: 26, lineHeight: 1.45, color: '#323F66', opacity: fade(frame, NOTICE_AT + 20, NOTICE_AT + 34) }}>
         If the browser never answers the camera and microphone request, the join screen now offers a way out instead of waiting on the loading screen.
       </div>
-      <div style={{ position: 'absolute', left: 24, bottom: 16, fontSize: 18, color: 'rgba(50,63,102,0.55)' }}>Samsung Internet on Android</div>
+      <div style={{ position: 'absolute', left: 24, bottom: 16, fontSize: 18, color: 'rgba(50,63,102,0.8)' }}>Samsung Internet on Android</div>
     </AbsoluteFill>
   );
 };
@@ -177,7 +177,7 @@ export const Tablet: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: BG, fontFamily: RFONT, opacity: intro }}>
       <div style={{ position: 'absolute', left: TB.x, top: TB.y, width: TB.w, height: TB.h, borderRadius: 40, background: '#111', boxShadow: '0 40px 90px rgba(10,15,40,0.4), 0 0 0 2px #333' }} />
-      <div style={{ position: 'absolute', left: sc.x, top: sc.y, width: sc.w, height: sc.h, borderRadius: 24, background: '#000', overflow: 'hidden' }}>
+      <div data-qc="product" style={{ position: 'absolute', left: sc.x, top: sc.y, width: sc.w, height: sc.h, borderRadius: 24, background: '#000', overflow: 'hidden' }}>
         <Img src={staticFile('logo_mono.svg')} style={{ position: 'absolute', left: 28, top: 22, height: 22, filter: 'brightness(0) invert(1)' }} />
         <div style={{ position: 'absolute', left: 0, right: 0, top: 22, textAlign: 'center', color: '#fff', fontSize: 16, fontWeight: 700 }}>Weekly product sync</div>
         <div style={{ position: 'absolute', left: 40, top: 70, width: 700, fontSize: 18, color: '#fff', fontWeight: 500 }}>Virtual background</div>
@@ -210,7 +210,7 @@ export const Tablet: React.FC = () => {
         </div>
       </div>
       <Pill text={fixed > 0.5 ? 'Fixed: you stay sharp, the room blurs' : 'Before: the whole picture blurred'} opacity={1} bottom={40} />
-      <div style={{ position: 'absolute', left: 24, bottom: 16, fontSize: 18, color: 'rgba(50,63,102,0.55)' }}>People shown are AI-generated · Android tablet</div>
+      <div style={{ position: 'absolute', left: 24, bottom: 16, fontSize: 18, color: 'rgba(50,63,102,0.8)' }}>People shown are AI-generated · Android tablet</div>
     </AbsoluteFill>
   );
 };

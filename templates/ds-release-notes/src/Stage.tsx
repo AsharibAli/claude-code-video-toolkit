@@ -83,7 +83,7 @@ export const Stage: React.FC<{
 
   return (
     <AbsoluteFill style={{ background: 'linear-gradient(135deg, #f8fafe 0%, #EBF1FC 100%)', overflow: 'hidden', opacity: intro }}>
-      <div
+      <div data-qc="product"
         style={{
           position: 'absolute',
           width: APP_W,
@@ -106,7 +106,7 @@ export const Stage: React.FC<{
         </div>
       </div>
       {aiNote && (
-        <div style={{ position: 'absolute', left: 24, bottom: 16, fontFamily: RFONT, fontSize: 18, color: 'rgba(50,63,102,0.55)' }}>
+        <div style={{ position: 'absolute', left: 24, bottom: 16, fontFamily: RFONT, fontSize: 18, color: 'rgba(50,63,102,0.8)' }}>
           People shown are AI-generated
         </div>
       )}
