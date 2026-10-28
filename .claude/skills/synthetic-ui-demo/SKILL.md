@@ -112,6 +112,9 @@ fictional.
 ### 7. Render, then normalise
 
 `tools/qc.py --project ...` before rendering, then `qc.py --render out/video.mp4 --fix` for -14 LUFS.
+`qc.py --project ... --layout` checks the video's own text (captions, cards, the AI note) for size and contrast, and
+lists the product UI's separately. `Stage` marks its window `data-qc="product"`; put the same attribute on any phone
+or tablet mockup you build outside it, or its UI text is judged as the video's.
 
 ## Gotchas
 

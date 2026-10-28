@@ -160,7 +160,9 @@ export const Stage: React.FC<StageProps> = ({
 
   return (
     <AbsoluteFill style={{ background, overflow: 'hidden', opacity: intro }}>
+      {/* data-qc: qc.py --layout reports the browser and the product's own UI apart from the video's text */}
       <div
+        data-qc="product"
         style={{
           position: 'absolute',
           width: canvasWidth,
@@ -183,7 +185,7 @@ export const Stage: React.FC<StageProps> = ({
         </div>
       </div>
       {aiNote && (
-        <div style={{ position: 'absolute', left: 24, bottom: 16, fontFamily, fontSize: 18, color: 'rgba(50,63,102,0.55)' }}>
+        <div style={{ position: 'absolute', left: 24, bottom: 16, fontFamily, fontSize: 18, color: 'rgba(50,63,102,0.8)' }}>
           {typeof aiNote === 'string' ? aiNote : 'People shown are AI-generated'}
         </div>
       )}

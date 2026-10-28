@@ -10,6 +10,7 @@ All notable changes to claude-code-video-toolkit.
 
 ### Added
 
+- **`qc.py --layout` measures the text in the video**: it bundles a Remotion project, opens it in Playwright and seeks a frame a second with Remotion's own hooks (no render), then reports text off the canvas or clipped by its box, text that never reaches 28px at 1080p, and contrast under WCAG AA, grouped by colour pair with a passing colour suggested. Text inside `data-qc="product"` (now set on `Stage`'s browser window) is the product's own UI and is listed apart, as info. On the product-demo template it finds white on the coral badges at 2.78:1 and the grey CTA tagline at 2.58:1. `Stage`'s "AI-generated" note goes from 2.9:1 to 5.3:1. Adapted from HyperFrames' `check` (HeyGen, Apache-2.0).
 - **`qc.py --render` checks the picture**, not just the loudness. It flags stretches over 3s where nothing on screen changes (`--max-still`), black gaps of 0.5s or more mid-video, and an empty first frame (a warning on vertical and square renders, whose first frame is the Shorts/Reels cover). The still check compares 20px tiles of a 320px-wide copy at 4fps, so a moving cursor or a talking-head PiP counts as change, where ffmpeg's `freezedetect` misses both. It takes about 8s on a 4-minute render; `--skip-frames` turns it off. A render with no audio track, or a silent one, now says which instead of "could not measure loudness". Thresholds follow HyperFrames' `check` craft warnings (HeyGen, Apache-2.0).
 
 ---
