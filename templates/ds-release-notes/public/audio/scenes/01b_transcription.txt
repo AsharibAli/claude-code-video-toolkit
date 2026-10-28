@@ -1,0 +1,1 @@
+Choose the spoken language in settings, and with "Apply to everyone" on by default, every participant is transcribed in it.

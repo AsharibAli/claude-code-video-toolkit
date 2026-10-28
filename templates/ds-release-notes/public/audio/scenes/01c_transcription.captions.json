@@ -1,0 +1,65 @@
+[
+ {
+  "text": "Turn",
+  "startMs": 240,
+  "endMs": 480,
+  "timestampMs": 360,
+  "confidence": null
+ },
+ {
+  "text": " it",
+  "startMs": 520,
+  "endMs": 600,
+  "timestampMs": 560,
+  "confidence": null
+ },
+ {
+  "text": " off,",
+  "startMs": 700,
+  "endMs": 980,
+  "timestampMs": 840,
+  "confidence": null
+ },
+ {
+  "text": " and",
+  "startMs": 1380,
+  "endMs": 1520,
+  "timestampMs": 1450,
+  "confidence": null
+ },
+ {
+  "text": " people",
+  "startMs": 1560,
+  "endMs": 1860,
+  "timestampMs": 1710,
+  "confidence": null
+ },
+ {
+  "text": " keep",
+  "startMs": 1920,
+  "endMs": 2080,
+  "timestampMs": 2000,
+  "confidence": null
+ },
+ {
+  "text": " their",
+  "startMs": 2120,
+  "endMs": 2220,
+  "timestampMs": 2170,
+  "confidence": null
+ },
+ {
+  "text": " own",
+  "startMs": 2280,
+  "endMs": 2460,
+  "timestampMs": 2370,
+  "confidence": null
+ },
+ {
+  "text": " language.",
+  "startMs": 2500,
+  "endMs": 2940,
+  "timestampMs": 2720,
+  "confidence": null
+ }
+]

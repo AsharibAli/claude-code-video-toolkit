@@ -1,0 +1,135 @@
+[
+ {
+  "text": "And",
+  "startMs": 180,
+  "endMs": 260,
+  "timestampMs": 220,
+  "confidence": null
+ },
+ {
+  "text": " a",
+  "startMs": 300,
+  "endMs": 380,
+  "timestampMs": 340,
+  "confidence": null
+ },
+ {
+  "text": " participant's",
+  "startMs": 400,
+  "endMs": 1040,
+  "timestampMs": 720,
+  "confidence": null
+ },
+ {
+  "text": " avatar",
+  "startMs": 1140,
+  "endMs": 1600,
+  "timestampMs": 1370,
+  "confidence": null
+ },
+ {
+  "text": " now",
+  "startMs": 1700,
+  "endMs": 1960,
+  "timestampMs": 1830,
+  "confidence": null
+ },
+ {
+  "text": " fits",
+  "startMs": 2000,
+  "endMs": 2240,
+  "timestampMs": 2120,
+  "confidence": null
+ },
+ {
+  "text": " inside",
+  "startMs": 2300,
+  "endMs": 2740,
+  "timestampMs": 2520,
+  "confidence": null
+ },
+ {
+  "text": " a",
+  "startMs": 2780,
+  "endMs": 2840,
+  "timestampMs": 2810,
+  "confidence": null
+ },
+ {
+  "text": " pinned",
+  "startMs": 2900,
+  "endMs": 3160,
+  "timestampMs": 3030,
+  "confidence": null
+ },
+ {
+  "text": " audio",
+  "startMs": 3240,
+  "endMs": 3500,
+  "timestampMs": 3370,
+  "confidence": null
+ },
+ {
+  "text": " tile,",
+  "startMs": 3600,
+  "endMs": 3920,
+  "timestampMs": 3760,
+  "confidence": null
+ },
+ {
+  "text": " however",
+  "startMs": 4460,
+  "endMs": 4760,
+  "timestampMs": 4610,
+  "confidence": null
+ },
+ {
+  "text": " small",
+  "startMs": 4900,
+  "endMs": 5140,
+  "timestampMs": 5020,
+  "confidence": null
+ },
+ {
+  "text": " it",
+  "startMs": 5160,
+  "endMs": 5260,
+  "timestampMs": 5210,
+  "confidence": null
+ },
+ {
+  "text": " gets",
+  "startMs": 5300,
+  "endMs": 5540,
+  "timestampMs": 5420,
+  "confidence": null
+ },
+ {
+  "text": " next",
+  "startMs": 5600,
+  "endMs": 5880,
+  "timestampMs": 5740,
+  "confidence": null
+ },
+ {
+  "text": " to",
+  "startMs": 5920,
+  "endMs": 6020,
+  "timestampMs": 5970,
+  "confidence": null
+ },
+ {
+  "text": " shared",
+  "startMs": 6040,
+  "endMs": 6320,
+  "timestampMs": 6180,
+  "confidence": null
+ },
+ {
+  "text": " content.",
+  "startMs": 6400,
+  "endMs": 6880,
+  "timestampMs": 6640,
+  "confidence": null
+ }
+]

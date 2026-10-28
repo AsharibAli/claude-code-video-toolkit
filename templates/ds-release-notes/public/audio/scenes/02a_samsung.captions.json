@@ -1,0 +1,16 @@
+[
+ {
+  "text": "Three",
+  "startMs": 100,
+  "endMs": 360,
+  "timestampMs": 230,
+  "confidence": null
+ },
+ {
+  "text": " fixes.",
+  "startMs": 500,
+  "endMs": 960,
+  "timestampMs": 730,
+  "confidence": null
+ }
+]

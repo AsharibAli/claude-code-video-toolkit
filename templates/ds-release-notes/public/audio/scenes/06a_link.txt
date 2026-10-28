@@ -1,0 +1,1 @@
+And editing a call now warns you before you change the custom room link, because links you've already shared will stop working.
