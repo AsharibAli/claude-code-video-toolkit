@@ -258,6 +258,18 @@ skip):
 Still stretches are warnings, not defects: a hold the narration needs is fine, but give it a next action
 (see `.claude/skills/remotion/motion-craft.md`).
 
+**`--layout` measures the text itself** (Remotion projects; needs Node, `playwright/` installed and Chrome or
+Playwright's Chromium). It bundles the project, opens it in a browser, seeks a frame a second with Remotion's own
+hooks and reports, as warnings:
+- text off the canvas or clipped by its own box, held across two samples (entrances and exits pass through);
+- contrast under WCAG AA at the size the text is shown, grouped by colour pair, with a passing colour suggested;
+- text that never reaches 2.6% of the short side (28px at 1080p), the smallest a phone viewer reads.
+
+Text under `data-qc="product"` is the product's own UI (Stage marks its browser window; mark a hand-built phone or
+tablet mockup the same way). It's reported separately, as info, without the overflow check, since the camera crops
+it on purpose: the video can't fix the product's colours, but it's worth knowing where the UI is hard to read.
+`data-qc-ignore` skips an element. About 10s to bundle, then ~0.15s a sample.
+
 ### Burned Captions (after voiceover)
 
 ```bash

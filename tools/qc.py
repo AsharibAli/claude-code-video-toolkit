@@ -21,6 +21,13 @@ It checks, without changing anything:
                 where nothing on screen changes (dead air for the eye), black
                 gaps mid-video, and an empty first frame (the cover image on
                 Shorts and Reels). Thresholds from motion-craft.md.
+  * layout    — with --layout, the project is bundled and opened in a browser
+                (tools/qc_layout.mjs) once a second: text off the canvas or
+                clipped by its box, text that never reaches 2.6% of the short
+                side (28px at 1080p), and contrast under WCAG AA, grouped by
+                colour pair with a passing colour suggested. Text inside
+                data-qc="product" (Stage's screen) is reported separately, as
+                info: it is the product's own UI, not the video's choice.
 
 `--fix` normalises loudness (and only loudness): out-of-range scene files are
 rewritten in place with originals kept in `.qc-backup/`, and a render is
@@ -34,6 +41,7 @@ Usage:
     uv run tools/qc.py --project projects/my-video
     uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4
     uv run tools/qc.py --project projects/my-video --fix
+    uv run tools/qc.py --project projects/my-video --layout
     uv run tools/qc.py --project projects/my-video --json
 
 Exit code: 0 when there are no errors (warnings allowed, unless --strict),
@@ -48,6 +56,7 @@ import shutil
 import statistics
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from pacing import pace_label
@@ -92,6 +101,13 @@ MAX_STILL_SECONDS = 3.0     # motion-craft.md: longer than this with nothing cha
 STILL_END_GRACE = 3.0       # the closing card may hold
 BLACK_MIN_SECONDS = 0.5     # a dip to black at a cut is a few frames; this is a gap
 EMPTY_EDGE_FRACTION = 0.005 # under 0.5% edge pixels: background only, maybe a disclaimer line
+
+# --layout: text measured in the page itself (tools/qc_layout.mjs)
+LAYOUT_EVERY = 1.0          # seconds between samples
+TEXT_FLOOR = 0.026          # of the short side: 28px at 1080p, the smallest text a phone viewer reads
+LAYOUT_PERSIST = 2          # consecutive samples before overflow counts; entrances and exits pass through
+LAYOUT_EDGE_PX = 2
+IGNORED_REQUESTS = ("/events",)  # Remotion's studio event stream, absent from a bundle
 
 
 # ─── Findings ────────────────────────────────────────────────
@@ -530,6 +546,159 @@ def check_frames(render: Path, info: dict, report: Report, max_still: float):
                    kind="first_frame_empty")
 
 
+def composition_id(project: Path) -> str | None:
+    """The composition `npm run render` renders, from package.json."""
+    try:
+        scripts = json.loads((project / "package.json").read_text(encoding="utf-8")).get("scripts", {})
+    except (OSError, json.JSONDecodeError):
+        return None
+    m = re.search(r"remotion render\s+(?:\S+\.[jt]sx?\s+)?([A-Za-z][\w-]*)", scripts.get("render", ""))
+    return m.group(1) if m else None
+
+
+def run_layout_audit(project: Path, composition: str | None, every: float, report: Report) -> dict | None:
+    """Bundle the project and run tools/qc_layout.mjs on it. Returns its raw JSON."""
+    node, npx = shutil.which("node"), shutil.which("npx")
+    if not node or not npx:
+        report.add("error", "layout", "--layout needs Node.js (node and npx on PATH)")
+        return None
+    if not (project / "package.json").exists():
+        report.add("error", "layout", f"--layout needs a Remotion project; no package.json in {project}")
+        return None
+    toolkit = Path(__file__).resolve().parent.parent
+    if not (toolkit / "playwright" / "node_modules" / "playwright").exists():
+        report.add("error", "layout", "--layout needs Playwright: cd playwright && npm install")
+        return None
+    bundle = Path(tempfile.mkdtemp(prefix="qc-layout-"))
+    try:
+        r = subprocess.run([npx, "remotion", "bundle", "--out-dir", str(bundle)], cwd=project,
+                           capture_output=True, text=True, timeout=600)
+        if r.returncode != 0:
+            report.add("error", "layout", f"remotion bundle failed: {(r.stderr or r.stdout).strip()[-300:]}")
+            return None
+        cmd = [node, str(toolkit / "tools" / "qc_layout.mjs"), "--bundle", str(bundle), "--every", str(every)]
+        if composition:
+            cmd += ["--composition", composition]
+        elif composition_id(project):
+            cmd += ["--prefer", composition_id(project)]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+        if r.returncode != 0:
+            report.add("error", "layout", f"layout audit failed: {r.stderr.strip()[-300:]}")
+            return None
+        return json.loads(r.stdout)
+    except subprocess.TimeoutExpired as e:
+        report.add("error", "layout", f"layout audit timed out ({e.cmd[1]})")
+        return None
+    finally:
+        shutil.rmtree(bundle, ignore_errors=True)
+
+
+def _contrast(a: list[int], b: list[int]) -> float:
+    def lum(c):
+        c = [x / 255 for x in c]
+        c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _suggest(fg: list[int], bg: list[int], need: float) -> str | None:
+    """The nearest colour in the same direction (darker on light, lighter on dark) that passes."""
+    toward = 0 if sum(bg) > sum(fg) else 255
+    for i in range(1, 101):
+        c = [round(x + (toward - x) * i / 100) for x in fg]
+        if _contrast(c, bg) >= need + 0.05:
+            return "#{:02x}{:02x}{:02x}".format(*c)
+    return None
+
+
+def _runs(frames: list[int], samples: list[int]) -> list[tuple[int, int]]:
+    """Runs of consecutive samples, as (first frame, last frame), at least LAYOUT_PERSIST long."""
+    position = {f: i for i, f in enumerate(samples)}
+    idx = sorted(position[f] for f in set(frames))
+    runs, i = [], 0
+    while i < len(idx):
+        j = i
+        while j + 1 < len(idx) and idx[j + 1] == idx[j] + 1:
+            j += 1
+        if j - i + 1 >= LAYOUT_PERSIST:
+            runs.append((samples[idx[i]], samples[idx[j]]))
+        i = j + 1
+    return runs
+
+
+def check_layout(data: dict, report: Report):
+    comp = data.get("composition")
+    if not comp:
+        return
+    fps, samples = comp["fps"], data["samples"]
+    floor = round(TEXT_FLOOR * min(comp["width"], comp["height"]))
+    report.data["layout"] = {"composition": comp["id"], "samples": len(samples), "texts": len(data["texts"])}
+    for note in data.get("notes", []):
+        report.add("info", "layout", note)
+
+    for req in {(r["url"], r["status"]) for r in data["failedRequests"] if r["url"] not in IGNORED_REQUESTS}:
+        report.add("warn", "layout", f"the page requested {req[0]} and got {req[1]}")
+    for err in dict.fromkeys(data["pageErrors"]):
+        report.add("warn", "layout", f"page error: {err}")
+
+    by_text: dict[tuple[str, bool], list[dict]] = {}
+    for t in data["texts"]:
+        by_text.setdefault((t["text"], t["product"]), []).append(t)
+
+    for product in (False, True):
+        level = "info" if product else "warn"
+        where = "product UI: " if product else ""
+        texts = {k[0]: v for k, v in by_text.items() if k[1] == product}
+
+        # Overflow and clipping that persists (a moving element passes through the edge). Not for
+        # product UI: Stage's camera crops it on purpose.
+        for text, obs in ({} if product else texts).items():
+            for key, what in (("offCanvas", "off the canvas"), ("clipped", "clipped by its box")):
+                hits = [o for o in obs if o[key] > LAYOUT_EDGE_PX]
+                for f0, f1 in _runs([o["frame"] for o in hits], samples):
+                    px = max(o[key] for o in hits if f0 <= o["frame"] <= f1)
+                    report.add(level, "layout", f"{where}{_fmt_t(f0 / fps)}-{_fmt_t(f1 / fps)} \"{text[:50]}\" "
+                               f"{px}px {what}", kind=key, product=product, text=text)
+
+        # Contrast: a text fails when its typical sample is under WCAG AA for the size it is shown at.
+        # Grouped by colour pair, because one style usually fails everywhere it's used.
+        pairs: dict[tuple, list] = {}
+        for text, obs in texts.items():
+            measured = [o for o in obs if o.get("ratio")]
+            if not measured:
+                continue
+            for o in measured:
+                large = o["fontPx"] >= 24 or (o["bold"] and o["fontPx"] >= 18.66)
+                o["need"] = 3.0 if large else 4.5
+            typical = sorted(measured, key=lambda o: o["ratio"] / o["need"])[len(measured) // 2]
+            if typical["ratio"] >= typical["need"]:
+                continue
+            key = (tuple(round(x / 8) for x in typical["fg"]), tuple(round(x / 8) for x in typical["bg"]))
+            pairs.setdefault(key, []).append((text, typical, min(o["frame"] for o in measured)))
+        for items in sorted(pairs.values(), key=lambda v: min(x[1]["ratio"] for x in v)):
+            text, o, first = min(items, key=lambda x: x[1]["ratio"])
+            fg, bg = "#{:02x}{:02x}{:02x}".format(*o["fg"]), "#{:02x}{:02x}{:02x}".format(*o["bg"])
+            fix = _suggest(o["fg"], o["bg"], o["need"])
+            names = ", ".join(f'"{x[0][:30]}"' for x in items[:3]) + (f" +{len(items) - 3}" if len(items) > 3 else "")
+            report.add(level, "layout", f"{where}contrast {o['ratio']:.2f}:1 (needs {o['need']:.1f}) {fg} on {bg}: "
+                       f"{names}, from {_fmt_t(first / fps)}" + (f". {fix} would pass" if fix else ""),
+                       kind="contrast", product=product, ratio=o["ratio"], need=o["need"], fg=fg, bg=bg,
+                       texts=[x[0] for x in items])
+
+        # Size: text that never reaches the floor, at any zoom, in any sample
+        small = sorted(((max(o["fontPx"] for o in obs), text) for text, obs in texts.items()
+                        if max(o["fontPx"] for o in obs) < floor - 0.5))
+        if small:
+            names = ", ".join(f'"{t[:30]}" {px:.0f}px' for px, t in small[:5])
+            more = f" +{len(small) - 5}" if len(small) > 5 else ""
+            report.add(level, "layout", f"{where}{len(small)} of {len(texts)} texts never reach {floor}px "
+                       f"({TEXT_FLOOR:.1%} of the short side, the phone floor): {names}{more}",
+                       kind="size", product=product, count=len(small))
+        if product and texts:
+            report.data["layout"]["product_texts"] = len(texts)
+
+
 # ─── Fix ─────────────────────────────────────────────────────
 
 def fix_scenes(levels: dict[Path, dict], target: float, report: Report) -> list[str]:
@@ -590,7 +759,7 @@ def print_report(report: Report, project: Path):
         tp = f"{r['true_peak']:+.1f} dBTP" if r["true_peak"] is not None else "n/a"
         print(f"  render: {r['lufs']:.1f} LUFS, {tp}", file=sys.stderr)
     print(file=sys.stderr)
-    for check in ("assets", "timing", "pacing", "loudness", "render", "frames", "fix"):
+    for check in ("assets", "timing", "pacing", "loudness", "render", "frames", "layout", "fix"):
         items = [f for f in report.findings if f["check"] == check]
         if not items:
             continue
@@ -616,6 +785,7 @@ Examples:
   uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4
   uv run tools/qc.py --project projects/my-video --fix            # normalise scene VO loudness
   uv run tools/qc.py --render out/video.mp4 --fix                 # write video.loudnorm.mp4
+  uv run tools/qc.py --project projects/my-video --layout         # text size, overflow, contrast
   uv run tools/qc.py --project projects/my-video --json           # machine-readable
 """,
     )
@@ -635,6 +805,12 @@ Examples:
     parser.add_argument("--max-still", type=float, default=MAX_STILL_SECONDS,
                         help=f"Seconds with nothing changing before a render warns "
                              f"(default: {MAX_STILL_SECONDS:.0f})")
+    parser.add_argument("--layout", action="store_true",
+                        help="Bundle the project and measure its text in the browser: off canvas, clipped, "
+                             "too small for a phone, contrast below WCAG AA (needs Node and playwright/)")
+    parser.add_argument("--composition", help="Composition for --layout (default: the one `npm run render` uses)")
+    parser.add_argument("--layout-every", type=float, default=LAYOUT_EVERY,
+                        help=f"Seconds between --layout samples (default: {LAYOUT_EVERY:.0f})")
     parser.add_argument("--strict", action="store_true", help="Exit 1 on warnings too")
     parser.add_argument("--json", action="store_true", help="Output JSON for scripting")
     args = parser.parse_args()
@@ -651,9 +827,9 @@ Examples:
         audio_dir, timed, narration = load_scenes_json(project, report)
     else:
         loaded = load_remotion(project, report, args.config)
-        if loaded is None and not args.render:
+        if loaded is None and not (args.render or args.layout):
             print(f"Error: no Remotion config or scenes.json found in {project}. "
-                  "Use --project, --config, or --render.", file=sys.stderr)
+                  "Use --project, --config, --render or --layout.", file=sys.stderr)
             sys.exit(1)
         audio_dir, timed = loaded or (None, [])
 
@@ -669,6 +845,11 @@ Examples:
         render_m = check_render(render, report, args.target_lufs, info)
         if info and not args.skip_frames:
             check_frames(render, info, report, args.max_still)
+
+    if args.layout:
+        layout = run_layout_audit(project, args.composition, args.layout_every, report)
+        if layout:
+            check_layout(layout, report)
 
     if args.fix:
         report.data["fixed_scenes"] = fix_scenes(levels, args.scene_lufs, report)
