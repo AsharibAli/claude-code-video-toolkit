@@ -646,13 +646,13 @@
     },
     "qc": {
       "path": "tools/qc.py",
-      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP). --fix normalises loudness; scene originals kept in .qc-backup/",
+      "description": "Pre-render QC — missing assets, narration vs scene length, wpm pacing, per-scene and render loudness (integrated LUFS / true peak against YouTube's -14 LUFS, -1 dBTP), and the render's frames (still stretches over --max-still seconds, black gaps, empty first frame). --fix normalises loudness; scene originals kept in .qc-backup/",
       "usage": "uv run tools/qc.py --project projects/my-video --render projects/my-video/out/video.mp4",
       "status": "beta",
       "category": "project",
       "requires": "ffmpeg + ffprobe",
       "created": "2026-10-12",
-      "updated": "2026-10-12"
+      "updated": "2026-10-28"
     },
     "align_captions": {
       "path": "tools/align_captions.py",

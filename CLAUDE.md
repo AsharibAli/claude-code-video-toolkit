@@ -214,6 +214,18 @@ music); the render targets -14 LUFS / -1 dBTP. Optional keys (`backgroundMusicFi
 `chimeFile`, `screenshotFile`, `voiceoverFile`) are warnings, not errors: the templates skip
 them with `getStaticFiles()`, so the render succeeds silently without them.
 
+**`--render` also watches the picture** (a few seconds even for a 4-minute render; `--skip-frames` to
+skip):
+- **Still stretches:** more than 3s (`--max-still`) where nothing on screen changes. The comparison is per
+  tile, so a moving cursor or a talking-head PiP counts as change. The last 3s may hold.
+- **Black gaps:** black for 0.5s or more mid-video, usually a gap between sequences or media that didn't load.
+- **Empty first frame:** background only. A warning on vertical and square renders, whose frame 0 is
+  the Shorts/Reels cover, and info on landscape renders, which get a custom thumbnail.
+- **Audio:** a missing or silent audio track is an error.
+
+Still stretches are warnings, not defects: a hold the narration needs is fine, but give it a next action
+(see `.claude/skills/remotion/motion-craft.md`).
+
 ### Burned Captions (after voiceover)
 
 ```bash

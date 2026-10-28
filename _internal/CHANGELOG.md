@@ -8,6 +8,10 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Added
+
+- **`qc.py --render` checks the picture**, not just the loudness. It flags stretches over 3s where nothing on screen changes (`--max-still`), black gaps of 0.5s or more mid-video, and an empty first frame (a warning on vertical and square renders, whose first frame is the Shorts/Reels cover). The still check compares 20px tiles of a 320px-wide copy at 4fps, so a moving cursor or a talking-head PiP counts as change, where ffmpeg's `freezedetect` misses both. It takes about 8s on a 4-minute render; `--skip-frames` turns it off. A render with no audio track, or a silent one, now says which instead of "could not measure loudness". Thresholds follow HyperFrames' `check` craft warnings (HeyGen, Apache-2.0).
+
 ---
 
 ## 2026-10-27 (v0.22.0)
