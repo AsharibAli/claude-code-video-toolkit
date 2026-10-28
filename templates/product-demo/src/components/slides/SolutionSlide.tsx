@@ -64,7 +64,7 @@ export const SolutionSlide: React.FC<SolutionSlideProps> = ({ content }) => {
           flexDirection: 'column',
           alignItems: 'center',
           gap: 50,
-          maxWidth: 1200,
+          maxWidth: 1600,
           textAlign: 'center',
         }}
       >
@@ -124,8 +124,8 @@ export const SolutionSlide: React.FC<SolutionSlideProps> = ({ content }) => {
               >
                 <div
                   style={{
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     borderRadius: '50%',
                     background: theme.colors.primary,
                   }}
@@ -133,8 +133,9 @@ export const SolutionSlide: React.FC<SolutionSlideProps> = ({ content }) => {
                 <span
                   style={{
                     color: theme.colors.textDark,
-                    fontSize: 20,
+                    fontSize: 28,
                     fontWeight: 500,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {highlight}

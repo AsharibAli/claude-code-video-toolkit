@@ -8,6 +8,10 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Fixed
+
+- **product-demo template text is readable on a phone and passes WCAG AA**: every slide's text is at least 28px at 1080p (it was down to 12px), the problem badges use dark text on the coral (2.8:1 → 6.5:1), and the CTA tagline uses `textMedium` instead of `textLight` (2.6:1 → 5.4:1). The demo window is marked `data-qc="product"`. `qc.py --layout` on the template now reports no text findings.
+
 ---
 
 ## 2026-10-28 (v0.23.0)
