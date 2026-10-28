@@ -36,6 +36,8 @@ dependencies = [
     # Python-native video composition as an alternative to Remotion
     "moviepy>=2.0",
     "matplotlib>=3.7",
+    # Frame checks in tools/qc.py (already installed by moviepy and matplotlib)
+    "numpy>=1.25",
 ]
 
 [project.optional-dependencies]

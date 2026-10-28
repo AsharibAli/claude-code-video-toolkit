@@ -16,6 +16,11 @@ It checks, without changing anything:
   * render    — with --render, the finished video's loudness against the
                 YouTube target (-14 LUFS integrated, -1 dBTP). Nothing in the
                 Remotion templates normalises loudness, so check it here.
+                A missing or silent audio track is an error.
+  * frames    — with --render, what the picture does: stretches over 3s
+                where nothing on screen changes (dead air for the eye), black
+                gaps mid-video, and an empty first frame (the cover image on
+                Shorts and Reels). Thresholds from motion-craft.md.
 
 `--fix` normalises loudness (and only loudness): out-of-range scene files are
 rewritten in place with originals kept in `.qc-backup/`, and a render is
@@ -77,6 +82,16 @@ SCENE_TRUE_PEAK = 0.0       # stems are allowed near full scale; the render gets
 SCENE_SPREAD_LU = 1.5       # scene this far from the median sounds uneven
 FIX_TOLERANCE_LU = 1.0
 MIN_LOUDNESS_SECONDS = 3.0  # loudnorm's integrated measure is unreliable below this
+
+# Frame checks run on a small greyscale copy of the render, sampled at STILL_FPS.
+FRAME_WIDTH = 320
+STILL_FPS = 4
+STILL_TILE = 20             # px at FRAME_WIDTH: a cursor or a talking-head PiP fills a tile
+STILL_TILE_DIFF = 1.0       # mean abs change (0-255) in the busiest tile; encoder noise sits below
+MAX_STILL_SECONDS = 3.0     # motion-craft.md: longer than this with nothing changing reads as a stall
+STILL_END_GRACE = 3.0       # the closing card may hold
+BLACK_MIN_SECONDS = 0.5     # a dip to black at a cut is a few frames; this is a gap
+EMPTY_EDGE_FRACTION = 0.005 # under 0.5% edge pixels: background only, maybe a disclaimer line
 
 
 # ─── Findings ────────────────────────────────────────────────
@@ -358,13 +373,43 @@ def check_scene_loudness(files: list[Path], report: Report) -> dict[Path, dict]:
     return levels
 
 
-def check_render(render: Path, report: Report, target: float) -> dict | None:
+def probe_video(path: Path) -> dict | None:
+    """width, height, duration and whether there is an audio stream."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,width,height:format=duration",
+             "-of", "json", str(path)],
+            capture_output=True, text=True, timeout=60,
+        )
+        data = json.loads(r.stdout)
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        return None
+    streams = data.get("streams", [])
+    video = next((s for s in streams if s.get("codec_type") == "video"), None)
+    if not video:
+        return None
+    return {
+        "width": int(video["width"]),
+        "height": int(video["height"]),
+        "duration": _num(data.get("format", {}).get("duration")),
+        "has_audio": any(s.get("codec_type") == "audio" for s in streams),
+    }
+
+
+def check_render(render: Path, report: Report, target: float, info: dict | None) -> dict | None:
     if not render.exists():
         report.add("error", "render", f"{render} not found")
         return None
+    if info and not info["has_audio"]:
+        report.add("error", "render", f"{render.name}: no audio track")
+        return None
     m = measure_loudness(render)
-    if not m or m["lufs"] is None:
-        report.add("error", "render", f"{render.name}: could not measure loudness (no audio stream?)")
+    if not m:
+        report.add("error", "render", f"{render.name}: could not measure loudness")
+        return None
+    if m["lufs"] is None:
+        # loudnorm reports -inf for digital silence
+        report.add("error", "render", f"{render.name}: the audio track is silent")
         return None
     report.data["render"] = {"file": str(render), "lufs": m["lufs"], "true_peak": m["true_peak"], "lra": m["lra"]}
     if m["lufs"] < target - 2:
@@ -378,6 +423,111 @@ def check_render(render: Path, report: Report, target: float) -> dict | None:
         report.add("warn", "render", f"{render.name}: true peak {m['true_peak']:+.1f} dBTP — clipping after "
                    "lossy encoding")
     return m
+
+
+def _fmt_t(seconds: float) -> str:
+    m, s = divmod(seconds, 60)
+    return f"{int(m)}:{s:04.1f}"
+
+
+def _edge_fraction(frame) -> float:
+    """Share of pixels on a sharp edge: text, UI and images have them, gradients and blurs don't."""
+    import numpy as np
+    gx = np.abs(np.diff(frame, axis=1))[:-1, :]
+    gy = np.abs(np.diff(frame, axis=0))[:, :-1]
+    return float((np.maximum(gx, gy) > 24).mean())
+
+
+def check_frames(render: Path, info: dict, report: Report, max_still: float):
+    """Still stretches, black gaps and an empty first frame, from a small greyscale copy."""
+    import numpy as np
+
+    w = FRAME_WIDTH
+    h = max(STILL_TILE, round(w * info["height"] / info["width"] / 2) * 2)
+    rows, cols = h // STILL_TILE, w // STILL_TILE
+    frame_bytes = w * h
+    try:
+        proc = subprocess.Popen(
+            ["ffmpeg", "-v", "error", "-i", str(render), "-map", "0:v:0",
+             "-vf", f"fps={STILL_FPS},scale={w}:{h}:flags=area,format=gray", "-f", "rawvideo", "-"],
+            stdout=subprocess.PIPE,
+        )
+    except OSError as e:
+        report.add("error", "frames", f"{render.name}: could not decode frames: {e}")
+        return
+
+    busiest: list[float] = []   # per sample pair: mean change in the busiest tile
+    dark: list[bool] = []
+    prev = None
+    while True:
+        buf = proc.stdout.read(frame_bytes)
+        if len(buf) < frame_bytes:
+            break
+        frame = np.frombuffer(buf, np.uint8).reshape(h, w).astype(np.int16)
+        if prev is not None:
+            diff = np.abs(frame - prev)[: rows * STILL_TILE, : cols * STILL_TILE]
+            busiest.append(float(diff.reshape(rows, STILL_TILE, cols, STILL_TILE).mean(axis=(1, 3)).max()))
+        # blackdetect's defaults: 98% of pixels under ~10% luma
+        dark.append(float((frame >= 26).mean()) < 0.02)
+        prev = frame
+    proc.wait()
+    if prev is None:
+        report.add("error", "frames", f"{render.name}: no video frames decoded")
+        return
+
+    duration = info["duration"] or len(dark) / STILL_FPS
+    report.data["frames"] = {"sampled": len(dark), "fps": STILL_FPS}
+
+    # Runs of samples where nothing changed. Sample i pairs frames i and i+1.
+    stills = []
+    start = None
+    for i, change in enumerate(busiest + [float("inf")]):
+        if change < STILL_TILE_DIFF:
+            start = i if start is None else start
+        elif start is not None:
+            t0, t1 = start / STILL_FPS, min(i / STILL_FPS, duration - STILL_END_GRACE)
+            if t1 - t0 > max_still:
+                stills.append((t0, t1))
+            start = None
+    for t0, t1 in stills:
+        report.add("warn", "frames",
+                   f"{_fmt_t(t0)}-{_fmt_t(t1)}: {t1 - t0:.1f}s with nothing on screen changing. Give the hold "
+                   "a next action (the cursor moving on, the camera's next move) or cut it shorter",
+                   start=round(t0, 2), end=round(t1, 2), kind="still")
+    report.data["frames"]["still_stretches"] = len(stills)
+
+    # Black gaps away from the opening fade-in and the closing fade-out.
+    start = None
+    for i, is_dark in enumerate(dark + [False]):
+        if is_dark:
+            start = i if start is None else start
+        elif start is not None:
+            t0, t1 = start / STILL_FPS, i / STILL_FPS
+            if t1 - t0 >= BLACK_MIN_SECONDS and start > 0 and i < len(dark):
+                report.add("warn", "frames", f"{_fmt_t(t0)}-{_fmt_t(t1)}: black for {t1 - t0:.1f}s "
+                           "(a gap between sequences, or media that failed to load?)",
+                           start=round(t0, 2), end=round(t1, 2), kind="black")
+            start = None
+
+    # Frame 0 is the cover on Shorts and Reels, where a vertical or square upload can't
+    # take a custom thumbnail; a landscape upload usually gets one from /thumbnail.
+    # Decoded on its own: the fps filter's first sample can land a few frames in.
+    r = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(render), "-map", "0:v:0", "-frames:v", "1",
+         "-vf", f"scale={w}:{h}:flags=area,format=gray", "-f", "rawvideo", "-"],
+        capture_output=True, timeout=120,
+    )
+    if len(r.stdout) < frame_bytes:
+        return
+    edges = _edge_fraction(np.frombuffer(r.stdout[:frame_bytes], np.uint8).reshape(h, w).astype(np.int16))
+    report.data["frames"]["first_frame_edges"] = round(edges, 4)
+    if edges < EMPTY_EDGE_FRACTION:
+        vertical = info["height"] >= info["width"]
+        report.add("warn" if vertical else "info", "frames",
+                   "first frame is background only" + (
+                       ", and it is the cover on Shorts and Reels. Start with the title already on screen"
+                       if vertical else " (fine with a custom thumbnail; it is what autoplay shows first)"),
+                   kind="first_frame_empty")
 
 
 # ─── Fix ─────────────────────────────────────────────────────
@@ -440,7 +590,7 @@ def print_report(report: Report, project: Path):
         tp = f"{r['true_peak']:+.1f} dBTP" if r["true_peak"] is not None else "n/a"
         print(f"  render: {r['lufs']:.1f} LUFS, {tp}", file=sys.stderr)
     print(file=sys.stderr)
-    for check in ("assets", "timing", "pacing", "loudness", "render", "fix"):
+    for check in ("assets", "timing", "pacing", "loudness", "render", "frames", "fix"):
         items = [f for f in report.findings if f["check"] == check]
         if not items:
             continue
@@ -457,7 +607,8 @@ def print_report(report: Report, project: Path):
 def main():
     ensure_utf8_output()  # Windows: piped stdout defaults to cp1252
     parser = argparse.ArgumentParser(
-        description="Pre-render QC: missing assets, scene timing, pacing, loudness",
+        description="Pre-render QC: missing assets, scene timing, pacing, loudness; with --render, "
+                    "the render's loudness and frames",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -480,6 +631,10 @@ Examples:
                         help="Normalise loudness: scene files in place (originals in .qc-backup/), "
                              "render to <name>.loudnorm.mp4")
     parser.add_argument("--skip-loudness", action="store_true", help="Skip the (slower) loudness pass")
+    parser.add_argument("--skip-frames", action="store_true", help="Skip the render's frame checks")
+    parser.add_argument("--max-still", type=float, default=MAX_STILL_SECONDS,
+                        help=f"Seconds with nothing changing before a render warns "
+                             f"(default: {MAX_STILL_SECONDS:.0f})")
     parser.add_argument("--strict", action="store_true", help="Exit 1 on warnings too")
     parser.add_argument("--json", action="store_true", help="Output JSON for scripting")
     args = parser.parse_args()
@@ -507,7 +662,13 @@ Examples:
     check_pacing(files, narration, report)
 
     levels = {} if args.skip_loudness else check_scene_loudness(files, report)
-    render_m = check_render(Path(args.render), report, args.target_lufs) if args.render else None
+    render_m = None
+    if args.render:
+        render = Path(args.render)
+        info = probe_video(render) if render.exists() else None
+        render_m = check_render(render, report, args.target_lufs, info)
+        if info and not args.skip_frames:
+            check_frames(render, info, report, args.max_still)
 
     if args.fix:
         report.data["fixed_scenes"] = fix_scenes(levels, args.scene_lufs, report)
