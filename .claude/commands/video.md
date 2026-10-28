@@ -44,6 +44,7 @@ Which template would you like to use?
   1. Sprint Review - internal demos, release videos
   2. Product Demo - marketing, launches, features
   3. Concept Explainer Short - vertical TikTok/Reels/Shorts explainers
+  4. DS Release Notes - Digital Samba release videos, screens rebuilt from source
 ```
 → Proceed to New Project Flow
 
@@ -162,7 +163,14 @@ Which template would you like to use?
 | Sprint Review | Internal demos, release videos | title, overview, demo, split-demo, summary, credits |
 | Product Demo | Marketing, launches, features | title, problem, solution, demo, feature, stats, cta |
 | Concept Explainer Short | Vertical 9:16 TikTok/Reels/Shorts explainers | hook, concept cards (Ideogram), b-roll (LTX), recap, cta |
+| DS Release Notes | Digital Samba release videos, nothing screen-recorded | title (item list), one scene per release item, outro |
 ```
+
+> **DS Release Notes carries its own Digital Samba look** (room and account-center kits), so skip the brand
+> question and the brand.ts and brand-asset steps below. Name the project `release-<number>` and set
+> `RELEASE_NUMBER` and `RELEASE_MONTH` in `src/config.ts`. Scenes come from the release notes, not the scene
+> planner: follow "Making the next release" in `templates/ds-release-notes/README.md` and the `synthetic-ui-demo`
+> skill.
 
 > **Concept Explainer Short is Python-based** (moviepy, no Remotion/npm). Its
 > flow differs after scene planning: author `scenes.json` → generate visuals
