@@ -15,7 +15,8 @@ The method is the `synthetic-ui-demo` skill; this template is its release-notes 
 | Path | What | Keep for the next release? |
 |---|---|---|
 | `src/Release.tsx` | Scene order, lengths, VO placement, SFX. Its header lists every phrase's length and start | Edit |
-| `src/scenes/Cards.tsx` | Title card (item list), outro, scene label | Edit the item list and the number |
+| `src/config.ts` | `RELEASE_NUMBER` and `RELEASE_MONTH`, shown on the title and outro cards | Edit first |
+| `src/scenes/Cards.tsx` | Title card (item list), outro, scene label | Edit the item list |
 | `src/scenes/*.tsx` | One file per release item: UI state, cursor path, clicks and camera as frame constants | Replace |
 | `src/Stage.tsx`, `src/Cursor.tsx` | Browser window, camera keyframes, cursor (the project-local version of `lib/components` Stage) | Keep |
 | `src/room/` | In-call room kit: chrome, left toolbar, tiles, participants panel, menus, dialogs, toasts, icomoon glyphs | Keep, extend |
@@ -25,6 +26,9 @@ The method is the `synthetic-ui-demo` skill; this template is its release-notes 
 | `public/audio/sfx/` | click, typing, pop, chime, whoosh, reveal | Keep |
 
 ## Making the next release
+
+Copy the template to `projects/release-<number>` (or let `/video` do it), set `RELEASE_NUMBER` and
+`RELEASE_MONTH` in `src/config.ts` and the `ITEMS` list in `src/scenes/Cards.tsx`, then:
 
 1. **Read the release notes and trace each item to code.** Send one subagent per app (`react-frontend`,
    `react-dashboard`, `react-account-center`), reading `origin/master`, to return the exact strings, control order,
@@ -66,7 +70,7 @@ attention from the key meeting team. Nothing urgent, but I'd like to flag it bef
 
 ```bash
 cp -r templates/ds-release-notes projects/release-651
-cd projects/release-651
+cd projects/release-651   # then set RELEASE_NUMBER and RELEASE_MONTH in src/config.ts
 npm install
 npm run studio
 npm run render

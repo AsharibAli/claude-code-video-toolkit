@@ -2,6 +2,7 @@ import React from 'react';
 import { AbsoluteFill, Img, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { fade } from '../Stage';
 import { RFONT } from '../room/theme';
+import { RELEASE_MONTH, RELEASE_NUMBER } from '../config';
 
 const NAVY = '#323F66';
 const BLUE = '#3771e0';
@@ -55,8 +56,8 @@ export const TitleCard: React.FC = () => {
         <Img src={staticFile('logo_mono.svg')} style={{ height: 40, filter: 'brightness(0) invert(1)' }} />
       </div>
       <div style={{ position: 'absolute', left: 140, top: 350, opacity: b, transform: `translateY(${(1 - b) * 30}px)` }}>
-        <div style={{ fontSize: 136, fontWeight: 800, letterSpacing: -4, lineHeight: 1 }}>Release 650</div>
-        <div style={{ fontSize: 34, color: CORAL, fontWeight: 600, marginTop: 22 }}>What's new · October 2026</div>
+        <div style={{ fontSize: 136, fontWeight: 800, letterSpacing: -4, lineHeight: 1 }}>Release {RELEASE_NUMBER}</div>
+        <div style={{ fontSize: 34, color: CORAL, fontWeight: 600, marginTop: 22 }}>What's new · {RELEASE_MONTH}</div>
       </div>
       <div style={{ position: 'absolute', left: 140, top: 610, display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 44, rowGap: 18, width: 860 }}>
         {ITEMS.map(([t, fixed], i) => {
@@ -107,7 +108,7 @@ export const OutroCard: React.FC = () => {
     <Navy>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 230, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 30, opacity: a, transform: `translateY(${(1 - a) * 24}px)` }}>
         <Img src={staticFile('logo_mono.svg')} style={{ height: 46, filter: 'brightness(0) invert(1)' }} />
-        <div style={{ fontSize: 84, fontWeight: 800, letterSpacing: -2 }}>Release 650 is available now</div>
+        <div style={{ fontSize: 84, fontWeight: 800, letterSpacing: -2 }}>Release {RELEASE_NUMBER} is available now</div>
         <div style={{ fontSize: 34, color: CORAL, fontWeight: 600, opacity: fade(frame, 16, 28) }}>digitalsamba.com/release-notes</div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 640, display: 'flex', justifyContent: 'center', gap: 16 }}>
