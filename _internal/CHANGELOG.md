@@ -8,6 +8,15 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+---
+
+## 2026-10-28 (v0.23.0)
+
+QC learns to look at the picture and the text, not just the sound: `qc.py --render` finds frozen
+stretches, black gaps and an empty first frame, and `qc.py --layout` measures every piece of text for
+size, overflow and contrast. Alongside: a motion-craft reference for Remotion scenes, clone prosody
+tools for cloned voices that come out flat, and the `ds-release-notes` template.
+
 ### Added
 
 - **`qc.py --layout` measures the text in the video**: it bundles a Remotion project, opens it in Playwright and seeks a frame a second with Remotion's own hooks (no render), then reports text off the canvas or clipped by its box, text that never reaches 28px at 1080p, and contrast under WCAG AA, grouped by colour pair with a passing colour suggested. Text inside `data-qc="product"` (now set on `Stage`'s browser window) is the product's own UI and is listed apart, as info. On the product-demo template it finds white on the coral badges at 2.78:1 and the grey CTA tagline at 2.58:1. `Stage`'s "AI-generated" note goes from 2.9:1 to 5.3:1. Adapted from HyperFrames' `check` (HeyGen, Apache-2.0). (#136)
