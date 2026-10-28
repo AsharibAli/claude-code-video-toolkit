@@ -1,0 +1,1 @@
+If the browser doesn't answer the camera and microphone request, you can reload, or join without them.

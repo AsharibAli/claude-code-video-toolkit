@@ -1,0 +1,37 @@
+[
+ {
+  "text": "Digital",
+  "startMs": 40,
+  "endMs": 420,
+  "timestampMs": 230,
+  "confidence": null
+ },
+ {
+  "text": " Samba,",
+  "startMs": 500,
+  "endMs": 940,
+  "timestampMs": 720,
+  "confidence": null
+ },
+ {
+  "text": " release",
+  "startMs": 1500,
+  "endMs": 1840,
+  "timestampMs": 1670,
+  "confidence": null
+ },
+ {
+  "text": " six",
+  "startMs": 1840,
+  "endMs": 2230,
+  "timestampMs": 2035,
+  "confidence": null
+ },
+ {
+  "text": " fifty.",
+  "startMs": 2230,
+  "endMs": 2620,
+  "timestampMs": 2425,
+  "confidence": null
+ }
+]

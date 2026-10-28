@@ -16,10 +16,10 @@
     },
     "remotion": {
       "path": ".claude/skills/remotion/",
-      "description": "Toolkit-specific Remotion patterns — custom transitions, shared components, conventions",
+      "description": "Toolkit-specific Remotion patterns — custom transitions, shared components, conventions, motion craft",
       "status": "stable",
       "created": "2025-12-04",
-      "updated": "2026-02-19"
+      "updated": "2026-10-28"
     },
     "elevenlabs": {
       "path": ".claude/skills/elevenlabs/",
@@ -871,6 +871,37 @@
       "documentation": "docs/youtube-upload.md",
       "created": "2026-06-09",
       "updated": "2026-06-09"
+    },
+    "voice_prosody": {
+      "path": "tools/voice_prosody.py",
+      "description": "Measure pitch spread (F0 semitone sd, p5-p95) of any audio, and write a livelier clone reference: pitch contour expanded around the median and slowed (Praat PSOLA). A clone copies its reference's pace and intonation, so fix the clip rather than stretching the output",
+      "usage": "uv run tools/voice_prosody.py measure FILES... [--json]; uv run tools/voice_prosody.py expand IN.wav OUT.wav [--pitch 2.0] [--tempo 0.85]",
+      "status": "beta",
+      "category": "project",
+      "requires": "`uv sync --extra prosody` (praat-parselmouth)",
+      "options": {
+        "pitch": "exponent on pitch deviations around the median (1 = unchanged; 1.7-2.2 useful)",
+        "tempo": "speed factor for the reference (0.85 = 15% slower)",
+        "floor/ceiling": "pitch range Hz (60/350 male, 100/500 female)"
+      },
+      "guide": "narration: sd under ~2 st sounds flat, 3-4 st normal, over ~5 theatrical",
+      "created": "2026-10-28",
+      "updated": "2026-10-28"
+    },
+    "pick_takes": {
+      "path": "tools/pick_takes.py",
+      "description": "Choose the best take per phrase from several voiceover runs: score = pitch spread minus a pace penalty outside 140-170 wpm; copies winners (+ .txt) to the output, slows only a winner over --max-wpm, never below --min-tempo; --json writes takes.json with every candidate",
+      "usage": "uv run tools/pick_takes.py --takes-dir public/audio/takes --output public/audio/scenes [--json]",
+      "status": "beta",
+      "category": "project",
+      "requires": "`uv sync --extra prosody`",
+      "options": {
+        "pace-min/pace-max": "comfortable band, default 140-170 wpm",
+        "max-wpm": "stretch a winner above this (default 170)",
+        "min-tempo": "stretch floor (default 0.9)"
+      },
+      "created": "2026-10-28",
+      "updated": "2026-10-28"
     }
   },
   "optionalComponents": {
@@ -1098,6 +1129,14 @@
       "status": "beta",
       "created": "2026-06-09",
       "updated": "2026-10-12"
+    },
+    "ds-release-notes": {
+      "path": "templates/ds-release-notes/",
+      "description": "Synthetic release-notes video for Digital Samba: room and account-center screens rebuilt from source, scripted cursor and camera (Stage), sentence-level cloned narration picked by pace and pitch. Ships as the release 650 build",
+      "status": "beta",
+      "created": "2026-10-28",
+      "updated": "2026-10-28",
+      "skill": "synthetic-ui-demo"
     }
   },
   "transitions": {

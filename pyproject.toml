@@ -46,6 +46,12 @@ dependencies = [
 whisper = [
     "openai-whisper>=20240930",
 ]
+# Voice prosody: tools/voice_prosody.py and tools/pick_takes.py (Praat via parselmouth).
+# Measures pitch spread and reshapes a clone reference clip's intonation and pace.
+prosody = [
+    "praat-parselmouth>=0.4.3",
+    "numpy>=1.24",
+]
 # Self-hosted cloud GPU fallback via Modal (see docs/modal-setup.md)
 modal = [
     "modal>=0.64",

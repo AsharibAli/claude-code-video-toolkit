@@ -1,0 +1,22 @@
+{
+  "name": "ds-release-notes",
+  "version": "1.0.0",
+  "description": "Synthetic release-notes video for Digital Samba: screens rebuilt from source, scripted cursor and camera, cloned narration",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render ReleaseNotes out/release-notes.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "@remotion/paths": "4.0.529",
+    "@remotion/shapes": "4.0.529",
+    "@remotion/transitions": "4.0.529",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.0.0"
+  }
+}

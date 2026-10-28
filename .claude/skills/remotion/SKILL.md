@@ -28,6 +28,13 @@ import { AnimatedBackground, SlideTransition, Label } from '../../../../lib/comp
 | `PointingHand` | Animated hand emoji with slide-in and pulse |
 | `MazeDecoration` | Animated isometric grid decoration for corners |
 
+## Motion Craft
+
+Before animating a scene, read [motion-craft.md](motion-craft.md). It covers durations and staggers in frames,
+choosing an ease by what the move does, springs by damping ratio, read time for on-screen text, a beat grid that
+doesn't drift, transitions with a cause, and the defaults that make a video look generated (several of which
+toolkit components produce unless you choose otherwise).
+
 ## Custom Transitions
 
 The toolkit includes a transitions library at `lib/transitions/` for scene-to-scene effects beyond the official `@remotion/transitions` package.

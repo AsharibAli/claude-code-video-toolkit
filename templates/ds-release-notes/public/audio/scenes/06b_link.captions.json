@@ -1,0 +1,100 @@
+[
+ {
+  "text": "With",
+  "startMs": 540,
+  "endMs": 640,
+  "timestampMs": 590,
+  "confidence": null
+ },
+ {
+  "text": " invitation",
+  "startMs": 700,
+  "endMs": 1220,
+  "timestampMs": 960,
+  "confidence": null
+ },
+ {
+  "text": " emails",
+  "startMs": 1300,
+  "endMs": 1680,
+  "timestampMs": 1490,
+  "confidence": null
+ },
+ {
+  "text": " on,",
+  "startMs": 1780,
+  "endMs": 1960,
+  "timestampMs": 1870,
+  "confidence": null
+ },
+ {
+  "text": " invitees",
+  "startMs": 2120,
+  "endMs": 2680,
+  "timestampMs": 2400,
+  "confidence": null
+ },
+ {
+  "text": " and",
+  "startMs": 2700,
+  "endMs": 2780,
+  "timestampMs": 2740,
+  "confidence": null
+ },
+ {
+  "text": " registrants",
+  "startMs": 2840,
+  "endMs": 3420,
+  "timestampMs": 3130,
+  "confidence": null
+ },
+ {
+  "text": " get",
+  "startMs": 3860,
+  "endMs": 3980,
+  "timestampMs": 3920,
+  "confidence": null
+ },
+ {
+  "text": " the",
+  "startMs": 4019,
+  "endMs": 4100,
+  "timestampMs": 4059,
+  "confidence": null
+ },
+ {
+  "text": " new",
+  "startMs": 4160,
+  "endMs": 4320,
+  "timestampMs": 4240,
+  "confidence": null
+ },
+ {
+  "text": " link",
+  "startMs": 4380,
+  "endMs": 4600,
+  "timestampMs": 4490,
+  "confidence": null
+ },
+ {
+  "text": " when",
+  "startMs": 4620,
+  "endMs": 4720,
+  "timestampMs": 4670,
+  "confidence": null
+ },
+ {
+  "text": " you",
+  "startMs": 4760,
+  "endMs": 4880,
+  "timestampMs": 4820,
+  "confidence": null
+ },
+ {
+  "text": " save.",
+  "startMs": 4920,
+  "endMs": 5220,
+  "timestampMs": 5070,
+  "confidence": null
+ }
+]

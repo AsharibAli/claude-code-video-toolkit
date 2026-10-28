@@ -1,0 +1,142 @@
+[
+ {
+  "text": "Choose",
+  "startMs": 120,
+  "endMs": 460,
+  "timestampMs": 290,
+  "confidence": null
+ },
+ {
+  "text": " the",
+  "startMs": 500,
+  "endMs": 580,
+  "timestampMs": 540,
+  "confidence": null
+ },
+ {
+  "text": " spoken",
+  "startMs": 660,
+  "endMs": 1000,
+  "timestampMs": 830,
+  "confidence": null
+ },
+ {
+  "text": " language",
+  "startMs": 1080,
+  "endMs": 1440,
+  "timestampMs": 1260,
+  "confidence": null
+ },
+ {
+  "text": " in",
+  "startMs": 1480,
+  "endMs": 1600,
+  "timestampMs": 1540,
+  "confidence": null
+ },
+ {
+  "text": " settings,",
+  "startMs": 1660,
+  "endMs": 2120,
+  "timestampMs": 1890,
+  "confidence": null
+ },
+ {
+  "text": " and",
+  "startMs": 2600,
+  "endMs": 2700,
+  "timestampMs": 2650,
+  "confidence": null
+ },
+ {
+  "text": " with",
+  "startMs": 2740,
+  "endMs": 2840,
+  "timestampMs": 2790,
+  "confidence": null
+ },
+ {
+  "text": " \"Apply",
+  "startMs": 2880,
+  "endMs": 3260,
+  "timestampMs": 3070,
+  "confidence": null
+ },
+ {
+  "text": " to",
+  "startMs": 3300,
+  "endMs": 3400,
+  "timestampMs": 3350,
+  "confidence": null
+ },
+ {
+  "text": " everyone\"",
+  "startMs": 3460,
+  "endMs": 3820,
+  "timestampMs": 3640,
+  "confidence": null
+ },
+ {
+  "text": " on",
+  "startMs": 3880,
+  "endMs": 4059,
+  "timestampMs": 3969,
+  "confidence": null
+ },
+ {
+  "text": " by",
+  "startMs": 4080,
+  "endMs": 4240,
+  "timestampMs": 4160,
+  "confidence": null
+ },
+ {
+  "text": " default,",
+  "startMs": 4260,
+  "endMs": 4720,
+  "timestampMs": 4490,
+  "confidence": null
+ },
+ {
+  "text": " every",
+  "startMs": 5260,
+  "endMs": 5420,
+  "timestampMs": 5340,
+  "confidence": null
+ },
+ {
+  "text": " participant",
+  "startMs": 5520,
+  "endMs": 6100,
+  "timestampMs": 5810,
+  "confidence": null
+ },
+ {
+  "text": " is",
+  "startMs": 6140,
+  "endMs": 6240,
+  "timestampMs": 6190,
+  "confidence": null
+ },
+ {
+  "text": " transcribed",
+  "startMs": 6260,
+  "endMs": 6840,
+  "timestampMs": 6550,
+  "confidence": null
+ },
+ {
+  "text": " in",
+  "startMs": 6880,
+  "endMs": 6940,
+  "timestampMs": 6910,
+  "confidence": null
+ },
+ {
+  "text": " it.",
+  "startMs": 6980,
+  "endMs": 7100,
+  "timestampMs": 7040,
+  "confidence": null
+ }
+]

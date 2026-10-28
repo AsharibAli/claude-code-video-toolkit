@@ -81,6 +81,12 @@ Config-driven sprint review videos with theme system, config-driven content (`sp
 ### product-demo
 Marketing/product demo videos with dark tech aesthetic, scene-based composition (title, problem, solution, demo, stats, CTA), animated background, Narrator PiP, browser/terminal chrome, and stats cards with spring animations.
 
+### ds-release-notes
+Synthetic release-notes videos for Digital Samba (nothing screen-recorded): room and account-center screens rebuilt
+from source as static React, driven by the `Stage` cursor and camera, with sentence-level cloned narration picked by
+pace and pitch. Ships as the finished release 650 build, so it renders as is; for a new release keep the kits and
+replace `src/scenes/` and the voice phrases. Method in the `synthetic-ui-demo` skill.
+
 ### concept-explainer-short
 9:16 vertical concept-explainer shorts (TikTok/Reels/YouTube Shorts). **Python/moviepy, not Remotion** — the whole video derives from `scenes.json` (per-scene narration + visual asset). Pipeline: `gen_vo.py` (per-scene TTS via voiceover.py, clone or built-in, `--max-wpm` pacing clamp) → `gen_captions.py` (whisper word timing force-aligned to script text, needs `uv sync --extra whisper`) → `build.py` (audio-anchored composite: Ken Burns on stills, boomerang-looped clips, burned karaoke caption pills, ducked music). Renders at every stage — placeholder cards before assets, silent before audio. Visuals follow the FLUX/Ideogram/LTX split: Ideogram cards at `1440x2560` for anything text-bearing, LTX b-roll at `576x1024` for motion.
 
@@ -182,6 +188,32 @@ Config: `SIXTYDB_API_KEY` (required), `SIXTYDB_VOICE_ID` (optional — falls bac
 settings). `redub.py --tts-provider 60db` uses 60db for the new voice while
 transcription stays on ElevenLabs Scribe (60db has no STT); in `--sync` mode the
 60db output is run back through Scribe to recover word timestamps.
+
+### Clone Prosody (when a cloned voice sounds flat or rushed)
+
+A clone copies its reference clip's **pace and intonation**. If the lines come out fast and flat, the clip is
+fast and flat, and `--max-wpm` stretching below ~0.9x only smears them. Measure, then fix the clip:
+
+```bash
+uv sync --extra prosody
+uv run tools/voice_prosody.py measure assets/voices/lugh-ref.wav public/audio/scenes/*.mp3   # sd < 2 st = flat
+uv run tools/voice_prosody.py expand assets/voices/lugh-ref.wav assets/voices/lugh-ref-expressive.wav \
+    --pitch 2.0 --tempo 0.85          # same voice and accent, bigger melody, 15% slower; clone from this
+```
+
+Then generate **one `.txt` per sentence**, three takes, and let `pick_takes.py` choose by pace then pitch spread
+(it stretches only a winner still over 170 wpm, never below 0.9x):
+
+```bash
+for t in 1 2 3; do cp -r public/audio/phrases public/audio/takes/t$t; \
+  uv run tools/voiceover.py --provider qwen3 --ref-audio assets/voices/lugh-ref-expressive.wav \
+    --ref-text "..." --scene-dir public/audio/takes/t$t; done
+uv run tools/pick_takes.py --takes-dir public/audio/takes --output public/audio/scenes --json
+```
+
+Lugh's expressive reference lives at `assets/voices/lugh-ref-expressive.wav`. Measured on release 650: the raw
+clip gave clones at 1.7-2.1 st sd and 180-215 wpm; the expanded clip gave 3-4 st at 145-165 wpm with no stretch.
+Short closing sentences still rush; take selection handles most of it.
 
 ### Timing Sync (after voiceover)
 

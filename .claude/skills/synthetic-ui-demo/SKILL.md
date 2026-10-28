@@ -14,7 +14,8 @@ product changes.
 
 - `examples/ds-free-schedule-demo`: one 26s flow (schedule a call) with a narrator tile. The simplest complete case.
   Its `src/Demo.tsx` is a single timeline with every cursor keyframe, click and camera move.
-- `examples/ds-release-649`: an 80s release-notes video, eight scenes across three apps. `src/Release.tsx` sequences
+- `examples/ds-release-649`: an 80s release-notes video, eight scenes across three apps. `templates/ds-release-notes` is the
+  reusable shape of it (ships as release 650). `src/Release.tsx` sequences
   the scenes, `src/scenes/` has one file per release item, and `src/room/` and `src/ac/` are the screen kits.
 
 ## When to use this vs. Playwright
@@ -77,8 +78,11 @@ and the default values to show.
 
 ### 3. Voice first, then put the timeline in frames
 
-- Write one line per scene and generate per-scene audio first (`voiceover.py --scene-dir ... --json`, add
-  `--max-wpm 165`). Read the measured durations.
+- Write one line per scene, **split at sentences** (one `.txt` per phrase), and generate the audio first
+  (`voiceover.py --scene-dir ...`). Three takes and `tools/pick_takes.py` beat a single take plus `--max-wpm`: a
+  clone copies its reference clip's pace and flatness, so if the lines come out rushed or monotone fix the clip with
+  `tools/voice_prosody.py expand` rather than stretching the output (see "Clone Prosody" in CLAUDE.md). Read the
+  measured durations, and `tools/captions.py` for word timings.
 - Size each scene to its line plus a beat, and keep a header comment listing each line's start and length. That
   comment is the source of truth (see "Audio-Anchored Timelines" in CLAUDE.md).
 - Everything is a frame constant at the top of the scene file: cursor keyframes, `CLICKS`, camera keyframes,

@@ -1,0 +1,44 @@
+[
+ {
+  "text": "Release",
+  "startMs": 240,
+  "endMs": 580,
+  "timestampMs": 410,
+  "confidence": null
+ },
+ {
+  "text": " six",
+  "startMs": 700,
+  "endMs": 920,
+  "timestampMs": 810,
+  "confidence": null
+ },
+ {
+  "text": " fifty",
+  "startMs": 1020,
+  "endMs": 1300,
+  "timestampMs": 1160,
+  "confidence": null
+ },
+ {
+  "text": " is",
+  "startMs": 1340,
+  "endMs": 1420,
+  "timestampMs": 1380,
+  "confidence": null
+ },
+ {
+  "text": " available",
+  "startMs": 1460,
+  "endMs": 1860,
+  "timestampMs": 1660,
+  "confidence": null
+ },
+ {
+  "text": " now.",
+  "startMs": 1980,
+  "endMs": 2240,
+  "timestampMs": 2110,
+  "confidence": null
+ }
+]
