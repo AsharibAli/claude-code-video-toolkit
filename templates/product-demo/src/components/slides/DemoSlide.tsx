@@ -79,8 +79,9 @@ export const DemoSlide: React.FC<DemoSlideProps> = ({ content }) => {
           </div>
         )}
 
-        {/* Video Container */}
+        {/* Video Container. data-qc="product": qc.py --layout reports text in here as product UI, not ours */}
         <div
+          data-qc="product"
           style={{
             opacity: containerOpacity,
             transform: `scale(${containerScale})`,
@@ -143,7 +144,7 @@ export const DemoSlide: React.FC<DemoSlideProps> = ({ content }) => {
           <p
             style={{
               opacity: labelOpacity,
-              fontSize: theme.typography.body.size - 4,
+              fontSize: theme.typography.body.size + 4,
               fontFamily: theme.fonts.primary,
               color: theme.colors.textMedium,
               margin: 0,

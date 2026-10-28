@@ -88,12 +88,12 @@ export const StatsSlide: React.FC<StatsSlideProps> = ({ content }) => {
                   borderRadius: 24,
                   padding: '50px 60px',
                   textAlign: 'center',
-                  minWidth: 280,
+                  minWidth: 320,
                 }}
               >
                 {/* Icon */}
                 {stat.icon && (
-                  <div style={{ fontSize: 48, marginBottom: 20 }}>
+                  <div style={{ fontSize: 56, marginBottom: 20 }}>
                     {stat.icon}
                   </div>
                 )}
@@ -101,7 +101,7 @@ export const StatsSlide: React.FC<StatsSlideProps> = ({ content }) => {
                 {/* Value */}
                 <div
                   style={{
-                    fontSize: 72,
+                    fontSize: 96,
                     fontWeight: 700,
                     fontFamily: theme.fonts.primary,
                     color: color,
@@ -112,7 +112,7 @@ export const StatsSlide: React.FC<StatsSlideProps> = ({ content }) => {
                   {stat.unit && (
                     <span
                       style={{
-                        fontSize: 32,
+                        fontSize: 40,
                         fontWeight: 400,
                         marginLeft: 4,
                       }}
@@ -125,7 +125,7 @@ export const StatsSlide: React.FC<StatsSlideProps> = ({ content }) => {
                 {/* Label */}
                 <div
                   style={{
-                    fontSize: 20,
+                    fontSize: 28,
                     fontFamily: theme.fonts.primary,
                     color: theme.colors.textMedium,
                     marginTop: 16,

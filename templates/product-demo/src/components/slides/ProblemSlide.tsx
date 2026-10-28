@@ -83,7 +83,7 @@ export const ProblemSlide: React.FC<ProblemSlideProps> = ({ content }) => {
               borderRadius: 16,
               padding: 30,
               border: '1px solid #333',
-              width: 700,
+              width: 820,
               boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
             }}
           >
@@ -98,7 +98,7 @@ export const ProblemSlide: React.FC<ProblemSlideProps> = ({ content }) => {
             <pre
               style={{
                 fontFamily: theme.fonts.mono,
-                fontSize: 16,
+                fontSize: 28,
                 lineHeight: 1.6,
                 margin: 0,
                 color: '#888',
@@ -135,21 +135,23 @@ export const ProblemSlide: React.FC<ProblemSlideProps> = ({ content }) => {
                 background: 'rgba(255, 107, 107, 0.1)',
                 border: '1px solid rgba(255, 107, 107, 0.3)',
                 borderRadius: 12,
-                padding: '16px 24px',
+                padding: '20px 28px',
               }}
             >
               <div
                 style={{
-                  width: 50,
-                  height: 50,
+                  minWidth: 104,
+                  height: 64,
+                  padding: '0 10px',
+                  boxSizing: 'border-box',
                   borderRadius: 10,
                   background: '#FF6B6B',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 18,
+                  fontSize: 28,
                   fontWeight: 700,
-                  color: '#fff',
+                  color: '#2a0d0d', // white on coral is 2.8:1, this is 6.5:1
                 }}
               >
                 {problem.icon}
@@ -157,7 +159,7 @@ export const ProblemSlide: React.FC<ProblemSlideProps> = ({ content }) => {
               <span
                 style={{
                   color: theme.colors.textDark,
-                  fontSize: 20,
+                  fontSize: 30,
                   fontWeight: 500,
                 }}
               >
