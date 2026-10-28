@@ -1,0 +1,107 @@
+[
+ {
+  "text": "Background",
+  "startMs": 380,
+  "endMs": 860,
+  "timestampMs": 620,
+  "confidence": null
+ },
+ {
+  "text": " blur",
+  "startMs": 940,
+  "endMs": 1300,
+  "timestampMs": 1120,
+  "confidence": null
+ },
+ {
+  "text": " and",
+  "startMs": 1580,
+  "endMs": 1700,
+  "timestampMs": 1640,
+  "confidence": null
+ },
+ {
+  "text": " images",
+  "startMs": 1780,
+  "endMs": 2160,
+  "timestampMs": 1970,
+  "confidence": null
+ },
+ {
+  "text": " work",
+  "startMs": 2220,
+  "endMs": 2440,
+  "timestampMs": 2330,
+  "confidence": null
+ },
+ {
+  "text": " again",
+  "startMs": 2500,
+  "endMs": 2800,
+  "timestampMs": 2650,
+  "confidence": null
+ },
+ {
+  "text": " on",
+  "startMs": 2840,
+  "endMs": 2920,
+  "timestampMs": 2880,
+  "confidence": null
+ },
+ {
+  "text": " Android",
+  "startMs": 3000,
+  "endMs": 3400,
+  "timestampMs": 3200,
+  "confidence": null
+ },
+ {
+  "text": " tablets,",
+  "startMs": 3460,
+  "endMs": 3960,
+  "timestampMs": 3710,
+  "confidence": null
+ },
+ {
+  "text": " instead",
+  "startMs": 4400,
+  "endMs": 4740,
+  "timestampMs": 4570,
+  "confidence": null
+ },
+ {
+  "text": " of",
+  "startMs": 4780,
+  "endMs": 4940,
+  "timestampMs": 4860,
+  "confidence": null
+ },
+ {
+  "text": " blurring",
+  "startMs": 4960,
+  "endMs": 5360,
+  "timestampMs": 5160,
+  "confidence": null
+ },
+ {
+  "text": " the",
+  "startMs": 5400,
+  "endMs": 5460,
+  "timestampMs": 5430,
+  "confidence": null
+ },
+ {
+  "text": " whole",
+  "startMs": 5500,
+  "endMs": 5680,
+  "timestampMs": 5590,
+  "confidence": null
+ },
+ {
+  "text": " picture.",
+  "startMs": 5780,
+  "endMs": 6140,
+  "timestampMs": 5960,
+  "confidence": null
+ }
+]

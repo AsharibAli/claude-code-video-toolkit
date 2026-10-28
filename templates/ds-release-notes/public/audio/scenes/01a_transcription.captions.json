@@ -1,0 +1,51 @@
+[
+ {
+  "text": "Transcription",
+  "startMs": 80,
+  "endMs": 700,
+  "timestampMs": 390,
+  "confidence": null
+ },
+ {
+  "text": " now",
+  "startMs": 780,
+  "endMs": 920,
+  "timestampMs": 850,
+  "confidence": null
+ },
+ {
+  "text": " uses",
+  "startMs": 1060,
+  "endMs": 1380,
+  "timestampMs": 1220,
+  "confidence": null
+ },
+ {
+  "text": " one",
+  "startMs": 1460,
+  "endMs": 1560,
+  "timestampMs": 1510,
+  "confidence": null
+ },
+ {
+  "text": " language",
+  "startMs": 1640,
+  "endMs": 2060,
+  "timestampMs": 1850,
+  "confidence": null
+ },
+ {
+  "text": " for",
+  "startMs": 2100,
+  "endMs": 2200,
+  "timestampMs": 2150,
+  "confidence": null
+ },
+ {
+  "text": " everyone.",
+  "startMs": 2280,
+  "endMs": 2680,
+  "timestampMs": 2480,
+  "confidence": null
+ }
+]

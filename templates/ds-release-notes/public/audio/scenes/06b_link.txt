@@ -1,0 +1,1 @@
+With invitation emails on, invitees and registrants get the new link when you save.
