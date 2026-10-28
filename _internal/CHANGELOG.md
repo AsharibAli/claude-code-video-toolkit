@@ -8,6 +8,10 @@ All notable changes to claude-code-video-toolkit.
 
 ## Unreleased
 
+### Added
+
+- **Motion craft reference** (`.claude/skills/remotion/motion-craft.md`): durations and staggers in frames at 30fps, choosing an ease by what the move does, springs named by damping ratio (with Remotion's default `spring()` worked out as ζ = 0.5, i.e. playful), read time for on-screen text, a beat grid that doesn't drift, transitions with a cause, and a list of defaults that make a video look generated, with the toolkit components that produce them. `/design` and `/scene-review` now read it alongside frontend-design. Adapted from HyperFrames (HeyGen, Apache-2.0).
+
 ---
 
 ## 2026-10-27 (v0.22.0)

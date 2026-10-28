@@ -16,10 +16,10 @@
     },
     "remotion": {
       "path": ".claude/skills/remotion/",
-      "description": "Toolkit-specific Remotion patterns — custom transitions, shared components, conventions",
+      "description": "Toolkit-specific Remotion patterns — custom transitions, shared components, conventions, motion craft",
       "status": "stable",
       "created": "2025-12-04",
-      "updated": "2026-02-19"
+      "updated": "2026-10-28"
     },
     "elevenlabs": {
       "path": ".claude/skills/elevenlabs/",
