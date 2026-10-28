@@ -14,7 +14,7 @@ Every frame below was generated in this workspace — click to watch.
 
 | | |
 |:--:|:--:|
-| <a href="https://demos.digitalsamba.com/video/ds-release-649.mp4"><img src="assets/readme-thumbs/ds-release-649.jpg" width="430" alt="Release-notes video with product UI rebuilt from source"></a> | <a href="https://demos.digitalsamba.com/video/ds-free-schedule-demo.mp4"><img src="assets/readme-thumbs/ds-free-schedule-demo.jpg" width="430" alt="Product demo with an AI narrator tile"></a> |
+| <a href="https://demos.digitalsamba.com/video/ds-release-650.mp4"><img src="assets/readme-thumbs/ds-release-650.jpg" width="430" alt="Release-notes video with product UI rebuilt from source"></a> | <a href="https://demos.digitalsamba.com/video/ds-free-schedule-demo.mp4"><img src="assets/readme-thumbs/ds-free-schedule-demo.jpg" width="430" alt="Product demo with an AI narrator tile"></a> |
 | **Release-notes video**<br>product UI rebuilt from source,<br>no screen recording | **Product demo**<br>scripted cursor and camera,<br>AI narrator tile |
 
 | | | |
@@ -128,6 +128,7 @@ See `examples/` for finished projects you can learn from (newest first — scrol
 
 | Date | Demo | Description |
 |------|------|-------------|
+| 2026-10-28 | [ds-release-650](https://demos.digitalsamba.com/video/ds-release-650.mp4) | 87s release-notes video built from the `ds-release-notes` template: six items across the room and account center, Lugh's cloned voice made livelier with `voice_prosody.py`, checked with `qc.py --render --layout` (`templates/ds-release-notes`) |
 | 2026-10-21 | [ds-release-649](https://demos.digitalsamba.com/video/ds-release-649.mp4) | Release-notes video with no screen recording: three product UIs rebuilt from their source code, driven by a scripted cursor and camera, narrated by Lugh (`examples/ds-release-649`) |
 | 2026-10-21 | [ds-free-schedule-demo](https://demos.digitalsamba.com/video/ds-free-schedule-demo.mp4) | 26s synthetic product demo of scheduling a call, with a SoulX talking-head narrator tile (`examples/ds-free-schedule-demo`) |
 | 2026-06-09 | [hallucinations-short](https://demos.digitalsamba.com/video/hallucinations_short.mp4) | 3:41 vertical explainer on AI hallucinations — Ideogram 4 cards, LTX-2 b-roll, burned karaoke captions, Qwen3-TTS voice *clone* (reference sample from [Pixabay](https://pixabay.com/sound-effects/search/voice%20overs/)) |
