@@ -107,7 +107,7 @@ def track(video, *, box=None, faces=False, max_lost=12):
 
 
 def validate_track(report, video):
-    if not isinstance(report, dict) or report.get('version') != 1 or report.get('sourceSha256') != sha256(video):
+    if not isinstance(report, dict) or type(report.get('version')) is not int or report['version'] != 1 or report.get('sourceSha256') != sha256(video):
         raise ValueError('Track does not match the source video hash')
     info = probe(video)
     stream = video_stream(info)
