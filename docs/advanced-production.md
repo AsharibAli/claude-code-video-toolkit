@@ -160,3 +160,25 @@ This conditions generation; it does not guarantee identity or prevent model
 artifacts. Inspect each shot. Estimates are supplied by you, not provider quotes.
 Unknown estimates block capped builds. Use a new `--output-dir` for revisions so
 old generated assets stay intact. Preview and lock creation do not call providers.
+
+## Reusable data videos
+
+```bash
+uv run tools/data_video.py --spec examples/data-to-video/chart.json \
+  --output out/chart.mp4 --script-output out/chart-narration.txt
+# Generate speech from that script with the existing voiceover tool, then:
+uv run tools/data_video.py --spec examples/data-to-video/chart.json \
+  --narration narration.wav --output out/narrated-chart.mp4 --run
+```
+
+Specs select `line` or `bar`, dataset, title, unit, dimensions, FPS and duration.
+CSV and JSON use long rows with `period`, `series`, `value`; override names with
+`columns`. Periods follow their first appearance, so sort source rows beforehand.
+Each series must have one finite numeric value per period. Missing/duplicate
+cells fail validation. Limits are 500 periods, 24 series, and 12000 rows.
+
+Matplotlib animates the values and holds the final state. The optional narration
+track determines duration. The generated script states first/last values and
+absolute changes, without inventing trends or explanations. `--save-report`
+writes the source hash, normalized data and narration text for audit. The sample
+dataset is fictional. Review labels, units and source data before publishing.
