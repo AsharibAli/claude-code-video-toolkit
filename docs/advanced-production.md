@@ -182,3 +182,30 @@ track determines duration. The generated script states first/last values and
 absolute changes, without inventing trends or explanations. `--save-report`
 writes the source hash, normalized data and narration text for audit. The sample
 dataset is fictional. Review labels, units and source data before publishing.
+
+## Source-backed content
+
+```json
+{"version":1,"script":"script.md","sources":{"report":{"path":"report.csv"}},
+ "claims":[{"id":"may-users","text":"May had 120 users.","source":"report",
+   "selector":{"row":0,"column":"users"},"expected":120,"display":"120"}]}
+```
+
+```bash
+uv run tools/evidence.py lock --spec evidence.json --output evidence.lock.json
+uv run tools/evidence.py check --spec evidence.lock.json --output out/evidence-report.json
+```
+
+Supported sources are local UTF-8 TXT, Markdown, CSV and JSON. Claims must quote
+their exact script text. Evidence is either a `quote` from a document or a
+`selector` for a CSV cell/JSON pointer, with `expected` value. CSV rows are
+zero-based, excluding the header. JSON pointers follow RFC 6901. Numeric display
+values use plain decimal notation, without thousands separators or unit scaling.
+
+The lock records script and source hashes. Checks flag changed/missing files,
+missing quotes, wrong values, unknown sources and script content with no claim.
+`quote-found` means exact text was located, not that the source is correct.
+Dataset matches and paraphrases produce review warnings because labels, units,
+context and meaning still need judgment. `--strict` also fails on those warnings.
+The tool never silently treats retrieval or matching numbers as proof of truth.
+Reports use `findings` with error/warning levels, compatible with local review QC.
