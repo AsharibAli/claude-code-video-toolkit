@@ -73,3 +73,56 @@ The crop follows the tracked center with smoothing, clamps at image edges, and
 preserves the target aspect ratio. `--smoothing 1` follows immediately. The source
 must have constant FPS. Original audio is retained. The adjacent `.track.json`
 contains frame boxes, loss markers and a source hash for reuse by compositing.
+
+## Multi-speaker dubbing
+
+```bash
+uv run tools/dubbing.py import diarized-whisperx.json --output dub.json
+# Edit dub.json with translated/replacement text and voice identities.
+uv run tools/dubbing.py render --video source.mp4 --spec dub.json \
+  --output out/dubbed.mp4 --run
+```
+
+WhisperX identifies speaker IDs, not people's names. Assign each ID a stable
+`provider` and `voiceId`, or `speaker` for Qwen3. Existing providers are
+`elevenlabs`, `qwen3`, and `60db`. Qwen3 supports `refAudio` plus `refText`.
+Set `audio` on individual segments to use existing recordings without TTS.
+Paths are relative to the spec. Review diarization and replacement text before
+rendering. The tool does not translate text automatically.
+
+```json
+{"version":1,"speakers":{"A":{"provider":"qwen3","speaker":"Ryan"}},
+ "background":"background.wav","segments":[
+  {"id":"greeting","speaker":"A","startSeconds":1,"endSeconds":3,
+   "text":"Welcome to the release."}]}
+```
+
+The renderer fits each utterance to its original slot with pitch-preserving
+`atempo`, places it at the original timestamp, and mixes overlapping speakers.
+It rejects tempo outside `--min-tempo .75 --max-tempo 1.5` instead of truncating
+speech. Revise text or timing when a translation does not fit. This synchronizes
+dialogue timing; it does not modify a presenter's mouth movements.
+
+Provide an isolated `background` stem to retain music/ambience. The original
+dialogue is never added back. Without a stem, gaps are silent. If Demucs is
+installed in another environment, extract a stem explicitly:
+
+```bash
+uv run tools/dubbing.py separate --video source.mp4 --output background.wav \
+  --python /path/to/demucs/python --run
+```
+
+Separation is approximate and can remove effects or retain speech leakage.
+For automatic transcription and diarization, install WhisperX in its own
+environment following its upstream instructions, set `HF_TOKEN`, accept its
+selected pyannote model conditions, then run:
+
+```bash
+/path/to/whisperx/python tools/dubbing.py diarize --video source.mp4 \
+  --output diarized-whisperx.json --model base --device cpu
+```
+
+This explicit analysis command downloads and runs local models. Keep the heavy
+WhisperX/Demucs environments separate from the toolkit's core dependencies.
+Preview/render tests use supplied utterances; paid TTS is only called by `--run`
+when a segment lacks `audio`.
