@@ -1,8 +1,9 @@
 # Production capability delivery
 
-Local branch: `codex/advanced-production-capabilities`.
+Implementation branch: `feat/advanced-video-production`.
 Base: `e3253a7`, including the previous production PR's three CI fixes.
-Implementation stays local until the user requests publication.
+Published to the `AsharibAli/claude-code-video-toolkit` fork for draft review.
+Depends on upstream PR #142, which supplies the production workflow foundation.
 
 Approaches were compared against GitHub projects before coding. See
 [the research record](../docs/advanced-production-research.md) for decisions,
@@ -52,8 +53,8 @@ uv run python scripts/verify_features.py --capabilities
 For the two optional RVM checks, also install `--extra matting` and set
 `VIDEO_TOOLKIT_RVM_MODEL` to that local model. Otherwise those checks skip.
 The new CI configuration exercises the offline graph on Windows and Ubuntu
-without downloading model weights. It has not been run remotely for this local
-branch. Existing Remotion/browser code was unchanged and its checks were not
+without downloading model weights. Check the draft PR for current remote CI
+results. Existing Remotion/browser code was unchanged and its checks were not
 rerun locally during this addition.
 
 ## Inference and quality limits
