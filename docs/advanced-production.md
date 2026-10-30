@@ -53,3 +53,23 @@ segment without word alignment stays intact. An unfinished final sentence is
 omitted. This is deterministic first-pass editing; inspect the exported edit
 decisions for context and editorial quality. It cannot infer which claims are
 interesting or correct. FFmpeg re-encodes cuts to preserve accurate boundaries.
+
+## Subject tracking and reframing
+
+```bash
+uv sync --extra vision
+uv run tools/reframe.py --video demo.mp4 --box 220,90,180,240 \
+  --width 1080 --height 1920 --output out/portrait.mp4 --run
+# Or use --faces instead of --box for automatic face detection.
+```
+
+CSRT follows the first-frame subject box. Face mode starts with the largest face,
+then follows the nearest face; it is not face recognition. Both modes report
+temporary losses and fail after `--max-lost` frames. Split footage at scene cuts
+or reinitialize with another first-frame box. Neither mode can guarantee identity
+through occlusion or reliably recognize the active speaker among several people.
+
+The crop follows the tracked center with smoothing, clamps at image edges, and
+preserves the target aspect ratio. `--smoothing 1` follows immediately. The source
+must have constant FPS. Original audio is retained. The adjacent `.track.json`
+contains frame boxes, loss markers and a source hash for reuse by compositing.
