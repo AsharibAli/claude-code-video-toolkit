@@ -29,6 +29,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--media', action='store_true', help='Compile helpers, typecheck and render actual template frames/video')
     parser.add_argument('--browser', action='store_true', help='Exercise flow recorder and review UI in a real browser')
+    parser.add_argument('--capabilities', action='store_true', help='Run the eleven-task local production graph; requires the vision extra')
     args = parser.parse_args(argv)
     evidence = {'python': False, 'media': False, 'browser': False, 'renders': []}
     try:
@@ -38,6 +39,11 @@ def main(argv=None) -> int:
         match = re.search(r'Ran (\d+) tests? in', output)
         if match:
             evidence['pythonTests'] = int(match[1])
+        if args.capabilities:
+            (ROOT / 'scratch').mkdir(exist_ok=True)
+            folder = Path(tempfile.mkdtemp(prefix='capability-verification-', dir=ROOT / 'scratch'))
+            evidence['capabilities'] = json.loads(run([sys.executable, 'scripts/verify_capabilities.py',
+                '--project', str(folder / 'demo'), '--report', str(folder / 'report.json')], timeout=600))
         browser = os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH')
         if not browser and (args.browser or args.media):
             browser = run(['node', '-e', 'process.stdout.write(require("playwright").chromium.executablePath())'], cwd=ROOT / 'playwright').strip()

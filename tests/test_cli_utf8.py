@@ -10,6 +10,26 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class UnicodeCliTests(unittest.TestCase):
+    def test_capability_help_needs_no_model_or_credentials(self):
+        for tool in ('audio_mix', 'highlights', 'reframe', 'dubbing', 'characters', 'data_video', 'evidence', 'composite'):
+            with self.subTest(tool=tool):
+                result = subprocess.run([sys.executable, str(ROOT / f'tools/{tool}.py'), '--help'],
+                    env={**os.environ, 'PYTHONIOENCODING': 'ascii'}, capture_output=True, encoding='utf-8', timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('usage:', result.stdout)
+
+    def test_dubbing_import_outputs_unicode_under_ascii_locale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'transcript.json'
+            source.write_text(json.dumps({'segments': [{'start': 0, 'end': 1, 'text': 'مرحبا بالعالم.',
+                                                        'speaker': 'محدث'}]}), encoding='utf-8')
+            result = subprocess.run([sys.executable, str(ROOT / 'tools/dubbing.py'), 'import', str(source),
+                '--output', str(root / 'dub.json')], env={**os.environ, 'PYTHONIOENCODING': 'ascii'},
+                capture_output=True, encoding='utf-8', timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['segments'][0]['speaker'], 'محدث')
+
     def test_redirected_console_keeps_unicode_json_under_ascii_locale(self):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
