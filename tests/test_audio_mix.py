@@ -1,17 +1,16 @@
 import json
-from pathlib import Path
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
 import wave
+from pathlib import Path
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from audio_mix import mix
-from media_ops import load_json, probe, run, staged_output
+from media_ops import load_json, number, probe, run, staged_output
 
 
 @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg required')
@@ -59,6 +58,11 @@ class AudioMixTests(unittest.TestCase):
 
 
 class MediaBoundaryTests(unittest.TestCase):
+    def test_nonfinite_or_huge_numbers_are_validation_errors(self):
+        for value in (True, float('inf'), float('nan'), 10**1000, '1'):
+            with self.assertRaises(ValueError):
+                number(value, 'test')
+
     def test_json_and_atomic_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / 'data.json'

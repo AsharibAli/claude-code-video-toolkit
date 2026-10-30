@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
-from difflib import SequenceMatcher
 import json
-from pathlib import Path
 import re
 import subprocess
 import sys
+from collections import Counter
+from difflib import SequenceMatcher
+from pathlib import Path
 
-from media_ops import load_json, number, output_path, probe, run, sha256, staged_output, video_stream, write_json
+from media_ops import (
+    load_json,
+    number,
+    output_path,
+    probe,
+    run,
+    sha256,
+    staged_output,
+    video_stream,
+    write_json,
+)
 from transcript import segments, transcribe
 
 
@@ -29,7 +39,7 @@ def sentences(transcript):
             if re.search(r'[.!?。！？]["\'”’]*$', word['text']):
                 units.append({'text': ' '.join(w['text'] for w in pending), 'words': pending})
                 pending = []
-    return units, bool(pending)
+    return units, pending
 
 
 def select(transcript, duration, *, budget=60., keywords=(), padding=.12, max_pause=.7, dedup=.85):
@@ -41,6 +51,21 @@ def select(transcript, duration, *, budget=60., keywords=(), padding=.12, max_pa
     units, incomplete = sentences(transcript)
     if not units:
         raise ValueError('No complete punctuated sentences found. Supply a punctuated transcript.')
+    all_words = [word for unit in units for word in unit['words']] + incomplete
+    previous = 0
+    for word in all_words:
+        if word['start'] < previous - .001:
+            raise ValueError('Resolve overlapping speech timing before selecting highlights')
+        if word['end'] > duration + .001:
+            raise ValueError('Transcript extends beyond the source media')
+        previous = word['end']
+    starts = {word['start']: i for i, word in enumerate(all_words)}
+    ends = {word['end']: i for i, word in enumerate(all_words)}
+    def padded(start, end):
+        left_index, right_index = starts[start], ends[end]
+        before = all_words[left_index - 1]['end'] if left_index else 0
+        after = all_words[right_index + 1]['start'] if right_index + 1 < len(all_words) else duration
+        return [max(0, start - padding, before), min(duration, end + padding, after)]
     vocabulary = Counter(t for unit in units for t in set(tokens(unit['text'])))
     wanted = {t for term in keywords for t in tokens(term)}
     candidates, seen = [], []
@@ -51,16 +76,14 @@ def select(transcript, duration, *, budget=60., keywords=(), padding=.12, max_pa
             continue
         seen.append(normalized)
         words = unit['words']
-        if words[-1]['end'] > duration + .1:
-            raise ValueError('Transcript extends beyond the source media')
         ranges = []
         start, end = words[0]['start'], words[0]['end']
         for word in words[1:]:
             if word['start'] - end > max_pause:
-                ranges.append([max(0, start - padding), min(duration, end + padding)])
+                ranges.append(padded(start, end))
                 start = word['start']
             end = word['end']
-        ranges.append([max(0, start - padding), min(duration, end + padding)])
+        ranges.append(padded(start, end))
         length = sum(b - a for a, b in ranges)
         score = sum(1 / vocabulary[t] for t in set(terms)) / max(1, len(terms))
         score += len(wanted.intersection(terms)) * 3
@@ -89,7 +112,7 @@ def select(transcript, duration, *, budget=60., keywords=(), padding=.12, max_pa
         raise ValueError('More than 128 cuts selected. Use a shorter budget.')
     return {'version': 1, 'durationSeconds': offset, 'segments': cuts,
             'sentences': [{'text': u['text'], 'score': u['score'], 'sourceStartSeconds': u['words'][0]['start']} for u in selected],
-            'omittedIncompleteTail': incomplete, 'ranking': 'keyword matches and uncommon transcript terms'}
+            'omittedIncompleteTail': bool(incomplete), 'ranking': 'keyword matches and uncommon transcript terms'}
 
 
 def render(video, output, plan):

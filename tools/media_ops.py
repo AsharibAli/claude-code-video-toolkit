@@ -1,20 +1,24 @@
 """Shared media boundaries for local production tools, using installed FFmpeg."""
 from __future__ import annotations
 
-from contextlib import contextmanager
 import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import subprocess
 import tempfile
+from contextlib import contextmanager
+from pathlib import Path
 
 from win_encoding import utf8_env
 
 
 def number(value, label, low=None, high=None):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+    try:
+        finite = isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    except OverflowError:
+        finite = False
+    if not finite:
         raise ValueError(f'{label} must be a finite number')
     if (low is not None and value < low) or (high is not None and value > high):
         raise ValueError(f'{label} must be between {low} and {high}')
@@ -44,7 +48,7 @@ def sha256(path):
 def run(command, *, timeout=1800):
     result = subprocess.run([str(x) for x in command], stdin=subprocess.DEVNULL,
                             capture_output=True, text=True, encoding='utf-8', errors='replace',
-                            timeout=timeout, shell=False, env=utf8_env())
+                            timeout=timeout, shell=False, check=False, env=utf8_env())
     if result.returncode:
         raise ValueError(f'{command[0]} failed ({result.returncode}): {result.stderr[-3000:]}')
     return result.stdout

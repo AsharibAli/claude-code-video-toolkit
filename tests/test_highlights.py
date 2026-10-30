@@ -1,14 +1,13 @@
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from highlights import render, select
 from media_ops import probe, run
 from transcript import segments
-
 
 WORDS = [{'text': text, 'startMs': start, 'endMs': end} for text, start, end in [
     ('Useful', 100, 400), ('result.', 500, 900),
@@ -39,6 +38,16 @@ class HighlightTests(unittest.TestCase):
             segments({'segments': [{'start': 1, 'end': 0, 'text': 'No.'}]})
         with self.assertRaises(ValueError):
             select([{'text': 'No punctuation', 'startMs': 0, 'endMs': 1000}], 2)
+
+    def test_padding_does_not_include_the_next_sentences_words(self):
+        words = [{'text': 'Release.', 'startMs': 100, 'endMs': 900},
+                 {'text': 'Other.', 'startMs': 950, 'endMs': 1800}]
+        plan = select(words, 2, budget=1.1, keywords=['release'])
+        self.assertEqual(len(plan['sentences']), 1)
+        self.assertLessEqual(plan['segments'][0]['endSeconds'], .95)
+        words[1]['startMs'] = 800
+        with self.assertRaises(ValueError):
+            select(words, 2)
 
     @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg required')
     def test_actual_render_matches_edl_duration_with_audio(self):
