@@ -34,6 +34,8 @@ def segments(value):
             raise ValueError('Speaker ID must be a nonempty string')
         words = []
         word_previous = start
+        if not isinstance(item.get('words', []), list):
+            raise ValueError('Transcript words must be an array')
         for word in item.get('words', []):
             if not isinstance(word, dict):
                 raise ValueError('Transcript words must be objects')
