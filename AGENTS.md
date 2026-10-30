@@ -643,6 +643,13 @@ read `docs/review.md`. Validate project files with `tools/project.py` before
 passing them between tools. Other new production tools and their trigger cases
 are indexed in `docs/production-features.md`.
 
+For transcript highlights, subject-following crops, speech-aware mixing,
+multi-speaker dubbing, character references, data videos, source evidence or
+background compositing, read `docs/advanced-production.md`. Use the existing
+engines and optional model boundaries described there. The offline example in
+`examples/production-capabilities/` verifies the local paths without provider
+calls; configured model inference remains an explicit production step.
+
 The `storyboard` template consumes project manifests and provides landscape,
 portrait and square compositions. Read `docs/multi-format.md` when composing for
 multiple aspect ratios, and `docs/variants.md` for language or campaign props.

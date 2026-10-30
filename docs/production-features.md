@@ -19,6 +19,14 @@ validated project data, resumable execution and local review. Each tool supports
 | Export subtitle files | `tools/subtitles.py` | [Subtitle export](variants.md) |
 | Add local templates or providers | `tools/extensions.py`, `tools/provider.py` | [Developer kit](developer-kit.md) |
 | Verify workflows, browsers and video output | `scripts/verify_features.py` | [Verification](verification.md) |
+| Select complete-sentence highlights | `tools/highlights.py` | [Production capabilities](advanced-production.md#automatic-highlights) |
+| Follow subjects when cropping footage | `tools/reframe.py` | [Tracking](advanced-production.md#subject-tracking-and-reframing) |
+| Duck music and place sound effects | `tools/audio_mix.py` | [Audio mixing](advanced-production.md#speech-aware-audio-mixing) |
+| Synchronize multiple replacement voices | `tools/dubbing.py` | [Dubbing](advanced-production.md#multi-speaker-dubbing) |
+| Reuse character identity/style references | `tools/characters.py` | [Characters](advanced-production.md#character-consistency-across-shots) |
+| Generate narrated chart videos | `tools/data_video.py` | [Data videos](advanced-production.md#reusable-data-videos) |
+| Audit sources for script/on-screen claims | `tools/evidence.py` | [Evidence](advanced-production.md#source-backed-content) |
+| Remove moving backgrounds and attach graphics | `tools/composite.py` | [Compositing](advanced-production.md#moving-backgrounds-and-tracked-graphics) |
 
 Start with the included offline production plan or storyboard template. Builds
 preview by default; generation executes only with `--run`. Hosted costs must be

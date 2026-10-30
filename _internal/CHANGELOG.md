@@ -10,6 +10,16 @@ All notable changes to claude-code-video-toolkit.
 
 ### Added
 
+- Sentence-aware transcript highlights with repetition and internal-pause removal.
+- OpenCV subject/face tracking and smoothed reframing of existing footage.
+- Speech-driven music ducking and timestamped sound effect placement.
+- Diarized speaker import, stable TTS voice mapping, timed dubbing and background stems.
+- Locked character references with FLUX still and dependent LTX motion plans.
+- Reusable CSV/JSON chart videos, data-derived narration and provenance.
+- Locked source checks for script and displayed project claims, with explicit review warnings.
+- Chroma key, supplied-alpha and optional recurrent ONNX human matting with tracked graphics.
+- An eleven-task offline capability example, media assertions and checkpoint resume verification.
+
 - Runtime-validated project manifests and compatibility-preserving migration.
 - Checkpointed build graphs, content-aware selective regeneration, cost forecasts,
   estimate caps, and named draft/final execution profiles.

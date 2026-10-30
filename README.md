@@ -81,6 +81,12 @@ See the [production feature guide](docs/production-features.md) for commands and
 examples. Start with `/build-video` to preview a build or `/review-video` to
 inspect an existing project's scenes.
 
+Production capabilities also include transcript highlights, subject tracking,
+speech-aware mixing, multi-speaker dubbing, character reference plans, animated
+data reports, source checks and video compositing. See the
+[capability guide](docs/advanced-production.md) and
+[offline example](examples/production-capabilities/README.md).
+
 ### Skills
 
 Claude Code has deep knowledge in:

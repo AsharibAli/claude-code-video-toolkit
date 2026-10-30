@@ -33,3 +33,31 @@ The CI workflow runs on Windows and Linux. It adds production-path coverage to
 the existing Remotion version baseline checks: changed inputs/outputs, failures,
 resuming, estimate caps, asset history, translations, provider contracts, shared
 schema, actual format dimensions and persisted review actions.
+
+## Production capabilities
+
+Install the optional vision extra for actual CSRT tracking and compositing tests:
+
+```bash
+uv sync --extra vision
+uv run python scripts/verify_features.py --capabilities
+# All verification, including existing Remotion/browser checks:
+uv run python scripts/verify_features.py --capabilities --media --browser
+```
+
+The capability checks measure music attenuation/recovery, two distinct utterances
+at their assigned timestamps, sentence edit decisions versus output duration,
+subject motion, chart pixel changes, source/claim mismatches, and composite pixels.
+The eleven-task example renders six media outputs, runs final QC, then verifies
+all eleven tasks resume. Artifacts and their hashes appear in the report under
+`scratch/capability-verification-*/`. No paid provider calls occur.
+
+FLUX/LTX transport tests use simulated responses through the existing engines.
+Real reference conditioning quality and TTS voice quality require configured
+providers and human review. WhisperX/pyannote and Demucs inference are optional
+external environments; the default checks use supplied diarized/recorded inputs.
+
+To exercise the real optional RVM model locally, install `--extra matting` and set
+`VIDEO_TOOLKIT_RVM_MODEL` to the downloaded official FP32 ONNX model before
+running verification. Otherwise the two RVM model tests explicitly skip. Model
+weights are not included or downloaded in CI.
