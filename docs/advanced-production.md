@@ -33,3 +33,23 @@ JSON file. Resolve narration phrases with `tools/cues.py`, then use their
 This uses FFmpeg's sidechaincompress, adelay, amix and limiter filters. It copies
 the source video stream and replaces its audio. It does not classify music or
 separate voices automatically.
+
+## Automatic highlights
+
+```bash
+uv run tools/highlights.py --video recording.mp4 --transcript words.json \
+  --seconds 45 --keyword release --output out/highlights.mp4 --save-plan out/edits.json
+# Add --run to render. Or replace --transcript with --transcribe --model base.
+```
+
+Accepts toolkit Caption[] milliseconds or Whisper/WhisperX `segments` in seconds.
+Local Whisper uses the existing optional `whisper` extra. It may download model
+weights on first use. No hosted transcription is invoked.
+
+The tool ranks complete punctuated sentences by keyword matches and uncommon
+terms, drops near-duplicate takes, selects within the duration budget, and keeps
+source order. Long internal pauses are shortened between aligned words. A
+segment without word alignment stays intact. An unfinished final sentence is
+omitted. This is deterministic first-pass editing; inspect the exported edit
+decisions for context and editorial quality. It cannot infer which claims are
+interesting or correct. FFmpeg re-encodes cuts to preserve accurate boundaries.
