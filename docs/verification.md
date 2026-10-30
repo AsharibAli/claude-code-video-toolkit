@@ -22,7 +22,8 @@ uv run python scripts/verify_features.py --media --browser
 
 FFmpeg/ffprobe must be on PATH. To use an installed Chromium browser, set
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to its absolute executable path. Verification
-runs headlessly and does not contact hosted generation providers. The report is
+selects Remotion's Chrome for Testing mode for this full Chromium executable.
+It runs headlessly and does not contact hosted generation providers. The report is
 saved to scratch/feature-verification.json; browser screenshots and small real
 renders accompany it. The report records only checks that actually ran.
 Media verification includes the storyboard build adapter through final QC,

@@ -46,6 +46,8 @@ def main(argv=None) -> int:
         environment = {**os.environ, 'VIDEO_TOOLKIT_PYTHON': sys.executable}
         if browser:
             environment['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'] = browser
+        # executablePath() returns full Chromium, not chrome-headless-shell.
+        remotion_browser_args = ['--chrome-mode=chrome-for-testing', '--browser-executable=' + browser] if browser else []
         if args.media:
             for helper in ('cues', 'formats'):
                 run(['node', 'templates/storyboard/node_modules/typescript/bin/tsc', f'lib/{helper}.ts',
@@ -57,21 +59,21 @@ def main(argv=None) -> int:
                 folder = ROOT / 'templates/storyboard'
                 destination = f'out/verified-{composition}.mp4'
                 run(['node', 'node_modules/@remotion/cli/remotion-cli.js', 'render', composition, destination,
-                    '--frames=15-29', '--scale=0.25', '--concurrency=1', '--browser-executable=' + browser, '--log=error'], cwd=folder)
+                    '--frames=15-29', '--scale=0.25', '--concurrency=1', *remotion_browser_args, '--log=error'], cwd=folder)
                 probe = json.loads(run(['ffprobe', '-v', 'error', '-show_streams', '-of', 'json', destination], cwd=folder))
                 stream = next(item for item in probe['streams'] if item['codec_type'] == 'video')
                 if (stream['width'], stream['height']) != dimensions:
                     raise RuntimeError(f'{composition} rendered incorrect dimensions')
                 evidence['renders'].append({'composition': composition, 'width': stream['width'], 'height': stream['height']})
             run(['node', 'node_modules/@remotion/cli/remotion-cli.js', 'still', 'NarrationCues', 'out/verified.png',
-                '--frame=75', '--browser-executable=' + browser, '--log=error'], cwd=ROOT / 'examples/narration-cues')
+                '--frame=75', *remotion_browser_args, '--log=error'], cwd=ROOT / 'examples/narration-cues')
             sys.path.insert(0, str(ROOT / 'tools'))
             from build import builtin_plan
             from variants import derive_variants, materialize
             folder = ROOT / 'templates/storyboard'
             plan = builtin_plan(folder)
             render_task = next(task for task in plan['tasks'] if task['id'] == 'render')
-            render_task['command'] += ['--frames=15-29', '--scale=0.25', '--concurrency=1', '--browser-executable=' + browser]
+            render_task['command'] += ['--frames=15-29', '--scale=0.25', '--concurrency=1', *remotion_browser_args]
             plan_file = folder / '.video-toolkit/verification-plan.json'
             plan_file.parent.mkdir(parents=True, exist_ok=True)
             plan_file.write_text(json.dumps(plan), encoding='utf-8')
@@ -88,7 +90,7 @@ def main(argv=None) -> int:
                 variant = materialize(Path(directory), derive_variants(base, specification), write=True)
                 props_file = variant['variants'][0]['props']
                 run(['node', 'node_modules/@remotion/cli/remotion-cli.js', 'render', 'Storyboard', 'out/verified-Spanish.mp4',
-                     '--props', props_file, '--frames=15-29', '--scale=0.25', '--concurrency=1', '--browser-executable=' + browser, '--log=error'], cwd=folder)
+                     '--props', props_file, '--frames=15-29', '--scale=0.25', '--concurrency=1', *remotion_browser_args, '--log=error'], cwd=folder)
             evidence['localizedRender'] = 'templates/storyboard/out/verified-Spanish.mp4'
             evidence['media'] = True
         if args.browser:
