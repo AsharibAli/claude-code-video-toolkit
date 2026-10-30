@@ -66,3 +66,23 @@ class EvidenceTests(unittest.TestCase):
             moved = nested / 'lock.json'
             moved.write_text(json.dumps(lock_spec(path, moved)))
             self.assertTrue(check(moved, strict=True)['success'])
+
+    def test_project_claims_cover_displayed_text_and_report_scene_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'source.md').write_text('120 users. The release is ready.')
+            project = {'name': 'Test', 'template': 'storyboard', 'scenes': [
+                {'id': 'count', 'type': 'stats', 'onScreenText': '120 users.', 'startSeconds': 2, 'durationSeconds': 3}]}
+            (root / 'project.json').write_text(json.dumps(project))
+            spec = {'version': 1, 'project': 'project.json', 'sources': {'doc': {'path': 'source.md'}},
+                    'claims': [{'id': 'count', 'sceneId': 'count', 'text': '120 users.', 'source': 'doc', 'quote': '120 users.'}]}
+            path, locked = root / 'evidence.json', root / 'locked.json'
+            path.write_text(json.dumps(spec))
+            locked.write_text(json.dumps(lock_spec(path, locked)))
+            self.assertTrue(check(locked, strict=True)['success'])
+            project['scenes'][0]['narration'] = 'Uncited narration.'
+            (root / 'project.json').write_text(json.dumps(project))
+            report = check(locked)
+            uncited = next(f for f in report['findings'] if f['code'] == 'uncited-text')
+            self.assertEqual(uncited['sceneId'], 'count')
+            self.assertEqual(uncited['timeSeconds'], 2)

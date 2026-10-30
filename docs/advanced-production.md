@@ -210,6 +210,15 @@ context and meaning still need judgment. `--strict` also fails on those warnings
 The tool never silently treats retrieval or matching numbers as proof of truth.
 Reports use `findings` with error/warning levels, compatible with local review QC.
 
+To check displayed storyboard content as well as narration, use
+`"project":"project.json"` instead of `script`. Each claim then needs `sceneId`.
+The default fields are `title`, `narration` and `onScreenText`; `textFields` can
+select other plain-text scene fields. Missing coverage is reported per scene
+with its start timestamp. This checks manifest content, not text embedded inside
+images or arbitrary template code. To display findings in local review, write
+the report to the project's `out/qc.json` or merge its findings into the build's
+QC report.
+
 ## Moving backgrounds and tracked graphics
 
 ```bash

@@ -12,6 +12,7 @@ import re
 import sys
 
 from media_ops import load_json, output_path, sha256, write_json
+from project_manifest import load_project
 
 
 def normalize(value):
@@ -37,16 +38,40 @@ def spec_data(path):
             raise ValueError(f'Source {name} needs path')
     if not isinstance(value.get('claims'), list) or not value['claims']:
         raise ValueError('Evidence spec needs a nonempty claims array')
+    if ('script' in value) == ('project' in value):
+        raise ValueError('Evidence spec must select either script or project')
     return value
+
+
+def content_blocks(spec, root):
+    if 'script' in spec:
+        path = path_at(root, spec['script'])
+        return path, [{'id': None, 'text': normalize(path.read_text(encoding='utf-8-sig')), 'startSeconds': 0}]
+    path = path_at(root, spec['project'])
+    if path.is_dir():
+        path /= 'project.json'
+    project = load_project(path)
+    fields = spec.get('textFields', ['title', 'narration', 'onScreenText'])
+    if not isinstance(fields, list) or not fields or any(not isinstance(f, str) or not f for f in fields):
+        raise ValueError('textFields must list scene text field names')
+    blocks, cursor = [], 0
+    for scene in project['scenes']:
+        values = [scene.get(field) for field in fields if scene.get(field) is not None]
+        if any(not isinstance(value, str) for value in values):
+            raise ValueError('Selected project text fields must contain strings')
+        start = scene.get('startSeconds', cursor)
+        blocks.append({'id': scene['id'], 'text': normalize(' '.join(values)), 'startSeconds': start})
+        cursor = start + scene.get('durationSeconds', 0)
+    return path, blocks
 
 
 def lock_spec(spec_file, output):
     value = spec_data(spec_file)
     root, target_root = Path(spec_file).resolve().parent, Path(output).resolve().parent
-    script = path_at(root, value.get('script'))
-    script.read_text(encoding='utf-8-sig')
-    value['script'] = Path(os.path.relpath(script, target_root)).as_posix()
-    value['scriptSha256'] = sha256(script)
+    content_file, _ = content_blocks(value, root)
+    key = 'script' if 'script' in value else 'project'
+    value[key] = Path(os.path.relpath(content_file, target_root)).as_posix()
+    value[key + 'Sha256'] = sha256(content_file)
     for source in value['sources'].values():
         path = path_at(root, source['path'])
         if path.suffix.lower() not in ('.txt', '.md', '.csv', '.json'):
@@ -113,8 +138,7 @@ def equal_value(actual, expected):
 def check(spec_file, *, strict=False):
     spec = spec_data(spec_file)
     root = Path(spec_file).resolve().parent
-    script_file = path_at(root, spec.get('script'))
-    script = normalize(script_file.read_text(encoding='utf-8-sig'))
+    content_file, blocks = content_blocks(spec, root)
     findings, claims, sources = [], [], {}
     def finding(code, message, claim=None, level='error'):
         item = {'code': code, 'level': level, 'message': message}
@@ -122,8 +146,12 @@ def check(spec_file, *, strict=False):
             item['claimId'] = claim['id']
             if isinstance(claim.get('sceneId'), str):
                 item['sceneId'] = claim['sceneId']
+                block = next((b for b in blocks if b['id'] == claim['sceneId']), None)
+                if block:
+                    item['timeSeconds'] = block['startSeconds']
         findings.append(item)
-    if spec.get('scriptSha256') != sha256(script_file):
+    key = 'script' if 'script' in spec else 'project'
+    if spec.get(key + 'Sha256') != sha256(content_file):
         finding('stale-script', 'Script differs from its evidence lock. Review changes and create a new lock.')
     for name, source in spec['sources'].items():
         path = path_at(root, source['path'])
@@ -134,7 +162,7 @@ def check(spec_file, *, strict=False):
                 finding('stale-source', f'Source {name} changed or has no locked hash')
         except OSError:
             finding('missing-source', f'Source {name} does not exist: {path}')
-    seen, covered = set(), []
+    seen, covered = set(), {block['id']: [] for block in blocks}
     for claim in spec['claims']:
         if not isinstance(claim, dict) or not isinstance(claim.get('id'), str) or not claim['id'].strip():
             raise ValueError('Each claim needs a nonempty ID')
@@ -146,11 +174,14 @@ def check(spec_file, *, strict=False):
             raise ValueError('Each claim needs its exact script text')
         content = normalize(content)
         status = 'missing-evidence'
-        if content not in script:
+        target_block = next((b for b in blocks if b['id'] == claim.get('sceneId')), None) if 'project' in spec else blocks[0]
+        if target_block is None:
+            raise ValueError('Project claims must name an existing sceneId')
+        if content not in target_block['text']:
             finding('claim-not-in-script', 'Claim text does not appear in the script', claim)
         else:
             # Cover every literal occurrence, leaving other script content visible.
-            covered.append(content)
+            covered[target_block['id']].append(content)
         source_id = claim.get('source')
         if not isinstance(source_id, str) or source_id not in sources:
             finding('missing-evidence', 'Claim references an unknown or missing source', claim)
@@ -186,12 +217,14 @@ def check(spec_file, *, strict=False):
             except (OSError, ValueError) as error:
                 finding('invalid-evidence', str(error), claim)
         claims.append({'id': claim['id'], 'text': content, 'source': source_id, 'status': status})
-    remaining = script
-    for content in sorted(covered, key=len, reverse=True):
-        remaining = remaining.replace(content, ' ')
-    remaining = re.sub(r'\[pause\s+[\d.]+s\]', ' ', remaining)
-    if re.search(r'\w', remaining, re.UNICODE):
-        finding('uncited-text', 'Unlinked script content: ' + normalize(remaining)[:500])
+    for block in blocks:
+        remaining = block['text']
+        for content in sorted(covered[block['id']], key=len, reverse=True):
+            remaining = remaining.replace(content, ' ')
+        remaining = re.sub(r'\[pause\s+[\d.]+s\]', ' ', remaining)
+        if re.search(r'\w', remaining, re.UNICODE):
+            finding('uncited-text', 'Unlinked script content: ' + normalize(remaining)[:500],
+                    {'id': 'uncited-' + block['id'], 'sceneId': block['id']} if block['id'] else None)
     success = not any(f['level'] == 'error' or strict for f in findings)
     return {'version': 1, 'success': success, 'strict': strict, 'claims': claims, 'findings': findings,
             'sources': sources, 'scope': 'Evidence location, values, hashes and coverage; not semantic truth verification'}
