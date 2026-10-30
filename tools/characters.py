@@ -3,16 +3,25 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import redirect_stdout
 import hashlib
 import json
-from pathlib import Path
 import re
 import subprocess
 import sys
+from contextlib import redirect_stdout
+from pathlib import Path
 
 from asset_history import record_asset
-from media_ops import load_json, number, output_path, probe, sha256, staged_output, video_stream, write_json
+from media_ops import (
+    load_json,
+    number,
+    output_path,
+    probe,
+    sha256,
+    staged_output,
+    video_stream,
+    write_json,
+)
 from production import project_path, validate_plan
 
 ROOT = Path(__file__).resolve().parents[1]

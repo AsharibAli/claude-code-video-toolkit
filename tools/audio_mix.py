@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
-from media_ops import audio_stream, load_json, number, output_path, probe, run, staged_output, video_stream
+from media_ops import (
+    audio_stream,
+    load_json,
+    number,
+    output_path,
+    probe,
+    run,
+    staged_output,
+    video_stream,
+)
 
 
 def mix(video, music, output, *, speech=None, events=None, music_gain=.25,

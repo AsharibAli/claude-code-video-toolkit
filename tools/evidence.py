@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import argparse
 import csv
-from decimal import Decimal, InvalidOperation
 import json
 import os
-from pathlib import Path
 import re
 import sys
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from media_ops import load_json, output_path, sha256, write_json
 from project_manifest import load_project

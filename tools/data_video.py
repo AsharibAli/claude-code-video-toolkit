@@ -6,14 +6,23 @@ import argparse
 import csv
 import json
 import math
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 import numpy as np
-
-from media_ops import audio_stream, encode_frames, load_json, number, output_path, probe, sha256, staged_output, write_json
+from media_ops import (
+    audio_stream,
+    encode_frames,
+    load_json,
+    number,
+    output_path,
+    probe,
+    sha256,
+    staged_output,
+    write_json,
+)
 
 
 def dataset(path, columns):
@@ -110,8 +119,8 @@ def prepare(spec_file, narration=None):
 
 def chart_frames(report):
     try:
-        from matplotlib.figure import Figure
         from matplotlib.backends.backend_agg import FigureCanvasAgg
+        from matplotlib.figure import Figure
     except ImportError as error:
         raise ValueError('Matplotlib is a core dependency. Install with uv sync') from error
     figure = Figure(figsize=(report['width'] / 100, report['height'] / 100), dpi=100, facecolor='#111827')

@@ -1,11 +1,11 @@
 import base64
 import io
 import json
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from PIL import Image

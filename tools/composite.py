@@ -3,18 +3,26 @@
 from __future__ import annotations
 
 import argparse
-from fractions import Fraction
 import json
 import math
-from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
+from fractions import Fraction
+from pathlib import Path
 
 import numpy as np
-
-from media_ops import cv2_module, encode_frames, load_json, number, output_path, probe, sha256, video_stream
+from media_ops import (
+    cv2_module,
+    encode_frames,
+    load_json,
+    number,
+    output_path,
+    probe,
+    sha256,
+    video_stream,
+)
 from reframe import validate_track
 
 
@@ -258,7 +266,7 @@ def composite(foreground, background, output, *, alpha=None, key=None, rvm_model
                         if layer['attachToTrack']:
                             if count >= len(report['frames']):
                                 raise ValueError('Track is shorter than foreground')
-                            x, y, w, h = report['frames'][count]['box']
+                            x, y, w, _height = report['frames'][count]['box']
                             position = [x + w / 2 - layer['image'].shape[1] / 2, y - layer['image'].shape[0]]
                         else:
                             position = layer['position']

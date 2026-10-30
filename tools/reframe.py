@@ -3,13 +3,22 @@
 from __future__ import annotations
 
 import argparse
-from fractions import Fraction
 import json
-from pathlib import Path
 import subprocess
 import sys
+from fractions import Fraction
+from pathlib import Path
 
-from media_ops import cv2_module, encode_frames, number, output_path, probe, sha256, video_stream, write_json
+from media_ops import (
+    cv2_module,
+    encode_frames,
+    number,
+    output_path,
+    probe,
+    sha256,
+    video_stream,
+    write_json,
+)
 
 
 def rectangle(value, width, height):

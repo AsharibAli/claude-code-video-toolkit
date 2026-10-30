@@ -1,10 +1,10 @@
 import json
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
 import wave
+from pathlib import Path
 
 import numpy as np
 

@@ -6,14 +6,25 @@ import argparse
 import gc
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
-from media_ops import audio_stream, load_json, number, output_path, probe, run, sha256, staged_output, video_stream, write_json
+from media_ops import (
+    audio_stream,
+    load_json,
+    number,
+    output_path,
+    probe,
+    run,
+    sha256,
+    staged_output,
+    video_stream,
+    write_json,
+)
 from transcript import segments
 
 ROOT = Path(__file__).resolve().parents[1]

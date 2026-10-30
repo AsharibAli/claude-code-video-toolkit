@@ -1,17 +1,17 @@
 import importlib.util
 import os
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from composite import composite, RvmMatte
+from composite import RvmMatte, composite
 from media_ops import cv2_module, encode_frames, probe, sha256
 
 

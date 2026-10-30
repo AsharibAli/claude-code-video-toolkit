@@ -1,9 +1,9 @@
 import importlib.util
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import numpy as np
 
