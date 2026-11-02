@@ -98,6 +98,8 @@ Claude Code has deep knowledge in:
 |---------|-------------|
 | `/setup` | First-time setup — cloud GPU, file transfer, voice, prerequisites |
 | `/video` | Video projects — list, resume, or create new |
+| `/build-video` | Experimental fork: preview or run the proposed build workflow |
+| `/review-video` | Experimental fork: local storyboard notes and approvals |
 | `/scene-review` | Scene-by-scene review in Remotion Studio |
 | `/design` | Focused design refinement session for a scene |
 | `/brand` | Brand profiles — list, edit, or create new |

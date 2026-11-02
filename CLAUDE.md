@@ -914,3 +914,7 @@ Keep these separate. Don't mix toolkit improvements with video production.
 - `docs/creating-templates.md` - Build new templates
 - `docs/creating-brands.md` - Create brand profiles
 - `docs/optional-components.md` - Setup for optional ML-based tools (ProPainter, etc.)
+
+## Experimental fork command proposals
+
+When explicitly testing `/build-video` or `/review-video`, read `docs/agent-workflows.md`. These commands depend on the proposed build/review modules and remain pending upstream issue #160. Existing `/video` and `tools/video_job.py` remain the upstream workflow. Preview before executing paid work; never invent review approvals.
