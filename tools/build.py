@@ -10,7 +10,7 @@ import shlex
 import re
 import sys
 
-from production import BuildError, plan_build, project_path, read_json, run_build, validate_plan
+from production import BuildError, plan_build, project_path, read_json, run_build, select_profile, validate_plan
 from project_manifest import load_project, ProjectValidationError
 
 TOOLKIT = Path(__file__).resolve().parent.parent
@@ -47,7 +47,7 @@ def builtin_plan(project: Path, *, provider: str = "elevenlabs", cloud: str = "m
                 "--output", "{project}/" + audio, "--provider", provider, "--cloud", cloud, "--json"]
         if manifest.get("brand"):
             argv += ["--brand", manifest["brand"]]
-        toolkit_inputs = ["tools/voiceover.py", "tools/pacing.py", "tools/config.py",
+        toolkit_inputs = ["tools/voiceover.py", "tools/pacing.py", "tools/config.py", ".env",
                           "_internal/toolkit-registry.json"]
         if provider == "qwen3":
             toolkit_inputs += ["tools/qwen3_tts.py", "tools/cloud_gpu.py", "tools/file_transfer.py"]
@@ -65,7 +65,7 @@ def builtin_plan(project: Path, *, provider: str = "elevenlabs", cloud: str = "m
             tasks.append({"id": caption_id, "dependsOn": [task_id],
                           "command": ["{python}", "{toolkit}/tools/captions.py", "{project}/" + audio,
                                       "--engine", caption_engine, "--json"],
-                          "inputs": [audio, script_rel],
+                          "inputs": [audio, script_rel], "toolkitInputs": ['tools/pacing.py', '.env'],
                           "outputs": [audio[:-4] + ".captions.json"]})
     configs = [p for p in ("src/config/sprint-config.ts", "src/config/demo-config.ts")
                if (project / p).is_file()]
@@ -109,6 +109,8 @@ def load_plan(project: Path, path: Path | None = None, *, builtin: bool = False,
 
 
 def main(argv=None) -> int:
+    from win_encoding import ensure_utf8_output
+    ensure_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, default=Path.cwd())
     parser.add_argument("--plan", type=Path, help="Production JSON file (or a manifest containing production)")
@@ -123,6 +125,8 @@ def main(argv=None) -> int:
     parser.add_argument("--captions", action="store_true", help="Include per-scene caption generation in built-in plan")
     parser.add_argument("--caption-engine", choices=["whisper", "scribe", "auto"], default="whisper")
     parser.add_argument("--json", action="store_true", help="Machine-readable result on stdout")
+    parser.add_argument('--budget-usd', type=float, help='Project-wide estimate cap including past attempts')
+    parser.add_argument('--profile', help='Named production profile with explicit task settings, e.g. draft or final')
     args = parser.parse_args(argv)
     try:
         project = args.project.resolve()
@@ -130,8 +134,9 @@ def main(argv=None) -> int:
             raise BuildError(f"Project directory does not exist: {project}")
         plan = load_plan(project, args.plan, builtin=args.builtin, provider=args.provider,
                          cloud=args.cloud, captions=args.captions, caption_engine=args.caption_engine)
-        result = (run_build(project, plan, TOOLKIT, restart=args.restart, force_tasks=args.force_task) if args.run and not args.dry_run
-                  else plan_build(project, plan, TOOLKIT, restart=args.restart, force_tasks=args.force_task))
+        plan = select_profile(plan, args.profile)
+        result = (run_build(project, plan, TOOLKIT, restart=args.restart, force_tasks=args.force_task, budget_usd=args.budget_usd) if args.run and not args.dry_run
+                  else plan_build(project, plan, TOOLKIT, restart=args.restart, force_tasks=args.force_task, budget_usd=args.budget_usd))
     except (BuildError, ProjectValidationError, OSError) as exc:
         result = {"success": False, "error": str(exc)}
         print(json.dumps(result) if args.json else str(exc), file=sys.stdout if args.json else sys.stderr)
@@ -141,6 +146,12 @@ def main(argv=None) -> int:
     elif "tasks" in result:
         for task in result["tasks"]:
             print(f"{task['action']:6} {task['id']}: {task['command']}")
+        budget = result['budget']
+        print(f"Planned estimate: ${budget['plannedEstimateUsd']:.4f}; project total: ${budget['projectedTotalUsd']:.4f}")
+        if budget['unknownTasks']:
+            print('Unknown estimates: ' + ', '.join(budget['unknownTasks']))
+        if not budget['allowed']:
+            print('Budget blocks execution. Inspect --json for details.')
         print("Preview only. Add --run to execute; generation tasks may use paid providers.")
     else:
         print(f"Completed {len(result['completed'])}; resumed {len(result['resumed'])}")

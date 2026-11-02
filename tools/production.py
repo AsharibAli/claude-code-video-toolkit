@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import hashlib
 import json
 import math
@@ -11,11 +12,37 @@ import re
 import subprocess
 import sys
 import tempfile
+import uuid
 from datetime import datetime, timezone
 
 
 class BuildError(ValueError):
     """A production plan or checkpoint cannot be used safely."""
+
+
+def select_profile(plan: dict, name: str | None = None) -> dict:
+    """Apply explicit draft/final task overrides without mutating the source plan."""
+    if name is None:
+        return plan
+    profiles = plan.get('profiles', {})
+    if not isinstance(profiles, dict) or not isinstance(profiles.get(name), dict):
+        raise BuildError(f'Unknown production profile: {name}')
+    overrides = profiles[name].get('tasks', {})
+    tasks = plan.get('tasks', [])
+    if not isinstance(tasks, list) or not isinstance(overrides, dict):
+        raise BuildError('Profile tasks must be an object mapping task IDs to overrides')
+    known = {task.get('id') for task in tasks if isinstance(task, dict)}
+    if set(overrides) - known:
+        raise BuildError('Profile references unknown task IDs')
+    allowed = {'command', 'estimatedCostUsd', 'timeoutSeconds', 'inputs', 'toolkitInputs', 'environmentInputs'}
+    result = copy.deepcopy(plan)
+    for task in result['tasks']:
+        change = overrides.get(task['id'], {})
+        if not isinstance(change, dict) or set(change) - allowed:
+            raise BuildError('Profiles may override commands, estimates, timeouts and declared inputs only')
+        task.update(copy.deepcopy(change))
+    result['selectedProfile'] = name
+    return result
 
 
 def canonical(path: Path) -> Path:
@@ -55,6 +82,9 @@ def validate_plan(value: object, project: Path, toolkit: Path | None = None) -> 
     if not isinstance(value, dict) or isinstance(value.get("version"), bool) or value.get("version") != 1:
         raise BuildError("production.version must be 1")
     tasks = value.get("tasks")
+    budget = value.get('budgetUsd')
+    if budget is not None:
+        valid_money(budget, 'production.budgetUsd')
     if not isinstance(tasks, list) or not tasks:
         raise BuildError("production.tasks must be a nonempty array")
     ids, claimed_outputs = set(), {}
@@ -286,7 +316,7 @@ def resumable(task: dict, record: dict, project: Path, toolkit: Path, snapshot: 
 
 
 def plan_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False,
-               force_tasks: list[str] | None = None) -> dict:
+               force_tasks: list[str] | None = None, budget_usd: float | None = None) -> dict:
     plan = validate_plan(plan, project, toolkit)
     state = load_state(project)
     force = set(force_tasks or [])
@@ -305,7 +335,57 @@ def plan_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = Fals
                         "cwd": str(project_path(project, task.get("cwd", "."), allow_root=True)),
                         "dependsOn": task.get("dependsOn", []), "outputs": outputs_for(task),
                         "estimatedCostUsd": task.get("estimatedCostUsd")})
-    return {"version": 1, "project": str(canonical(project)), "tasks": entries}
+    return {"version": 1, "project": str(canonical(project)), "tasks": entries,
+            'budget': cost_forecast(entries, state, budget_usd if budget_usd is not None else plan.get('budgetUsd'))}
+
+
+def valid_money(value: object, name: str) -> float:
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value) or value < 0):
+        raise BuildError(f'{name} must be a finite, non-negative USD amount')
+    return float(value)
+
+
+def cost_history(state: dict) -> list[dict]:
+    history = state.get('costHistory', [])
+    if not isinstance(history, list):
+        raise BuildError('Invalid cost history in build checkpoint')
+    for entry in history:
+        if not isinstance(entry, dict) or not isinstance(entry.get('id'), str):
+            raise BuildError('Invalid cost history entry')
+        for field in ('estimatedCostUsd', 'actualCostUsd'):
+            if entry.get(field) is not None:
+                valid_money(entry[field], field)
+    return history
+
+
+def cost_forecast(entries: list[dict], state: dict, limit: float | None) -> dict:
+    if limit is not None:
+        limit = valid_money(limit, 'budget')
+    history = cost_history(state)
+    prior = sum(item.get('actualCostUsd') if item.get('actualCostUsd') is not None
+                else item.get('estimatedCostUsd') or 0 for item in history)
+    unknown_past = [item['id'] for item in history
+                    if item.get('actualCostUsd') is None and item.get('estimatedCostUsd') is None]
+    pending = [entry for entry in entries if entry['action'] == 'run']
+    forecast = sum(entry.get('estimatedCostUsd') or 0 for entry in pending)
+    unknown = [entry['id'] for entry in pending if entry.get('estimatedCostUsd') is None]
+    total = round(prior + forecast, 8)
+    allowed = limit is None or (not unknown and not unknown_past and total <= limit + 1e-9)
+    return {'limitUsd': limit, 'previousReservedUsd': round(prior, 8),
+            'plannedEstimateUsd': round(forecast, 8), 'projectedTotalUsd': total,
+            'unknownTasks': unknown, 'unknownPriorAttempts': unknown_past, 'allowed': allowed,
+            'basis': 'User-supplied estimates; failed and interrupted attempts remain reserved. Not a provider invoice.'}
+
+
+def enforce_budget(forecast: dict) -> None:
+    if forecast['allowed']:
+        return
+    if forecast['unknownTasks'] or forecast['unknownPriorAttempts']:
+        raise BuildError('Budget cannot be enforced with unknown costs. Set estimatedCostUsd for tasks '
+                         'and reconcile unknown prior attempts with tools/budget.py.')
+    raise BuildError(f"Budget exceeded: projected ${forecast['projectedTotalUsd']:.4f} "
+                     f"is above ${forecast['limitUsd']:.4f}")
 
 
 def _now() -> str:
@@ -330,14 +410,17 @@ def execute_task(task: dict, project: Path, toolkit: Path) -> None:
 
 
 def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False,
-              force_tasks: list[str] | None = None) -> dict:
+              force_tasks: list[str] | None = None, budget_usd: float | None = None) -> dict:
     plan = validate_plan(plan, project, toolkit)
+    enforce_budget(plan_build(project, plan, toolkit, restart=restart,
+                              force_tasks=force_tasks, budget_usd=budget_usd)['budget'])
     with build_lock(project):
-        preview = plan_build(project, plan, toolkit, restart=restart, force_tasks=force_tasks)
+        preview = plan_build(project, plan, toolkit, restart=restart, force_tasks=force_tasks, budget_usd=budget_usd)
+        enforce_budget(preview['budget'])
         state = load_state(project)
         state_path = project_path(project, ".video-toolkit/build-state.json")
         tasks = {t["id"]: t for t in plan["tasks"]}
-        summary = {"success": True, "completed": [], "resumed": [], "failed": None}
+        summary = {"success": True, "completed": [], "resumed": [], "failed": None, 'budget': preview['budget']}
         for entry in preview["tasks"]:
             task_id = entry["id"]
             if entry["action"] == "resume":
@@ -349,6 +432,10 @@ def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False
                       "startedAt": _now(), "attempts": previous.get("attempts", 0) + 1,
                       "outputs": outputs_for(task)}
             state["tasks"][task_id] = record
+            state.setdefault('costHistory', []).append({'id': uuid.uuid4().hex, 'taskId': task_id,
+                'startedAt': record['startedAt'], 'estimatedCostUsd': task.get('estimatedCostUsd'),
+                'actualCostUsd': None, 'status': 'reserved'})
+            cost_entry = state['costHistory'][-1]
             atomic_write(state_path, json.dumps(state, indent=2) + "\n")
             print(f"Running {task_id}", file=sys.stderr, flush=True)
             try:
@@ -358,10 +445,12 @@ def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False
                 record["outputSnapshot"] = output_snapshot(task, project)
             except (BuildError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
                 record.update(status="failed", finishedAt=_now(), error=str(exc) or "Interrupted")
+                cost_entry.update(status='failed', finishedAt=record['finishedAt'])
                 atomic_write(state_path, json.dumps(state, indent=2) + "\n")
                 summary.update(success=False, failed={"id": task_id, "error": record["error"]})
                 return summary
             record.update(status="succeeded", finishedAt=_now())
+            cost_entry.update(status='succeeded', finishedAt=record['finishedAt'])
             atomic_write(state_path, json.dumps(state, indent=2) + "\n")
             summary["completed"].append(task_id)
         return summary
