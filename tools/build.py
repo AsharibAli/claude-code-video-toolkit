@@ -19,6 +19,10 @@ TOOLKIT = Path(__file__).resolve().parent.parent
 def builtin_plan(project: Path, *, provider: str = "elevenlabs", cloud: str = "modal",
                  captions: bool = False, caption_engine: str = "whisper") -> dict:
     """Connect existing per-scene narration, timing, QC, and Remotion CLIs."""
+    if (project / 'project.json').is_file() and load_project(project)['template'] == 'storyboard':
+        from storyboard_plan import storyboard_plan
+        return validate_plan(storyboard_plan(project, provider=provider, cloud=cloud,
+            captions=captions, caption_engine=caption_engine), project, TOOLKIT)
     package = read_json(project / "package.json")
     try:
         render = shlex.split(package["scripts"]["render"])
