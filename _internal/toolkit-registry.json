@@ -1185,6 +1185,13 @@
     }
   },
   "templates": {
+    "storyboard": {
+      "path": "templates/storyboard/",
+      "description": "Experimental responsive scene composition for landscape portrait and square",
+      "status": "beta",
+      "engine": "remotion",
+      "documentation": "templates/storyboard/README.md"
+    },
     "sprint-review": {
       "path": "templates/sprint-review/",
       "description": "Sprint review videos with demos, stats, and voiceover",
