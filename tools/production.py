@@ -6,7 +6,7 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import subprocess
 import sys
@@ -29,7 +29,10 @@ def canonical(path: Path) -> Path:
 
 def project_path(project: Path, value: str, *, allow_root: bool = False) -> Path:
     root = canonical(project)
-    if not isinstance(value, str) or not value or Path(value).is_absolute():
+    if (not isinstance(value, str) or not value or not value.strip()
+            or any(ord(c) < 32 for c in value) or PureWindowsPath(value).drive
+            or ":" in value or ".." in value.replace("\\", "/").split("/")
+            or Path(value).is_absolute()):
         raise BuildError(f"Expected a project-relative path, got {value!r}")
     path = canonical(root / value)
     if not path.is_relative_to(root) or (path == root and not allow_root):
@@ -47,9 +50,9 @@ def read_json(path: Path) -> dict:
     return data
 
 
-def validate_plan(value: object, project: Path) -> dict:
+def validate_plan(value: object, project: Path, toolkit: Path | None = None) -> dict:
     """Validate a production block without changing it or the filesystem."""
-    if not isinstance(value, dict) or value.get("version") != 1:
+    if not isinstance(value, dict) or isinstance(value.get("version"), bool) or value.get("version") != 1:
         raise BuildError("production.version must be 1")
     tasks = value.get("tasks")
     if not isinstance(tasks, list) or not tasks:
@@ -67,7 +70,7 @@ def validate_plan(value: object, project: Path) -> dict:
         argv = task.get("command")
         if not isinstance(argv, list) or not argv or any(not isinstance(s, str) or not s or "\0" in s for s in argv):
             raise BuildError(f"{task_id}: command must be a nonempty array of argv strings")
-        for field in ("inputs", "outputs", "dependsOn"):
+        for field in ("inputs", "outputs", "dependsOn", "toolkitInputs", "environmentInputs"):
             items = task.get(field, [])
             if not isinstance(items, list) or any(not isinstance(s, str) or not s for s in items):
                 raise BuildError(f"{task_id}: {field} must be an array of strings")
@@ -76,6 +79,11 @@ def validate_plan(value: object, project: Path) -> dict:
                 project_path(project, item)
                 if field == "outputs" and any(c in item for c in "*?["):
                     raise BuildError(f"{task_id}: outputs cannot contain globs")
+        for item in task.get("environmentInputs", []):
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", item):
+                raise BuildError(f"{task_id}: invalid environment input name: {item}")
+        for item in task.get("toolkitInputs", []):
+            project_path(toolkit or Path(__file__).resolve().parent.parent, item)
         project_path(project, task.get("cwd", "."), allow_root=True)
         if task.get("stdoutFile") is not None:
             project_path(project, task["stdoutFile"])
@@ -135,6 +143,63 @@ def expand_command(task: dict, project: Path, toolkit: Path) -> list[str]:
 def definition_hash(task: dict, project: Path, toolkit: Path) -> str:
     definition = {**task, "command": expand_command(task, project, toolkit)}
     return hashlib.sha256(json.dumps(definition, sort_keys=True).encode()).hexdigest()
+
+
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def paths_snapshot(root: Path, specifications: list[str]) -> dict:
+    """Hash file bytes and directory membership, including absent optional inputs."""
+    root = canonical(root)
+    result = {}
+    for specification in specifications:
+        path = project_path(root, specification)
+        matches = sorted(root.glob(specification)) if any(c in specification for c in "*?[") else [path]
+        files = {}
+        pending = list(matches)
+        visited = set()
+        while pending:
+            item = canonical(pending.pop())
+            if not item.is_relative_to(root):
+                raise BuildError(f"Input resolves outside its root: {specification}")
+            if item in visited:
+                continue
+            visited.add(item)
+            relative = item.relative_to(root).as_posix()
+            if item.is_dir():
+                files[relative + "/"] = "directory"
+                pending.extend(item.iterdir())
+            elif item.is_file():
+                files[relative] = file_digest(item)
+            else:
+                files[relative] = None
+        result[specification] = dict(sorted(files.items()))
+    return result
+
+
+def input_snapshot(task: dict, project: Path, toolkit: Path) -> dict:
+    code = {}
+    for argument in expand_command(task, project, toolkit)[1:]:
+        if argument.endswith((".py", ".js", ".mjs", ".cjs")) and len(argument) < 1000:
+            path = Path(argument)
+            if not path.is_absolute():
+                path = project_path(project, task.get("cwd", "."), allow_root=True) / path
+            if path.is_file():
+                code[str(canonical(path))] = file_digest(path)
+    return {"project": paths_snapshot(project, task.get("inputs", [])),
+            "toolkit": paths_snapshot(toolkit, task.get("toolkitInputs", [])),
+            "code": code,
+            "environment": {key: hashlib.sha256(json.dumps(os.environ.get(key)).encode()).hexdigest()
+                            for key in task.get("environmentInputs", [])}}
+
+
+def output_snapshot(task: dict, project: Path) -> dict:
+    return {name: file_digest(project_path(project, name)) for name in outputs_for(task)}
 
 
 def atomic_write(path: Path, text: str) -> None:
@@ -204,25 +269,35 @@ def verify_outputs(task: dict, project: Path) -> None:
             raise BuildError(f"{task['id']}: expected nonempty output file: {output}")
 
 
-def resumable(task: dict, record: dict, project: Path, toolkit: Path) -> bool:
+def resumable(task: dict, record: dict, project: Path, toolkit: Path, snapshot: dict | None = None) -> bool:
     if record.get("status") != "succeeded" or not outputs_for(task):
         return False
     if record.get("definition") != definition_hash(task, project, toolkit):
         return False
     try:
         verify_outputs(task, project)
+        if record.get("inputSnapshot") != (snapshot if snapshot is not None else input_snapshot(task, project, toolkit)):
+            return False
+        if record.get("outputSnapshot") != output_snapshot(task, project):
+            return False
     except (BuildError, OSError):
         return False
     return True
 
 
-def plan_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False) -> dict:
-    plan = validate_plan(plan, project)
+def plan_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False,
+               force_tasks: list[str] | None = None) -> dict:
+    plan = validate_plan(plan, project, toolkit)
     state = load_state(project)
+    force = set(force_tasks or [])
+    unknown = force - {task["id"] for task in plan["tasks"]}
+    if unknown:
+        raise BuildError(f"Unknown forced tasks: {', '.join(sorted(unknown))}")
     entries, changed = [], set()
     for task in ordered_tasks(plan):
-        skip = (not restart and not set(task.get("dependsOn", [])) & changed
-                and resumable(task, state["tasks"].get(task["id"], {}), project, toolkit))
+        snapshot = input_snapshot(task, project, toolkit)
+        skip = (not restart and task["id"] not in force and not set(task.get("dependsOn", [])) & changed
+                and resumable(task, state["tasks"].get(task["id"], {}), project, toolkit, snapshot))
         if not skip:
             changed.add(task["id"])
         entries.append({"id": task["id"], "action": "resume" if skip else "run",
@@ -254,10 +329,11 @@ def execute_task(task: dict, project: Path, toolkit: Path) -> None:
     verify_outputs(task, project)
 
 
-def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False) -> dict:
-    plan = validate_plan(plan, project)
+def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False,
+              force_tasks: list[str] | None = None) -> dict:
+    plan = validate_plan(plan, project, toolkit)
     with build_lock(project):
-        preview = plan_build(project, plan, toolkit, restart=restart)
+        preview = plan_build(project, plan, toolkit, restart=restart, force_tasks=force_tasks)
         state = load_state(project)
         state_path = project_path(project, ".video-toolkit/build-state.json")
         tasks = {t["id"]: t for t in plan["tasks"]}
@@ -277,6 +353,9 @@ def run_build(project: Path, plan: dict, toolkit: Path, *, restart: bool = False
             print(f"Running {task_id}", file=sys.stderr, flush=True)
             try:
                 execute_task(task, project, toolkit)
+                # Record post-task inputs: timing tasks may legitimately update their config input.
+                record["inputSnapshot"] = input_snapshot(task, project, toolkit)
+                record["outputSnapshot"] = output_snapshot(task, project)
             except (BuildError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
                 record.update(status="failed", finishedAt=_now(), error=str(exc) or "Interrupted")
                 atomic_write(state_path, json.dumps(state, indent=2) + "\n")
