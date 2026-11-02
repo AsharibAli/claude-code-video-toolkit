@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from build import TOOLKIT, builtin_plan
@@ -135,13 +137,97 @@ class BuildTests(unittest.TestCase):
         (self.project / "package.json").write_text(json.dumps({"scripts": {"render": "remotion render Demo out/video.mp4"}}))
         plan = builtin_plan(self.project, provider="qwen3", captions=True)
         tasks = {t["id"]: t for t in plan["tasks"]}
-        self.assertEqual(tasks["timing"]["dependsOn"], ["voiceover-001"])
-        self.assertIn("--engine", tasks["captions-001"]["command"])
+        voice_id = next(key for key in tasks if key.startswith("voiceover-"))
+        captions_id = next(key for key in tasks if key.startswith("captions-"))
+        self.assertEqual(tasks["timing"]["dependsOn"], [voice_id])
+        self.assertIn("--engine", tasks[captions_id]["command"])
+        self.assertIn("tools/pacing.py", tasks[voice_id]["toolkitInputs"])
         self.assertEqual(tasks["render"]["outputs"], ["out/video.mp4"])
         preview = plan_build(self.project, plan, TOOLKIT)
         self.assertTrue(all(Path(t["cwd"]) == canonical(self.project) for t in preview["tasks"]))
         self.assertFalse((self.project / ".video-toolkit").exists())
         self.assertFalse(any("publish" in str(t["command"]) for t in preview["tasks"]))
+
+    def test_content_change_rebuilds_only_affected_branch_and_dependents(self):
+        for name in ("left.txt", "right.txt"):
+            (self.project / name).write_text(name)
+        tasks = [task("left", "from pathlib import Path; print(Path('left.txt').read_text())", [],
+                      inputs=["left.txt"], stdoutFile="left.out"),
+                 task("right", "from pathlib import Path; print(Path('right.txt').read_text())", [],
+                      inputs=["right.txt"], stdoutFile="right.out"),
+                 task("final", "from pathlib import Path; print(Path('left.out').read_text()+Path('right.out').read_text())", [],
+                      inputs=["left.out", "right.out"], dependsOn=["left", "right"], stdoutFile="final.out")]
+        self.assertTrue(self.run_plan(tasks)["success"])
+        stamp = (self.project / "left.txt").stat().st_mtime_ns
+        (self.project / "left.txt").write_text("new content")
+        os.utime(self.project / "left.txt", ns=(stamp, stamp))
+        result = self.run_plan(tasks)
+        self.assertEqual(result["completed"], ["left", "final"])
+        self.assertEqual(result["resumed"], ["right"])
+        self.assertIn("new content", (self.project / "final.out").read_text())
+        os.utime(self.project / "left.txt", None)
+        self.assertEqual(self.run_plan(tasks)["completed"], [])
+
+    def test_output_tampering_and_forced_task_invalidate_dependents(self):
+        tasks = [task("a", "print('original')", [], stdoutFile="a"),
+                 task("b", "print('final')", [], dependsOn=["a"], stdoutFile="b")]
+        self.run_plan(tasks)
+        (self.project / "a").write_text("tampered")
+        self.assertEqual(self.run_plan(tasks)["completed"], ["a", "b"])
+        self.assertEqual(self.run_plan(tasks, force_tasks=["a"])["completed"], ["a", "b"])
+        with self.assertRaises(BuildError):
+            self.run_plan(tasks, force_tasks=["missing"])
+
+    def test_glob_membership_missing_inputs_and_tool_source_changes(self):
+        code = self.project / "generate.py"
+        code.write_text("print('one')")
+        tasks = [{"id": "a", "command": ["{python}", "{project}/generate.py"], "outputs": [],
+                  "stdoutFile": "out", "inputs": ["notes/*.txt", "optional.txt"]}]
+        self.run_plan(tasks)
+        (self.project / "notes").mkdir()
+        (self.project / "notes/new.txt").write_text("new")
+        self.assertEqual(self.run_plan(tasks)["completed"], ["a"])
+        (self.project / "optional.txt").write_text("present")
+        self.assertEqual(self.run_plan(tasks)["completed"], ["a"])
+        (self.project / "optional.txt").unlink()
+        self.assertEqual(self.run_plan(tasks)["completed"], ["a"])
+        code.write_text("print('two')")
+        self.assertEqual(self.run_plan(tasks)["completed"], ["a"])
+        self.assertEqual((self.project / "out").read_text().strip(), "two")
+
+    def test_toolkit_and_environment_inputs_invalidate_without_recording_secrets(self):
+        toolkit = self.project / "toolkit"
+        toolkit.mkdir()
+        setting = toolkit / "voice.json"
+        setting.write_text('{"speed":1}')
+        tasks = [task("a", "print('done')", [], stdoutFile="out", toolkitInputs=["voice.json"],
+                      environmentInputs=["TOOLKIT_TEST_VOICE"])]
+        plan = {"version": 1, "tasks": tasks}
+        with patch.dict(os.environ, {"TOOLKIT_TEST_VOICE": "secret-one"}):
+            run_build(self.project, plan, toolkit)
+            self.assertEqual(run_build(self.project, plan, toolkit)["completed"], [])
+        with patch.dict(os.environ, {"TOOLKIT_TEST_VOICE": "secret-two"}):
+            self.assertEqual(run_build(self.project, plan, toolkit)["completed"], ["a"])
+            setting.write_text('{"speed":2}')
+            self.assertEqual(run_build(self.project, plan, toolkit)["completed"], ["a"])
+        self.assertNotIn("secret-", (self.project / ".video-toolkit/build-state.json").read_text())
+
+    def test_in_place_inputs_snapshot_after_success(self):
+        (self.project / "config").write_text("first")
+        tasks = [task("timing", "from pathlib import Path; Path('config').write_text('synced')", ["config"], inputs=["config"])]
+        self.run_plan(tasks)
+        self.assertEqual(self.run_plan(tasks)["resumed"], ["timing"])
+
+    def test_runtime_manifest_validation_and_portable_path_guards(self):
+        (self.project / "project.json").write_text(json.dumps({"name": "bad", "scenes": []}))
+        result = self.cli("--json")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("template", json.loads(result.stdout)["error"])
+        for value in ("C:relative", "name\nfile", "../escape", "https://example.test/a"):
+            with self.subTest(path=value), self.assertRaises(BuildError):
+                validate_plan({"version": 1, "tasks": [task("a", "pass", [], inputs=[value])]}, self.project)
+        with self.assertRaises(BuildError):
+            validate_plan({"version": True, "tasks": [task("a", "pass", [])]}, self.project)
 
 
 if __name__ == "__main__":
