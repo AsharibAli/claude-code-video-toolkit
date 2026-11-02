@@ -73,6 +73,8 @@ npm run render   # Export
 
 ## Templates
 
+Experimental fork proposal: `templates/storyboard/` composes validated scene data in landscape, portrait and square. Its project schema is pending upstream design agreement in issue #160; do not replace existing project workflows. See its README and use pnpm in its workspace.
+
 Templates live in `templates/`. Most are standalone Remotion projects; concept-explainer-short is pure Python. See registry `templates` section for the full list.
 
 ### sprint-review

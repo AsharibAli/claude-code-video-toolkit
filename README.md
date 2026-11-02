@@ -116,6 +116,8 @@ Claude Code has deep knowledge in:
 
 ### Templates
 
+The experimental [responsive storyboard](templates/storyboard/README.md) composes one story for landscape, portrait and square. It is a fork-only proposal pending [design discussion](https://github.com/digitalsamba/claude-code-video-toolkit/issues/160).
+
 Pre-built video structures in `templates/`:
 
 - **sprint-review** — Sprint review videos with demos, stats, and voiceover
