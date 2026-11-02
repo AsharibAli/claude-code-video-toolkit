@@ -315,6 +315,16 @@
       "created": "2025-12-28",
       "updated": "2026-10-12"
     },
+    "dubbing": {
+      "path": "tools/dubbing.py",
+      "description": "Import diarized speakers, synchronize replacement voices and preserve background stems",
+      "usage": "uv run tools/dubbing.py --help",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/dubbing.md"
+    },
     "addmusic": {
       "path": "tools/addmusic.py",
       "description": "Add background music to video (generate via ElevenLabs or use existing file)",
@@ -322,6 +332,16 @@
       "status": "beta",
       "created": "2025-12-28",
       "updated": "2025-12-28"
+    },
+    "audio_mix": {
+      "path": "tools/audio_mix.py",
+      "description": "Duck music under speech and place timestamped sound effects",
+      "usage": "uv run tools/audio_mix.py --help",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/audio-mix.md"
     },
     "dewatermark": {
       "path": "tools/dewatermark.py",
@@ -358,6 +378,15 @@
       "created": "2025-12-29",
       "updated": "2025-12-30"
     },
+    "browser_flow": {
+      "path": "playwright/scripts/flow.ts",
+      "description": "Record editable browser actions, replay them with supplied secrets, and export video plus click/target timing events.",
+      "usage": "pnpm --dir playwright flow --help",
+      "status": "beta",
+      "documentation": "docs/replayable-demos.md",
+      "category": "utility",
+      "created": "2026-11-03"
+    },
     "verify_setup": {
       "path": "tools/verify_setup.py",
       "description": "Verify toolkit setup - check prerequisites, cloud GPU, R2, and voice configuration",
@@ -365,6 +394,16 @@
       "status": "beta",
       "created": "2026-03-23",
       "updated": "2026-10-12"
+    },
+    "asset_history": {
+      "path": "tools/asset_history.py",
+      "description": "Record, search and restore immutable asset versions",
+      "usage": "uv run tools/asset_history.py --project PROJECT list",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/asset-history.md"
     },
     "modal_setup": {
       "path": "tools/modal_setup.py",
@@ -409,6 +448,16 @@
       },
       "created": "2026-10-12",
       "updated": "2026-10-12"
+    },
+    "highlights": {
+      "path": "tools/highlights.py",
+      "description": "Assemble sentence-aware transcript highlights and shorten internal pauses",
+      "usage": "uv run tools/highlights.py --help",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/highlights.md"
     },
     "image_edit": {
       "path": "tools/image_edit.py",
@@ -491,6 +540,16 @@
       "estimatedCost": "$0.01-0.05 per image",
       "created": "2026-01-04",
       "updated": "2026-10-12"
+    },
+    "reframe": {
+      "path": "tools/reframe.py",
+      "description": "Track a selected subject or detected face and render a smoothed crop",
+      "usage": "uv run tools/reframe.py --help",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/reframe.md"
     },
     "sadtalker": {
       "path": "tools/sadtalker.py",
@@ -643,6 +702,15 @@
       "created": "2026-06-08",
       "updated": "2026-06-08"
     },
+    "cues": {
+      "path": "tools/cues.py",
+      "description": "Export existing narration phrase timings as named JSON cues, with a validated FPS-aware consumer.",
+      "usage": "uv run tools/cues.py --help",
+      "status": "beta",
+      "documentation": "docs/narration-cue-json.md",
+      "category": "utility",
+      "created": "2026-11-03"
+    },
     "sync_timing": {
       "path": "tools/sync_timing.py",
       "description": "Sync scene durationSeconds in Remotion config with actual audio durations",
@@ -663,6 +731,16 @@
       "created": "2026-10-12",
       "updated": "2026-10-28"
     },
+    "data_video": {
+      "path": "tools/data_video.py",
+      "description": "Animate CSV/JSON charts with narration and source provenance",
+      "usage": "uv run tools/data_video.py --help",
+      "status": "beta",
+      "created": "2026-10-31",
+      "category": "utility",
+      "updated": "2026-11-03",
+      "documentation": "docs/data-video.md"
+    },
     "align_captions": {
       "path": "tools/align_captions.py",
       "description": "Align hand-estimated cap() caption timings in sprint-config.ts to actual TTS audio — transcribes each scene with ElevenLabs Scribe, fuzzy-matches phrases to word timestamps, patches fromSec/durSec in --apply mode",
@@ -678,6 +756,15 @@
       ],
       "created": "2026-05-07",
       "updated": "2026-10-12"
+    },
+    "subtitles": {
+      "path": "tools/subtitles.py",
+      "description": "Export existing word-caption JSON as a downloadable SRT or WebVTT track.",
+      "usage": "uv run tools/subtitles.py --help",
+      "status": "beta",
+      "documentation": "docs/subtitles.md",
+      "category": "utility",
+      "created": "2026-11-03"
     },
     "captions": {
       "path": "tools/captions.py",
@@ -880,6 +967,15 @@
       "documentation": "docs/youtube-upload.md",
       "created": "2026-06-09",
       "updated": "2026-06-09"
+    },
+    "evidence": {
+      "path": "tools/evidence.py",
+      "description": "Check local quotations, data values, hashes and script coverage before producing a video.",
+      "usage": "uv run tools/evidence.py --help",
+      "status": "beta",
+      "documentation": "docs/evidence.md",
+      "category": "utility",
+      "created": "2026-11-03"
     },
     "voice_prosody": {
       "path": "tools/voice_prosody.py",

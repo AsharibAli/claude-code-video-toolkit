@@ -42,6 +42,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Optional local add-on model runtime; weights are supplied separately.
+matting = ["onnxruntime>=1.20", "opencv-contrib-python-headless>=4.10,<5"]
+# Local subject tracking; no external model download.
+vision = ["opencv-contrib-python-headless>=4.10,<5"]
 # Burned karaoke captions in templates/concept-explainer-short
 # (word-level timing; heavy install, pulls in torch)
 whisper = [
