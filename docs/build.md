@@ -1,0 +1,65 @@
+# Resumable production builds
+
+`tools/build.py` runs declared commands in dependency order and saves a checkpoint after each task. An interrupted or failed build resumes completed tasks on its next run. The default is a read-only preview.
+
+```powershell
+uv run tools/build.py --project projects/my-video --json
+uv run tools/build.py --project projects/my-video --run
+```
+
+Projects can place a `production` block in `project.json`, or use a separate plan:
+
+```powershell
+uv run tools/build.py --project projects/my-video --plan production.json --run
+```
+
+The plan path is relative to the command's working directory. File paths *inside* the plan are relative to `--project`. An example plan is at `examples/production-plan.json`; it uses Python only and makes no network calls. Copy it into an empty project and run it to try failure-free checkpointing.
+
+## Task format
+
+```json
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "voice-intro",
+      "command": ["{python}", "{toolkit}/tools/voiceover.py", "--script", "{project}/public/audio/scenes/01_intro.txt", "--output", "{project}/public/audio/scenes/01_intro.mp3", "--provider", "qwen3", "--json"],
+      "inputs": ["public/audio/scenes/01_intro.txt"],
+      "outputs": ["public/audio/scenes/01_intro.mp3"],
+      "timeoutSeconds": 1800
+    }
+  ]
+}
+```
+
+- `command` is an argv array, executed without a shell. `{python}`, `{toolkit}`, and `{project}` are substituted in each argument. Shell operators are ordinary arguments. Use executable paths rather than shell built-ins or platform batch launchers.
+- `dependsOn` lists task IDs. Missing IDs, duplicate IDs, and cycles fail before execution.
+- `cwd` defaults to the project root. Paths for working directories and outputs must stay inside the project, including through symlinks.
+- `inputs` records file, directory, or glob dependencies for production plans. In this initial runner, resume checks the task definition and output existence; input-content invalidation is a separate incremental-build extension.
+- `outputs` lists nonempty files that must exist after success. `stdoutFile` optionally writes captured stdout to a project-relative file and counts as an output. A task with no outputs always reruns. Outputs cannot be shared by multiple tasks.
+- `timeoutSeconds` defaults to 1800. Failed commands, timeouts, missing outputs, and interruptions stop the graph and keep earlier checkpoints.
+- `estimatedCostUsd` can annotate a task; this runner does not enforce a budget or claim provider billing accuracy.
+
+Checkpoint data lives in `.video-toolkit/build-state.json`. Writes are atomic, and an OS lock prevents simultaneous runs for one project. A process crash releases the lock. Preserve invalid checkpoint files for diagnosis; the runner reports them rather than silently discarding them. Use `--restart` to rerun successful tasks. Use `--run --dry-run` to force a preview with no state writes or commands.
+
+## Built-in Remotion plan
+
+For sprint-review and product-demo projects using `src/config/sprint-config.ts` or `src/config/demo-config.ts`, the runner connects existing toolkit commands:
+
+1. Generate voiceover separately for each existing `public/audio/scenes/*.txt` script.
+2. Optionally generate captions with `--captions` (`whisper` by default; install `uv sync --extra whisper`).
+3. Sync timing to generated audio.
+4. Run pre-render QC, render via the project's installed Remotion CLI, then run final QC.
+
+```powershell
+uv run tools/build.py --project projects/my-video --builtin --provider qwen3 --captions --json
+uv run tools/build.py --project projects/my-video --builtin --provider qwen3 --captions --run
+```
+
+The built-in plan reads the project's plain `remotion render ...` package script and brand. Install the project's Node dependencies first. Supply existing scene scripts and configured voice credentials; generation can incur provider charges. Previewing never calls providers. Existing QC errors stop rendering. No publishing step is added. MoviePy and custom templates can use explicit task plans with their existing build commands.
+
+Verify locally without cloud calls:
+
+```powershell
+python -m unittest discover -s tests -p test_build.py
+```
