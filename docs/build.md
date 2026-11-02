@@ -45,6 +45,13 @@ Checkpoint data lives in `.video-toolkit/build-state.json`. Writes are atomic, a
 
 ## Built-in Remotion plan
 
+For the `storyboard` template, the built-in adapter reads narration directly
+from project.json. It creates one script and generation task per scene, reuses
+explicitly supplied scene audio, measures the final audio lengths, validates
+referenced media, prepares render props and runs the chosen format plus QC.
+Changing one scene's narration leaves the other scene scripts reusable. Projects
+with no planned narration/audio pass `--allow-silent` to QC explicitly.
+
 For sprint-review and product-demo projects using `src/config/sprint-config.ts` or `src/config/demo-config.ts`, the runner connects existing toolkit commands:
 
 1. Generate voiceover separately for each existing `public/audio/scenes/*.txt` script.
