@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Fit supplied speaker recordings or existing TTS voices to a video timeline."""
+"""Diarized multi-speaker dubbing using WhisperX, existing TTS tools and FFmpeg."""
 from __future__ import annotations
 
 import argparse
+import gc
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,13 +32,40 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def import_transcript(value):
     if not isinstance(value, dict) or not isinstance(value.get('segments'), list):
-        raise ValueError('Import expects a transcript object with speaker-labelled segments')
+        raise ValueError('Import expects diarized WhisperX JSON')
     if any(not isinstance(s, dict) or not s.get('speaker') for s in value['segments']):
-        raise ValueError('Every segment needs a speaker ID. Label speakers before importing.')
+        raise ValueError('Every segment needs a speaker ID. Run diarization before importing.')
     utterances = segments(value)
     return {'version': 1, 'speakers': {s['speaker']: {'provider': 'elevenlabs', 'voiceId': 'SET_VOICE_ID'} for s in utterances},
             'segments': [{'id': f'line-{i + 1:04}', 'speaker': s['speaker'], 'startSeconds': s['start'],
                           'endSeconds': s['end'], 'text': s['text']} for i, s in enumerate(utterances)]}
+
+
+def diarize(video, output, *, model='base', device='cpu'):
+    output_path(output, video)
+    audio_stream(probe(video))
+    token = os.environ.get('HF_TOKEN')
+    if not token:
+        raise ValueError('Set HF_TOKEN and accept the selected pyannote model conditions before diarization')
+    try:
+        import whisperx
+        from whisperx.diarize import DiarizationPipeline
+    except ImportError as error:
+        raise ValueError('Install WhisperX in a separate environment; see docs/dubbing-analysis.md') from error
+    audio = whisperx.load_audio(str(video))
+    engine = whisperx.load_model(model, device, compute_type='int8' if device == 'cpu' else 'float16')
+    result = engine.transcribe(audio, batch_size=4)
+    del engine
+    gc.collect()
+    aligner, metadata = whisperx.load_align_model(language_code=result['language'], device=device)
+    aligned = whisperx.align(result['segments'], aligner, metadata, audio, device, return_char_alignments=False)
+    del aligner
+    gc.collect()
+    pipeline = DiarizationPipeline(token=token, device=device)
+    labeled = whisperx.assign_word_speakers(pipeline(audio), aligned)
+    # Also validate that all segments actually received labels before writing.
+    import_transcript(labeled)
+    write_json(output, labeled)
 
 
 def resolve(root, value):
@@ -159,14 +189,34 @@ def dub(video, spec_file, output, *, execute=False, min_tempo=.75, max_tempo=1.5
     return result
 
 
+def separate(video, output, *, execute=False, python=sys.executable):
+    output_path(output, video)
+    audio_stream(probe(video))
+    if execute:
+        with tempfile.TemporaryDirectory(prefix='video-stems-') as folder:
+            source = Path(folder) / 'source.wav'
+            run(['ffmpeg', '-v', 'error', '-i', video, '-vn', '-c:a', 'pcm_s16le', source])
+            run([python, '-m', 'demucs', '--two-stems', 'vocals', '-n', 'htdemucs', '-o', folder, source], timeout=7200)
+            stem = Path(folder) / 'htdemucs/source/no_vocals.wav'
+            audio_stream(probe(stem))
+            with staged_output(output) as target:
+                shutil.copyfile(stem, target)
+    return {'version': 1, 'executed': execute, 'output': str(Path(output).resolve()), 'engine': 'demucs/htdemucs'}
+
+
 def main(argv=None):
     from win_encoding import ensure_utf8_output
     ensure_utf8_output()
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
-    ingest = commands.add_parser('import', help='Write an editable spec from speaker-labelled transcript JSON')
+    ingest = commands.add_parser('import', help='Write an editable dubbing spec from diarized WhisperX JSON')
     ingest.add_argument('transcript', type=Path)
     ingest.add_argument('--output', type=Path, required=True)
+    analyze = commands.add_parser('diarize', help='Run installed WhisperX and pyannote locally; downloads model weights')
+    analyze.add_argument('--video', type=Path, required=True)
+    analyze.add_argument('--output', type=Path, required=True)
+    analyze.add_argument('--model', default='base')
+    analyze.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     render = commands.add_parser('render')
     render.add_argument('--video', type=Path, required=True)
     render.add_argument('--spec', type=Path, required=True)
@@ -174,12 +224,22 @@ def main(argv=None):
     render.add_argument('--min-tempo', type=float, default=.75)
     render.add_argument('--max-tempo', type=float, default=1.5)
     render.add_argument('--run', action='store_true')
+    stems = commands.add_parser('separate', help='Extract a background stem with an installed Demucs environment')
+    stems.add_argument('--video', type=Path, required=True)
+    stems.add_argument('--output', type=Path, required=True)
+    stems.add_argument('--python', default=sys.executable, help='Python executable with Demucs installed')
+    stems.add_argument('--run', action='store_true')
     args = parser.parse_args(argv)
     try:
         if args.command == 'import':
             output_path(args.output, args.transcript)
             result = import_transcript(load_json(args.transcript))
             write_json(args.output, result)
+        elif args.command == 'diarize':
+            diarize(args.video, args.output, model=args.model, device=args.device)
+            result = {'version': 1, 'output': str(args.output.resolve()), 'executed': True}
+        elif args.command == 'separate':
+            result = separate(args.video, args.output, execute=args.run, python=args.python)
         else:
             result = dub(args.video, args.spec, args.output, execute=args.run, min_tempo=args.min_tempo, max_tempo=args.max_tempo)
         print(json.dumps(result, ensure_ascii=False, indent=2))
