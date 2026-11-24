@@ -7,3 +7,7 @@ Claude Code, Codex and OpenCode wrote plans from the same brief. The toolkit ren
 - [Render measurements and checksums](results.json).
 
 The OpenCode run needed a one-line copy edit after preflight. See the discussion in [issue #240](https://github.com/digitalsamba/claude-code-video-toolkit/issues/240).
+
+## Crossfade rerender
+
+The [fixed Claude Code render](claude-crossfade-fixed.mp4) uses the same source assets as the original. The [QC report](crossfade-result.json) records the change from one black gap to zero at the same duration.

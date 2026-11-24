@@ -1,0 +1,26 @@
+{
+  "duration_s": 39.3,
+  "black_before": 1,
+  "black_after": 0,
+  "qc_after": {
+    "passed": true,
+    "errors": 0,
+    "warnings": 1,
+    "findings": [
+      {
+        "level": "warn",
+        "check": "pacing",
+        "message": "03_trade-speed.mp3: 177 wpm (fast; comfortable is 140-160)",
+        "file": "03_trade-speed.mp3",
+        "wpm": 176.6
+      },
+      {
+        "level": "info",
+        "check": "frames",
+        "message": "first frame is background only (fine with a custom thumbnail; it is what autoplay shows first)",
+        "kind": "first_frame_empty"
+      }
+    ]
+  },
+  "build_s": 286.39
+}
