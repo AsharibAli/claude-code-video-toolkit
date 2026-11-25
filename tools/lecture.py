@@ -560,9 +560,9 @@ def spec_for(project: Path, lec: dict, tl: dict, words: Words, spans, i: int, no
         "cast": [{"id": "presenter", "from": str(rel), "posture": "stand",
                   "at": {"door": opening["behind"]} if opening else {"board": list(st["stand"])},
                   "facing": 0 if opening else st["facing"]}],
-        "voice": ([{"captions": str(cap.with_name(f"{tl['opening']['voice']['id']}.captions.json")),
+        "voice": ([{"captions": cap.with_name(f"{tl['opening']['voice']['id']}.captions.json").as_posix(),
                     "at": tl["opening"]["voice"]["at"]}] if opening and (tl.get("opening") or {}).get("voice") else [])
-        + [{"captions": str(cap), "at": round(at, 4)}],
+        + [{"captions": cap.as_posix(), "at": round(at, 4)}],
         "shots": ([{"id": "pre", "dur": round(pre, 4), "type": "fixed", "cam": "board", "lens": st["lens"],
                     "window": list(win), "built_only": True}] if pre_f else [])
         + [{"id": sid, "dur": round(dur, 4), "type": "fixed", "cam": "board", "lens": st["lens"], "window": list(win)}],
