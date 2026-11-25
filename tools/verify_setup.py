@@ -323,9 +323,10 @@ def test_cloud_endpoint(tool_name: str, provider: str = "modal") -> dict:
 
 def check_optional() -> list[dict]:
     """Optional components: reported, never counted as missing."""
-    candidates = [os.environ.get("BLENDER"), shutil.which("blender"),
-                  "/Applications/Blender.app/Contents/MacOS/Blender",
-                  str(Path.home() / "Applications/Blender.app/Contents/MacOS/Blender")]
+    candidates = [os.environ.get("BLENDER"), shutil.which("blender")]
+    if sys.platform == "darwin":
+        candidates += ["/Applications/Blender.app/Contents/MacOS/Blender",
+                       str(Path.home() / "Applications/Blender.app/Contents/MacOS/Blender")]
     for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramW6432")):
         if base:
             candidates += sorted(Path(base).glob("Blender Foundation/Blender*/blender.exe"), reverse=True)
